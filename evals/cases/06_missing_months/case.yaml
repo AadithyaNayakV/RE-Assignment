@@ -1,0 +1,39 @@
+id: 06_missing_months
+title: Missing months (synthetic Company G)
+synthetic: true
+input:
+  client_id: company_g_missing_data
+  period: "2026-06"
+  workbook: data/synthetic/company_g_missing_data.xlsx
+  config: config/clients/company_g_missing_data.yaml
+why: >
+  2025-04 and 2025-09 are absent from the workbook, and Services Revenue is blank in
+  2025-10. The TTM window 2025-07..2026-06 needs 2025-09, so every TTM figure must be
+  n/a. A writer must not sum the eleven months that do exist and call the result TTM.
+  The CLI exits 2 because ttm_window_incomplete is a data-quality error that blocks the
+  TTM metrics; the monthly figures still compute.
+
+engine:
+  exit_code: 2
+  reconciliation_passed: true
+  ttm_complete: false
+  required_codes: [missing_months, ttm_window_incomplete]
+  seasonality_assessed: false
+
+skill:
+  run: true
+  required_figures: [revenue.total, opex.total]
+  required_flags:
+    - id: missing_months_named
+      description: Names both missing months.
+      pattern: '(2025-04|Apr(il)? 2025)[\s\S]{0,400}(2025-09|Sep(t|tember)? 2025)|(2025-09|Sep(t|tember)? 2025)[\s\S]{0,400}(2025-04|Apr(il)? 2025)'
+  forbidden_claims:
+    - id: eleven_month_ttm
+      description: No 11-month total presented as annual, YTD or TTM.
+      pattern: '\b(11|eleven)[- ]month (total|sum)|annuali[sz]ed'
+      unless: '\b(no|not|never|none)\b'
+
+pass_criteria: >
+  Level 1: ttm.complete is false, every TTM metric is null with incomplete_window, both
+  codes present, monthly values match. Level 2: guard PASS, TTM stated as not
+  available, no TTM figure, both missing months named.

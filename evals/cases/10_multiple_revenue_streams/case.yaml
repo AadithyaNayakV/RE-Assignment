@@ -1,0 +1,45 @@
+id: 10_multiple_revenue_streams
+title: Multiple revenue streams (synthetic Company I)
+synthetic: true
+input:
+  client_id: company_i_multiple_revenue_streams
+  period: "2026-06"
+  workbook: data/synthetic/company_i_multiple_revenue_streams.xlsx
+  config: config/clients/company_i_multiple_revenue_streams.yaml
+why: >
+  Six revenue streams and two opex subtotal groups. Every stream's value, share and MoM
+  change is checked. Partnership Income peaks quarterly: hand check 7,448.00 in May to
+  11,476.00 in June, +4,028.00 (+54.1%), which clears the 25% / 1,000 route. Events &
+  Conferences carries a 42,200.00 spike in 2026-03, inside the TTM window.
+
+engine:
+  exit_code: 0
+  reconciliation_passed: true
+  ttm_complete: true
+  max_errors: 0
+  significant_includes: [Partnership Income]
+  ttm_window_one_offs_include: [Events & Conferences]
+  seasonality_assessed: false
+
+skill:
+  run: true
+  required_figures:
+    - revenue.total
+    - revenue.stream.platform_revenue
+    - revenue.stream.usage_fees
+    - revenue.stream.professional_services
+    - revenue.stream.partnership_income
+    - revenue.stream.white_label
+    - revenue.stream.training_revenue
+  required_flags:
+    - id: all_streams_named
+      description: All six streams are named.
+      pattern: 'Platform Revenue[\s\S]*Usage Fees|Usage Fees[\s\S]*Platform Revenue'
+    - id: partnership_flagged
+      description: The Partnership Income jump is reported.
+      pattern: 'Partnership Income[^\n]{0,300}(\+?\$4,028\.00|54\.1%)'
+  forbidden_claims: []
+
+pass_criteria: >
+  Level 1: all six streams' values, shares and changes match. Level 2: guard PASS,
+  every stream figure present, Partnership Income flagged.

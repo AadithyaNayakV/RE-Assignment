@@ -150,6 +150,7 @@ underscores (`Marketing/Advertising: Ad Spend` → `marketing_advertising_ad_spe
 | `operating_margin_pct` | percent | |
 | `net_income.reported` | currency | Read from the workbook's own Net Income row. |
 | `balance_sheet.<key>` | currency | `cash`, `accounts_receivable`, `deferred_revenue`, `assets`, `liabilities`, `equity`, `liabilities_and_equity`. |
+| `<base>.prior` | same as base | The prior-month value the comparison used. Emitted only for the five headline measures (`revenue.total`, `cogs.total`, `gross_profit`, `opex.total`, `operating_income`) so a report can show it without computing `current − change`. |
 | `<base>.mom_abs` | same as base | Current minus prior month. |
 | `<base>.mom_pct` | percent | Requires a strictly positive prior month. |
 | `<base>.yoy_abs` / `.yoy_pct` | currency / percent | Against the same month a year earlier. |
@@ -199,8 +200,31 @@ The absolute floor on the percentage route is load-bearing. Without it a line mo
 June 2026 data the unfiltered rule returned 21 lines, 14 of which changed by under 2,000.
 With the floor at 1,000 it returns 11 from 46 candidates.
 
-A **possible one-off** entry adds `trailing_average`, `trailing_months_used`,
-`multiple_of_average`, `excess_over_average` and `assessment`. Two things to note:
+### One-off entries
+
+`possible_one_offs` and `ttm_window_one_offs` are produced by **one implementation**
+(`MetricsBuilder._scan_one_offs`) and share one schema. They differ only in which months
+they test and what each month is compared against:
+
+| | Months tested | Compared against |
+|---|---|---|
+| `possible_one_offs` | the reporting month | the trailing `oneoff_trailing_months` before it |
+| `ttm_window_one_offs` | every month in the TTM window | the average of the *other* months in that window |
+
+Both entries carry: `label`, `section`, `category`, `group`, `group_key`, `sheet`, `row`,
+`period`, `current`, `comparison_average`, `comparison_basis`, `comparison_months`,
+`excess_over_average`, `multiple_of_average`, `multiple_unavailable_reason`,
+`metric_name`, `assessment`.
+
+`comparison_basis` is free text naming exactly what the average was taken over, so a
+reader never has to guess which months a multiple is relative to.
+
+Both are **magnitude-based**: `abs()` governs the floor and the multiple, because a large
+credit distorts a total exactly as much as a large charge. An earlier version tested
+`current >= min_abs` in the monthly scan, which meant a 1.2M credit could never qualify
+however large it was.
+
+Two further things to note:
 
 - `multiple_of_average` is `null` when the trailing average was zero or negative, with
   `multiple_unavailable_reason` explaining which. A line that is normally zero and
@@ -230,10 +254,20 @@ Each entry carries `label`, `section`, `period`, `value`,
 `window_average_excluding_period`, `excess_over_average`, `months_compared`, `row` and
 `metric_name`.
 
-When anything is found, a validation **warning** (`ttm_includes_possible_one_offs`,
-`affects: ["*.ttm"]`) is raised, so **every** TTM metric carries it into the report and
-the reader is told the figure is not a run rate. It is a warning rather than an error:
-the TTM total is correct, it just must not be read as a monthly rate.
+When anything is found, a validation **warning** (`ttm_includes_possible_one_offs`) is
+raised against **the named TTM metrics whose totals actually include those lines** — not
+a blanket `*.ttm`. All four of ABC's items are operating expenses, so the warning lands
+on `opex.total.ttm`, `operating_income.ttm`, the three affected `opex.category.*.ttm` and
+`opex.group.marketing.ttm`: six metrics. `revenue.total.ttm`, `cogs.total.ttm` and
+`gross_profit.ttm` stay clean, because no operating-expense item can move them. The
+message names the section involved rather than claiming "every trailing-twelve-month
+figure".
+
+It is a warning rather than an error: the TTM total is arithmetically correct, it just
+must not be read as a monthly rate.
+
+Note that `net_income` has no TTM metric to tag — the engine emits only
+`net_income.reported`, read from the workbook's own monthly row.
 
 ## `seasonality`
 
@@ -280,9 +314,24 @@ discrepancy, and `tests/test_mutation.py` confirms a deliberate two-cent error i
 `affects` patterns: an exact metric name, a `prefix.`, a `*.suffix`, or `*` for a fault
 that invalidates the whole run.
 
+**Prefer exact names.** A prefix is convenient and usually too broad: `negative_opex_line`
+once used `"opex."` and so attached a note about Bad Debts to all ~270 `opex.*` metrics,
+including `opex.line.travel`. It now names the metrics that genuinely include the
+offending lines — the lines themselves, their category, their subtotal group, and the
+section total — which is 18 metrics for ABC's June 2026. `finance_engine/naming.py` builds
+these lists, and is imported by both `validation` and `metrics` so the naming convention
+has exactly one definition.
+
+A warning on a figure it cannot affect is worse than no warning: it teaches the reader to
+skip warnings.
+
+Codes `negative_opex_line` and `negative_cogs_line` are raised separately, each scoped to
+its own section.
+
 Codes: `period_not_in_source`, `missing_months`, `ttm_window_incomplete`,
-`formula_value_unreadable`, `blank_not_zero`, `duplicate_line_labels`,
-`negative_revenue_line`, `negative_expense_line`, `opex_category_unmatched`,
+`ttm_includes_possible_one_offs`, `formula_value_unreadable`, `blank_not_zero`,
+`duplicate_line_labels`, `negative_revenue_line`, `negative_opex_line`,
+`negative_cogs_line`, `opex_category_unmatched`,
 `possible_unit_scaling`, `no_balance_sheet`, `statement_period_mismatch`,
 `balance_sheet_period_missing`.
 

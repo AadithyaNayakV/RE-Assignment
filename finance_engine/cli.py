@@ -3,6 +3,7 @@
     python -m finance_engine analyze          --client abc_inc --period 2026-06
     python -m finance_engine report           --client abc_inc --period 2026-06
     python -m finance_engine check-commentary --client abc_inc --period 2026-06 --file x.md
+    python -m finance_engine brief            --client abc_inc --period 2026-06
     python -m finance_engine list-periods     --client abc_inc
 
 Exit codes are meaningful, so the CLI can gate a pipeline:
@@ -20,6 +21,7 @@ import json
 import sys
 from pathlib import Path
 
+from finance_engine.brief import build_brief
 from finance_engine.commentary.base import ProviderUnavailable, get_provider
 from finance_engine.config import ClientConfig, ConfigError, Settings
 from finance_engine.guard import NumberGuard
@@ -29,6 +31,10 @@ from finance_engine.report import build_report
 from finance_engine.sources.excel import ExcelSource
 
 EXIT_OK, EXIT_USAGE, EXIT_DATA, EXIT_GUARD = 0, 1, 2, 3
+
+
+class UsageError(Exception):
+    """A bad command-line value. Reported in one line, never as a traceback."""
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -61,6 +67,13 @@ def main(argv: list[str] | None = None) -> int:
     p_check.add_argument("--file", required=True, help="text or markdown file to check")
     p_check.add_argument("--json", action="store_true", help="emit the result as JSON")
 
+    p_brief = sub.add_parser("brief",
+                             help="print the figures in an existing metrics.json, "
+                                  "formatted for a commentary writer")
+    add_common(p_brief)
+    p_brief.add_argument("--metric", default=None,
+                         help="print only metrics whose name contains this text")
+
     p_periods = sub.add_parser("list-periods", help="list the months in a client's source")
     add_common(p_periods, period_required=False)
 
@@ -72,9 +85,11 @@ def main(argv: list[str] | None = None) -> int:
             return _report(args)
         if args.command == "check-commentary":
             return _check_commentary(args)
+        if args.command == "brief":
+            return _brief(args)
         if args.command == "list-periods":
             return _list_periods(args)
-    except (ConfigError, LayoutError) as exc:
+    except (ConfigError, LayoutError, UsageError) as exc:
         # A layout or config problem is reported, never worked around.
         print(f"error: {exc}", file=sys.stderr)
         return EXIT_USAGE
@@ -118,7 +133,10 @@ def _output_dir(settings: Settings, client_id: str, period: str) -> Path:
 
 def _validate_period(period: str) -> None:
     from finance_engine.model import Period
-    Period.from_key(period)
+    try:
+        Period.from_key(period)
+    except ValueError as exc:
+        raise UsageError(f"{exc}. Use --period YYYY-MM, e.g. 2026-06.") from None
 
 
 def _analyze(args) -> int:
@@ -198,7 +216,8 @@ def _report(args) -> int:
     return EXIT_DATA if (errors or recon["checks_failed"]) else EXIT_OK
 
 
-def _check_commentary(args) -> int:
+def _metrics_path(args) -> Path:
+    """The metrics.json an earlier `analyze` wrote for this client and period."""
     _validate_period(args.period)
     root = Path(args.root) if args.root else Path.cwd()
     settings = Settings.from_env(root)
@@ -208,6 +227,11 @@ def _check_commentary(args) -> int:
             f"{metrics_path} not found. Run 'analyze --client {args.client} "
             f"--period {args.period}' first."
         )
+    return metrics_path
+
+
+def _check_commentary(args) -> int:
+    metrics_path = _metrics_path(args)
     text_path = Path(args.file)
     if not text_path.exists():
         raise FileNotFoundError(f"Commentary file not found: {text_path}")
@@ -224,6 +248,13 @@ def _check_commentary(args) -> int:
             for note in result.notes:
                 print(f"  note: {note}")
     return EXIT_OK if result.passed else EXIT_GUARD
+
+
+def _brief(args) -> int:
+    doc = json.loads(_metrics_path(args).read_text(encoding="utf-8"))
+    sys.stdout.reconfigure(encoding="utf-8")
+    print(build_brief(doc, args.metric), end="")
+    return EXIT_OK
 
 
 def _list_periods(args) -> int:

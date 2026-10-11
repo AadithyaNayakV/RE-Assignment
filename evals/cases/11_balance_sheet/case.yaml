@@ -1,0 +1,38 @@
+id: 11_balance_sheet
+title: Balance sheet (synthetic Company J)
+synthetic: true
+input:
+  client_id: company_j_balance_sheet
+  period: "2026-06"
+  workbook: data/synthetic/company_j_balance_sheet.xlsx
+  config: config/clients/company_j_balance_sheet.yaml
+why: >
+  The only synthetic company with a balance sheet. Assets, liabilities and equity are
+  derived from the generator's inputs: assets = checking + savings + receivables +
+  prepaid, liabilities = payables + deferred revenue + accrued, and equity is the plug.
+  So Assets = Liabilities + Equity holds by construction, and the engine must agree and
+  say so.
+
+engine:
+  exit_code: 0
+  reconciliation_passed: true
+  ttm_complete: true
+  max_errors: 0
+  forbidden_codes: [no_balance_sheet]
+  reconciliation_checks_include: [balance_sheet_balances]
+  seasonality_assessed: false
+
+skill:
+  run: true
+  required_sections_extra: [balance_sheet]
+  required_figures: [balance_sheet.assets, balance_sheet.liabilities, balance_sheet.equity, balance_sheet.cash]
+  required_flags:
+    - id: balance_check_reported
+      description: The Assets = Liabilities + Equity check and its result are reported.
+      pattern: 'assets\s*=\s*liabilities\s*\+\s*equity|assets equals? (total )?liabilities (plus|and) equity|balance sheet balances'
+  forbidden_claims: []
+
+pass_criteria: >
+  Level 1: balance-sheet values match the generator; A = L + E within a cent; the
+  balance check ran and passed. Level 2: guard PASS, balance sheet section present with
+  totals and the check result.

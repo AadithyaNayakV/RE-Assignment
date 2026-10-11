@@ -1,0 +1,39 @@
+id: 09_one_time_expense
+title: One-time expense (synthetic Company F, November 2025)
+synthetic: true
+input:
+  client_id: company_f_one_time_expense
+  period: "2025-11"
+  workbook: data/synthetic/company_f_one_time_expense.xlsx
+  config: config/clients/company_f_one_time_expense.yaml
+why: >
+  A 285,000.00 Legal Settlement lands in November 2025 only. It is zero in every other
+  month, so its trailing average is 0 and no multiple exists. It must be flagged as a
+  possible one-off, not a trend. Layout is oldest-first. The TTM window for 2025-11
+  starts 2024-12, before the data begins, so TTM is also n/a here: a second trap.
+
+engine:
+  exit_code: 2
+  reconciliation_passed: true
+  ttm_complete: false
+  required_codes: [ttm_window_incomplete]
+  significant_includes: [Legal Settlement]
+  possible_one_offs_include: [Legal Settlement]
+  seasonality_assessed: false
+
+skill:
+  run: true
+  required_figures: [opex.line.legal_settlement, opex.total, operating_income]
+  required_flags:
+    - id: possible_one_off
+      description: Legal Settlement is called a possible one-off.
+      pattern: 'Legal Settlement[\s\S]{0,600}(possible|potential) one[- ](off|time)|(possible|potential) one[- ](off|time)[\s\S]{0,600}Legal Settlement'
+  forbidden_claims:
+    - id: settlement_as_trend
+      description: A single month must not be called a trend or a run rate.
+      pattern: 'Legal Settlement[^.\n]{0,160}\b(trend|recurring|ongoing|run[- ]rate|will continue|continuing)'
+      unless: '(\bnot\b|n''t|\bno\b|possib|may\b|might|could|whether|confirm|\?)'
+
+pass_criteria: >
+  Level 1: Legal Settlement in significant and possible_one_offs; TTM n/a. Level 2:
+  guard PASS, "possible one-off" wording, no trend claim, TTM not available.

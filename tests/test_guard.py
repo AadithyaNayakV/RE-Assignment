@@ -228,3 +228,34 @@ class TestMeasuredLimits:
         # Far from any real figure in the workbook.
         assert not guard.check("$77,777,777.77").passed
         assert not guard.check("$0.07").passed
+
+
+class TestSpansFoundByTheEvalSuite:
+    """Gaps the Phase 3 evals exposed by running the guard over a whole report.md."""
+
+    def test_iso_timestamp_is_not_a_figure(self, abc_metrics):
+        result = NumberGuard(abc_metrics).check("**Generated:** 2026-10-11T10:48:47+00:00")
+        assert result.checked == 0, result.summary()
+
+    def test_sha256_label_and_digest_are_not_figures(self, abc_metrics):
+        text = ("- **SHA-256:** `75da8d679a89551f9e46b3563b7cfc724d9aaeabe0444b0214d455a0b3"
+                "35a0ea` and a digest ending in digits `a1b2c3d4e5f60718293a5847036`")
+        result = NumberGuard(abc_metrics).check(text)
+        assert result.checked == 0, result.summary()
+
+    def test_the_guards_own_counts_are_not_figures(self, abc_metrics):
+        text = ("| Commentary number check | PASS | 30/30 numbers traced to metrics.json |\n"
+                "_All 30 numbers in this section were checked._\n"
+                "PASS — 12/12 number(s) traced to metrics.json.")
+        result = NumberGuard(abc_metrics).check(text)
+        assert result.checked == 0, result.summary()
+
+    def test_magnitudes_are_compared_in_both_directions(self, abc_metrics):
+        # Documented behaviour: the guard does not judge signs. A negative written
+        # figure for a positive metric used to be rejected, while the reverse passed.
+        assert NumberGuard(abc_metrics).check("Revenue was -$195,898.16.").passed
+        assert NumberGuard(abc_metrics).check("Revenue was $195,898.16.").passed
+
+    def test_a_wrong_figure_is_still_rejected_whatever_its_sign(self, abc_metrics):
+        for text in ("Revenue was $195,998.16.", "Revenue was -$195,998.16."):
+            assert not NumberGuard(abc_metrics).check(text).passed

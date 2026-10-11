@@ -45,6 +45,8 @@ METHODS = {
     "difference_v1": "One computed metric minus another.",
     "margin_pct_v1": "numerator / denominator x 100, requiring a strictly positive denominator.",
     "mom_abs_v1": "Current period minus the immediately preceding period.",
+    "prior_period_value_v1": "The same measure for the immediately preceding period, "
+                             "as the month-over-month comparison used it.",
     "mom_pct_v1": "(current - prior) / prior x 100, requiring a strictly positive prior.",
     "pct_points_delta_v1": "Current percentage minus prior percentage, in percentage points.",
     "yoy_abs_v1": "Current period minus the same month one year earlier.",
@@ -278,8 +280,19 @@ class MetricsBuilder:
 
     def _emit_mom(self, base_name: str, current: float | None,
                   prior_value: float | None, unit: str,
-                  traces: list[dict] | None = None) -> None:
-        """Absolute and percentage month-over-month change for a base metric."""
+                  traces: list[dict] | None = None, emit_prior: bool = False) -> None:
+        """Absolute and percentage month-over-month change for a base metric.
+
+        `emit_prior` also records the prior-period value itself as `<base>.prior`, for
+        the headline measures a report shows side by side. Without it a report has to
+        rebuild the prior figure as `current - change`, which is arithmetic outside the
+        engine and produces a number the guard cannot trace.
+        """
+        if emit_prior:
+            self._emit(f"{base_name}.prior", prior_value, unit, "prior_period_value_v1",
+                       None, None if prior_value is not None else "missing_input",
+                       notes=[f"The {self.prior} value every change in {base_name} "
+                              f"is measured against."])
         if current is None or prior_value is None:
             abs_change, abs_reason = None, "missing_input"
         else:
@@ -340,7 +353,7 @@ class MetricsBuilder:
                    notes=[f"{len(traces)} revenue line(s) summed"
                           + (f"; {missing} missing" if missing else "") + "."])
         prior_total, _, _ = sum_present(items, self.prior)
-        self._emit_mom("revenue.total", total, prior_total, CURRENCY, traces)
+        self._emit_mom("revenue.total", total, prior_total, CURRENCY, traces, emit_prior=True)
         self._emit_ttm("revenue.total", items, "ttm_sum_v1")
         self._emit_yoy("revenue.total", items)
 
@@ -369,7 +382,7 @@ class MetricsBuilder:
                    notes=[f"{len(traces)} COGS line(s) summed"
                           + (f"; {missing} missing" if missing else "") + "."])
         prior_total, _, _ = sum_present(items, self.prior)
-        self._emit_mom("cogs.total", total, prior_total, CURRENCY, traces)
+        self._emit_mom("cogs.total", total, prior_total, CURRENCY, traces, emit_prior=True)
         self._emit_ttm("cogs.total", items, "ttm_sum_v1")
 
         for item in items:
@@ -394,7 +407,7 @@ class MetricsBuilder:
         prior_rev, _, _ = sum_present(self.sheet.in_section("revenue"), self.prior)
         prior_gp = (None if prior_rev is None or prior_total is None
                     else prior_rev - prior_total)
-        self._emit_mom("gross_profit", gp, prior_gp, CURRENCY)
+        self._emit_mom("gross_profit", gp, prior_gp, CURRENCY, emit_prior=True)
 
         margin, reason = ratio_pct(gp, rev)
         self._emit("gross_margin_pct", margin, PERCENT, "margin_pct_v1", [], reason,
@@ -442,7 +455,7 @@ class MetricsBuilder:
                           + ". Subtotal-group members are summed once; the workbook's "
                             "own group subtotal rows are not added again."])
         prior_total, _, _ = sum_present(leaves, self.prior)
-        self._emit_mom("opex.total", total, prior_total, CURRENCY, traces)
+        self._emit_mom("opex.total", total, prior_total, CURRENCY, traces, emit_prior=True)
         self._emit_ttm("opex.total", leaves, "ttm_sum_v1")
 
         # By subtotal group, as the workbook presents them.
@@ -530,7 +543,7 @@ class MetricsBuilder:
         prior_opex, _, _ = sum_present(self.sheet.in_section("opex"), self.prior)
         prior_oi = (None if None in (prior_gp_rev, prior_cogs, prior_opex)
                     else prior_gp_rev - prior_cogs - prior_opex)
-        self._emit_mom("operating_income", oi, prior_oi, CURRENCY)
+        self._emit_mom("operating_income", oi, prior_oi, CURRENCY, emit_prior=True)
 
         rev = self.metrics.value("revenue.total")
         margin, reason = ratio_pct(oi, rev)

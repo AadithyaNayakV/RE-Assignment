@@ -178,7 +178,7 @@ def _revenue(doc, m, fmt) -> str:
         )
     total = m.get("revenue.total")
     lines.append(
-        f"| **Total revenue** | **{fmt.metric(total)}** | 100.0% | "
+        f"| **Total revenue** | **{fmt.metric(total)}** | — | "
         f"**{fmt.metric_signed(m.get('revenue.total.mom_abs'))}** | "
         f"**{fmt.metric_signed(m.get('revenue.total.mom_pct'))}** |"
     )
@@ -254,7 +254,7 @@ def _expenses(doc, m, fmt) -> str:
         )
     total = m.get("opex.total")
     lines.append(
-        f"| **Total** | **{fmt.metric(total)}** | 100.0% | "
+        f"| **Total** | **{fmt.metric(total)}** | — | "
         f"**{fmt.metric_signed(m.get('opex.total.mom_abs'))}** | "
         f"**{fmt.metric_signed(m.get('opex.total.mom_pct'))}** | "
         f"**{fmt.metric(m.get('opex.total.ttm'))}** |"
@@ -301,13 +301,10 @@ def _mom_summary(doc, m, fmt) -> str:
         change = m.get(f"{key}.mom_abs")
         if current is None:
             continue
-        # The prior figure is reconstructed from the current value and the change, both
-        # of which are metrics — nothing new is calculated here.
-        prior_display = "n/a"
-        if current.get("value") is not None and (change or {}).get("value") is not None:
-            prior_display = fmt.money(current["value"] - change["value"])
+        # The prior figure is the engine's `<key>.prior` metric. It used to be rebuilt
+        # here as current - change, which put five untraceable numbers in every report.
         lines.append(
-            f"| {label} | {prior_display} | {fmt.metric(current)} | "
+            f"| {label} | {fmt.metric(m.get(f'{key}.prior'))} | {fmt.metric(current)} | "
             f"{fmt.metric_signed(change)} | "
             f"{fmt.metric_signed(m.get(f'{key}.mom_pct'))} |"
         )

@@ -1,0 +1,2570 @@
+{
+  "kind": "skill",
+  "run_id": "2026-10-11T11-21-12Z",
+  "date_utc": "2026-10-11T11:21:19+00:00",
+  "git_commit": "a18e32d",
+  "git_dirty": true,
+  "baseline_label": "skill",
+  "provider": "claude",
+  "summary": {
+    "passed": 13,
+    "failed": 0,
+    "skipped": 0,
+    "total": 13
+  },
+  "cases": {
+    "01_abc_inc_2026_06": {
+      "status": "pass",
+      "checks": [
+        {
+          "id": "skill_discovered",
+          "passed": true,
+          "detail": "skills at start-up: ['monthly-financial-analysis', 'design', 'design-sync', 'dataviz', 'update-config', 'verify']..."
+        },
+        {
+          "id": "skill_invoked",
+          "passed": true,
+          "detail": "a Skill tool call naming the skill"
+        },
+        {
+          "id": "claude_completed",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "ran_analyze",
+          "passed": true,
+          "detail": "skill step 2"
+        },
+        {
+          "id": "ran_check_commentary",
+          "passed": true,
+          "detail": "skill step 8"
+        },
+        {
+          "id": "report_written_this_run",
+          "passed": true,
+          "detail": "C:\\Users\\aadit\\OneDrive\\Desktop\\RE Assignment\\output\\clients\\abc_inc\\2026-06\\report.md (from the original run)"
+        },
+        {
+          "id": "metrics_written_this_run",
+          "passed": true,
+          "detail": "C:\\Users\\aadit\\OneDrive\\Desktop\\RE Assignment\\output\\clients\\abc_inc\\2026-06\\metrics.json (from the original run)"
+        },
+        {
+          "id": "guard",
+          "passed": true,
+          "detail": "295/295 numbers traced"
+        },
+        {
+          "id": "section:data_quality",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:revenue",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:margins",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:operating_expenses",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:month_over_month",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:ttm",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:significant_movements",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:one_offs",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:limitations",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:reviewer_checklist",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "issue_shown_early:negative_opex_line",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "issue_shown_early:ttm_includes_possible_one_offs",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "draft_label",
+          "passed": true,
+          "detail": "the first 25 lines must say this is a draft"
+        },
+        {
+          "id": "provider_label",
+          "passed": true,
+          "detail": "must say it was written by skill"
+        },
+        {
+          "id": "reviewer_checklist",
+          "passed": true,
+          "detail": "14 unchecked item(s) under the heading"
+        },
+        {
+          "id": "causal_language_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_vocabulary_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "seasonality_not_asserted",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "one_offs_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "impossible_values",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "client_isolation",
+          "passed": true,
+          "detail": "mentions other clients: []"
+        },
+        {
+          "id": "no_credentials",
+          "passed": true,
+          "detail": "credential-like text found"
+        },
+        {
+          "id": "figure:revenue.total",
+          "passed": true,
+          "detail": "found '$195,898.16'"
+        },
+        {
+          "id": "figure:revenue.total.mom_abs",
+          "passed": true,
+          "detail": "found '$12,452.80'"
+        },
+        {
+          "id": "figure:gross_margin_pct",
+          "passed": true,
+          "detail": "found '70.2%'"
+        },
+        {
+          "id": "figure:opex.total",
+          "passed": true,
+          "detail": "found '$468,181.80'"
+        },
+        {
+          "id": "figure:operating_income",
+          "passed": true,
+          "detail": "found '$330,756.08'"
+        },
+        {
+          "id": "figure:revenue.total.ttm",
+          "passed": true,
+          "detail": "found '$2,303,975.51'"
+        },
+        {
+          "id": "figure:opex.line.events_conferences.mom_abs",
+          "passed": true,
+          "detail": "found '$17,970.67'"
+        },
+        {
+          "id": "flag:events_flagged",
+          "passed": true,
+          "detail": "The largest movement, Events & Conferences, is reported."
+        },
+        {
+          "id": "flag:bad_debts_sign_change",
+          "passed": true,
+          "detail": "Bad Debts is described as swinging from a charge to a credit, not as a % saving."
+        },
+        {
+          "id": "flag:ttm_not_run_rate",
+          "passed": true,
+          "detail": "The large TTM-window items are named and the affected TTM figures are said not to be a run rate."
+        },
+        {
+          "id": "flag:ttm_run_rate_warning",
+          "passed": true,
+          "detail": "Says the affected TTM figures are not a run rate."
+        },
+        {
+          "id": "flag:classification_note",
+          "passed": true,
+          "detail": "The workbook's operating income equals its net income because interest and tax sit inside opex."
+        },
+        {
+          "id": "forbidden:bad_debts_as_saving",
+          "passed": true,
+          "detail": "A sign change must not be read as a percentage cost saving. "
+        }
+      ],
+      "values": {},
+      "claude": {
+        "model": "claude-opus-5-5",
+        "cost_usd": 0.5090964,
+        "num_turns": 17,
+        "seconds": 0,
+        "bash_commands": [
+          "python -m finance_engine list-periods --client abc_inc; \"EXIT=$LASTEXITCODE\"",
+          "cd \"C:/Users/aadit/OneDrive/Desktop/RE Assignment\" && python -m finance_engine list-periods --client abc_inc; echo \"EXIT=$?\"; python -m finance_engine analyze --client abc_inc --period 2026-06; echo \"EXIT=$?\"",
+          "python -m finance_engine list-periods --client abc_inc; $LASTEXITCODE",
+          "python -m finance_engine list-periods --client abc_inc",
+          "python -m finance_engine analyze --client abc_inc --period 2026-06",
+          "python -m finance_engine brief --client abc_inc --period 2026-06",
+          "python -m finance_engine check-commentary --client abc_inc --period 2026-06 --file output/clients/abc_inc/2026-06/report.md"
+        ],
+        "read_raw_metrics_json": false,
+        "final_reply": " those.\n\n**Data quality:**\n- Reconciliation passed 144/144, with 0 errors and no blocked metrics.\n- There are 2 warnings:\n  - `negative_opex_line`: Bad Debts and Interest Income are negative this month. They are kept with their sign.\n  - `ttm_includes_possible_one_offs`: four large items sit in the trailing-twelve-month window. Three are from 2025-12 (Income Tax Benefit, Stock-Based Compensation Expense, Bonus) and one from 2026-02 (Events & Conferences). Because of them, the trailing-twelve-month operating expense and operating income figures are not a run rate.\n- The trailing-twelve-month window (2025-07..2026-06) is complete. Seasonality was not assessed because the workbook has 18 months and at least 24 are needed.\n- Interest, Bad Debts and Income Tax Benefit sit inside operating expenses in this workbook. So operating income equals net income, and the operating margin isn't comparable to statements that show those items separately.\n\n**What changed in June:**\n- Revenue fell -$12,452.80 (-6.0%) to $195,898.16. Usage Fees, which is 85.1% of revenue, fell -$11,142.74.\n- Gross margin rose +3.1 pts to 70.2%.\n- The operating loss narrowed by +$8,343.52 to -$330,756.08.\n- Cash fell -$215,543.33 (-23.2%), while accounts receivable rose +$194,550.06 (+47.7%).\n\nThe workbook doesn't record why anything changed. The report's \"Questions for the reviewer\" section lists seven open questions on possible causes, each marked as needing confirmation, and it ends with the reviewer checklist."
+      },
+      "rechecked_from": "evals\\runs\\skill_2026-10-11T11-03-32Z"
+    },
+    "02_normal_growth": {
+      "status": "pass",
+      "checks": [
+        {
+          "id": "skill_discovered",
+          "passed": true,
+          "detail": "skills at start-up: ['monthly-financial-analysis', 'design', 'design-sync', 'dataviz', 'update-config', 'verify']..."
+        },
+        {
+          "id": "skill_invoked",
+          "passed": true,
+          "detail": "a Skill tool call naming the skill"
+        },
+        {
+          "id": "claude_completed",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "ran_analyze",
+          "passed": true,
+          "detail": "skill step 2"
+        },
+        {
+          "id": "ran_check_commentary",
+          "passed": true,
+          "detail": "skill step 8"
+        },
+        {
+          "id": "report_written_this_run",
+          "passed": true,
+          "detail": "C:\\Users\\aadit\\OneDrive\\Desktop\\RE Assignment\\output\\clients\\company_a_normal_growth\\2026-06\\report.md (from the original run)"
+        },
+        {
+          "id": "metrics_written_this_run",
+          "passed": true,
+          "detail": "C:\\Users\\aadit\\OneDrive\\Desktop\\RE Assignment\\output\\clients\\company_a_normal_growth\\2026-06\\metrics.json (from the original run)"
+        },
+        {
+          "id": "guard",
+          "passed": true,
+          "detail": "133/133 numbers traced"
+        },
+        {
+          "id": "section:data_quality",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:revenue",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:margins",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:operating_expenses",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:month_over_month",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:ttm",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:significant_movements",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:one_offs",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:limitations",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:reviewer_checklist",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "issue_shown_early:no_balance_sheet",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "draft_label",
+          "passed": true,
+          "detail": "the first 25 lines must say this is a draft"
+        },
+        {
+          "id": "provider_label",
+          "passed": true,
+          "detail": "must say it was written by skill"
+        },
+        {
+          "id": "reviewer_checklist",
+          "passed": true,
+          "detail": "11 unchecked item(s) under the heading"
+        },
+        {
+          "id": "causal_language_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_vocabulary_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "seasonality_not_asserted",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "one_offs_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "impossible_values",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "client_isolation",
+          "passed": true,
+          "detail": "mentions other clients: []"
+        },
+        {
+          "id": "no_credentials",
+          "passed": true,
+          "detail": "credential-like text found"
+        },
+        {
+          "id": "figure:revenue.total",
+          "passed": true,
+          "detail": "found '$185,600.00'"
+        },
+        {
+          "id": "figure:revenue.total.mom_abs",
+          "passed": true,
+          "detail": "found '$2,800.00'"
+        },
+        {
+          "id": "figure:gross_margin_pct",
+          "passed": true,
+          "detail": "found '82.2%'"
+        },
+        {
+          "id": "figure:opex.total",
+          "passed": true,
+          "detail": "found '$79,004.00'"
+        },
+        {
+          "id": "figure:revenue.total.ttm",
+          "passed": true,
+          "detail": "found '$2,042,400.00'"
+        },
+        {
+          "id": "flag:revenue_rose",
+          "passed": true,
+          "detail": "States that revenue rose."
+        },
+        {
+          "id": "flag:nothing_significant",
+          "passed": true,
+          "detail": "Says no line met the significance test."
+        },
+        {
+          "id": "forbidden:invented_decline",
+          "passed": true,
+          "detail": "Total revenue did not fall. "
+        }
+      ],
+      "values": {},
+      "claude": {
+        "model": "claude-opus-5-5",
+        "cost_usd": 0.32128500000000004,
+        "num_turns": 13,
+        "seconds": 0,
+        "bash_commands": [
+          "python -m finance_engine list-periods --client company_a_normal_growth; \"EXIT=$LASTEXITCODE\"",
+          "cd \"C:/Users/aadit/OneDrive/Desktop/RE Assignment\" && python -m finance_engine list-periods --client company_a_normal_growth; echo \"EXIT=$?\"",
+          "python -m finance_engine list-periods --client company_a_normal_growth",
+          "python -m finance_engine analyze --client company_a_normal_growth --period 2026-06",
+          "python -m finance_engine brief --client company_a_normal_growth --period 2026-06",
+          "python -m finance_engine check-commentary --client company_a_normal_growth --period 2026-06 --file output/clients/company_a_normal_growth/2026-06/report.md"
+        ],
+        "read_raw_metrics_json": false,
+        "final_reply": "The draft report for Company A (SYNTHETIC), June 2026, is written and passed the number check: all 133 figures in it match `metrics.json`.\n\n**Report:** `output/clients/company_a_normal_growth/2026-06/report.md`. A report already existed at this path and I replaced it, as the skill's steps say to.\n\n**Data quality:** there are no errors and no blocked metrics, and all 108 checks against the workbook's own totals passed.\n- **One warning, `no_balance_sheet`:** the workbook has no balance sheet, so the Assets = Liabilities + Equity check can't be run.\n- **Trailing twelve months:** complete, covering 2025-07 to 2026-06.\n- **Seasonality:** not assessed, because the workbook doesn't cover enough months. The report calls no movement seasonal.\n\n**The month in brief:**\n- **Revenue:** up +$2,800.00 (+1.5%) to $185,600.00, and +22.1% on June last year.\n- **Gross margin:** 82.2%, up +0.2 pts.\n- **Operating income:** $73,556.00, up +$2,168.00. Operating margin is 39.6%, up +0.6 pts.\n- **Operating expenses:** up only +$512.00 (+0.7%). Payroll & People Costs are 74.9% of them.\n- **Notable movements:** no line changed enough to count as significant, and nothing was flagged as a possible one-off.\n\nThe report ends with reviewer questions about the year-on-year revenue growth, the payroll increase and the missing balance sheet, followed by the reviewer checklist."
+      },
+      "rechecked_from": "evals\\runs\\skill_2026-10-11T11-03-32Z"
+    },
+    "03_revenue_decline": {
+      "status": "pass",
+      "checks": [
+        {
+          "id": "skill_discovered",
+          "passed": true,
+          "detail": "skills at start-up: ['monthly-financial-analysis', 'design', 'design-sync', 'dataviz', 'update-config', 'verify']..."
+        },
+        {
+          "id": "skill_invoked",
+          "passed": true,
+          "detail": "a Skill tool call naming the skill"
+        },
+        {
+          "id": "claude_completed",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "ran_analyze",
+          "passed": true,
+          "detail": "skill step 2"
+        },
+        {
+          "id": "ran_check_commentary",
+          "passed": true,
+          "detail": "skill step 8"
+        },
+        {
+          "id": "report_written_this_run",
+          "passed": true,
+          "detail": "C:\\Users\\aadit\\OneDrive\\Desktop\\RE Assignment\\output\\clients\\company_b_revenue_decline\\2026-06\\report.md (from the original run)"
+        },
+        {
+          "id": "metrics_written_this_run",
+          "passed": true,
+          "detail": "C:\\Users\\aadit\\OneDrive\\Desktop\\RE Assignment\\output\\clients\\company_b_revenue_decline\\2026-06\\metrics.json (from the original run)"
+        },
+        {
+          "id": "guard",
+          "passed": true,
+          "detail": "131/131 numbers traced"
+        },
+        {
+          "id": "section:data_quality",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:revenue",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:margins",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:operating_expenses",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:month_over_month",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:ttm",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:significant_movements",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:one_offs",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:limitations",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:reviewer_checklist",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "issue_shown_early:no_balance_sheet",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "draft_label",
+          "passed": true,
+          "detail": "the first 25 lines must say this is a draft"
+        },
+        {
+          "id": "provider_label",
+          "passed": true,
+          "detail": "must say it was written by skill"
+        },
+        {
+          "id": "reviewer_checklist",
+          "passed": true,
+          "detail": "11 unchecked item(s) under the heading"
+        },
+        {
+          "id": "causal_language_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_vocabulary_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "seasonality_not_asserted",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "one_offs_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "impossible_values",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "client_isolation",
+          "passed": true,
+          "detail": "mentions other clients: []"
+        },
+        {
+          "id": "no_credentials",
+          "passed": true,
+          "detail": "credential-like text found"
+        },
+        {
+          "id": "figure:revenue.total",
+          "passed": true,
+          "detail": "found '$129,850.00'"
+        },
+        {
+          "id": "figure:revenue.total.mom_abs",
+          "passed": true,
+          "detail": "found '$7,950.00'"
+        },
+        {
+          "id": "figure:revenue.total.mom_pct",
+          "passed": true,
+          "detail": "found '5.8%'"
+        },
+        {
+          "id": "figure:revenue.total.yoy_abs",
+          "passed": true,
+          "detail": "found '$86,400.00'"
+        },
+        {
+          "id": "flag:decline_reported",
+          "passed": true,
+          "detail": "States that revenue fell."
+        },
+        {
+          "id": "forbidden:revenue_described_as_growing",
+          "passed": true,
+          "detail": "Total revenue fell month over month; it must not be described as growing. "
+        },
+        {
+          "id": "forbidden:invented_churn",
+          "passed": true,
+          "detail": "No cause of the decline is in the data. "
+        }
+      ],
+      "values": {},
+      "claude": {
+        "model": "claude-opus-5-5",
+        "cost_usd": 0.3297294,
+        "num_turns": 14,
+        "seconds": 0,
+        "bash_commands": [
+          "python -m finance_engine list-periods --client company_b_revenue_decline; \"EXIT=$LASTEXITCODE\"",
+          "python -m finance_engine list-periods --client company_b_revenue_decline; echo $LASTEXITCODE",
+          "python -m finance_engine list-periods --client company_b_revenue_decline",
+          "cd \"C:/Users/aadit/OneDrive/Desktop/RE Assignment\" && python -m finance_engine analyze --client company_b_revenue_decline --period 2026-06; echo \"EXIT=$?\"",
+          "python -m finance_engine analyze --client company_b_revenue_decline --period 2026-06",
+          "python -m finance_engine brief --client company_b_revenue_decline --period 2026-06",
+          "python -m finance_engine check-commentary --client company_b_revenue_decline --period 2026-06 --file output/clients/company_b_revenue_decline/2026-06/report.md"
+        ],
+        "read_raw_metrics_json": false,
+        "final_reply": "ients/company_b_revenue_decline/2026-06/report.md`. A report already existed at that path, and this one replaced it.\n\n**Number check:** PASS. All 131 figures in the report match `metrics.json`. The check confirms the numbers but not whether \"rose\" or \"fell\" is right for each, so the reviewer still needs to check those.\n\n**Data quality:** there are no errors and no blocked metrics, and all 108 checks against the workbook's own totals passed. There is one warning, `no_balance_sheet`: the workbook has no balance sheet, so that section says \"Not in this source.\" The trailing twelve months (2025-07 to 2026-06) are complete. Seasonality was not assessed because the workbook covers only 18 months and at least 24 are needed.\n\n**What the report says:**\n- **Revenue:** $129,850.00, down -$7,950.00 (-5.8%) from May. It is down -40.0% on June last year.\n- **Licence Revenue:** this stream is 81.9% of revenue and accounts for -$7,800.00 of the monthly fall.\n- **Margins:** gross margin fell -1.8 pts to 67.7%, and operating margin fell -6.3 pts to -12.5%.\n- **Costs and profit:** operating expenses were nearly flat at $104,100.00, so the operating loss grew to -$16,230.00.\n- **Flags:** no line moved enough to count as a significant movement, and nothing was flagged as a possible one-off.\n\nThe report gives no causes as fact. Possible explanations, such as lost licences or costs that don't scale with revenue, appear only as questions for the reviewer. The report ends with the reviewer checklist."
+      },
+      "rechecked_from": "evals\\runs\\skill_2026-10-11T11-03-32Z"
+    },
+    "04_expense_spike": {
+      "status": "pass",
+      "checks": [
+        {
+          "id": "skill_discovered",
+          "passed": true,
+          "detail": "skills at start-up: ['monthly-financial-analysis', 'design', 'design-sync', 'dataviz', 'update-config', 'verify']..."
+        },
+        {
+          "id": "skill_invoked",
+          "passed": true,
+          "detail": "a Skill tool call naming the skill"
+        },
+        {
+          "id": "claude_completed",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "ran_analyze",
+          "passed": true,
+          "detail": "skill step 2"
+        },
+        {
+          "id": "ran_check_commentary",
+          "passed": true,
+          "detail": "skill step 8"
+        },
+        {
+          "id": "report_written_this_run",
+          "passed": true,
+          "detail": "C:\\Users\\aadit\\OneDrive\\Desktop\\RE Assignment\\output\\clients\\company_c_expense_spike\\2026-01\\report.md (from the original run)"
+        },
+        {
+          "id": "metrics_written_this_run",
+          "passed": true,
+          "detail": "C:\\Users\\aadit\\OneDrive\\Desktop\\RE Assignment\\output\\clients\\company_c_expense_spike\\2026-01\\metrics.json (from the original run)"
+        },
+        {
+          "id": "guard",
+          "passed": true,
+          "detail": "149/149 numbers traced"
+        },
+        {
+          "id": "section:data_quality",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:revenue",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:margins",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:operating_expenses",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:month_over_month",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:ttm",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:significant_movements",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:one_offs",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:limitations",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:reviewer_checklist",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "issue_shown_early:no_balance_sheet",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "issue_shown_early:ttm_includes_possible_one_offs",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "draft_label",
+          "passed": true,
+          "detail": "the first 25 lines must say this is a draft"
+        },
+        {
+          "id": "provider_label",
+          "passed": true,
+          "detail": "must say it was written by skill"
+        },
+        {
+          "id": "reviewer_checklist",
+          "passed": true,
+          "detail": "13 unchecked item(s) under the heading"
+        },
+        {
+          "id": "causal_language_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_vocabulary_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "seasonality_not_asserted",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "one_offs_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "impossible_values",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "client_isolation",
+          "passed": true,
+          "detail": "mentions other clients: []"
+        },
+        {
+          "id": "no_credentials",
+          "passed": true,
+          "detail": "credential-like text found"
+        },
+        {
+          "id": "figure:opex.line.legal_expenses",
+          "passed": true,
+          "detail": "found '$36,000.00'"
+        },
+        {
+          "id": "figure:opex.line.legal_expenses.mom_abs",
+          "passed": true,
+          "detail": "found '$34,000.00'"
+        },
+        {
+          "id": "figure:opex.total",
+          "passed": true,
+          "detail": "found '$116,850.00'"
+        },
+        {
+          "id": "figure:operating_income",
+          "passed": true,
+          "detail": "found '$91,870.00'"
+        },
+        {
+          "id": "flag:legal_flagged",
+          "passed": true,
+          "detail": "Legal Expenses is reported as a significant movement."
+        },
+        {
+          "id": "flag:cause_left_to_reviewer",
+          "passed": true,
+          "detail": "The reviewer is asked to confirm the cause."
+        },
+        {
+          "id": "forbidden:invented_legal_cause",
+          "passed": true,
+          "detail": "No lawsuit, dispute or settlement is recorded in the data. "
+        },
+        {
+          "id": "forbidden:direction_wrong",
+          "passed": true,
+          "detail": "Legal Expenses rose. "
+        }
+      ],
+      "values": {},
+      "claude": {
+        "model": "claude-opus-5-5",
+        "cost_usd": 0.3739116,
+        "num_turns": 14,
+        "seconds": 0,
+        "bash_commands": [
+          "python -m finance_engine list-periods --client company_c_expense_spike; \"EXIT=$LASTEXITCODE\"",
+          "cd \"C:/Users/aadit/OneDrive/Desktop/RE Assignment\" && python -m finance_engine list-periods --client company_c_expense_spike; echo \"EXIT=$?\"; python -m finance_engine analyze --client company_c_expense_spike --period 2026-01; echo \"EXIT=$?\"",
+          "python -m finance_engine list-periods --client company_c_expense_spike; $LASTEXITCODE",
+          "python -m finance_engine list-periods --client company_c_expense_spike",
+          "python -m finance_engine analyze --client company_c_expense_spike --period 2026-01",
+          "python -m finance_engine brief --client company_c_expense_spike --period 2026-01",
+          "python -m finance_engine check-commentary --client company_c_expense_spike --period 2026-01 --file output/clients/company_c_expense_spike/2026-01/report.md"
+        ],
+        "read_raw_metrics_json": false,
+        "final_reply": "Number check:** PASS. All 149 figures in the report trace back to `metrics.json`. The check confirms each number exists there, not that it sits in the right sentence or has the right sign, so a reviewer still needs to confirm those.\n\n**Data quality:** 0 errors, 2 warnings, nothing blocked. All 108 reconciliation checks passed.\n- `no_balance_sheet`: the workbook has no balance sheet, so the balance-sheet section reads \"Not in this source.\"\n- `ttm_includes_possible_one_offs`: the trailing-twelve-month operating expense and operating income figures include an unusually large Legal Expenses amount of $36,000.00 in 2026-01. Those two totals therefore don't reflect a normal year's run rate.\n- Seasonality wasn't assessed. The source has 18 months and it needs at least 24.\n- This is a synthetic test company, so no figure describes a real business.\n\n**Main points:**\n- **Operating expenses** rose +$34,000.00 (+41.0%) to $116,850.00. All of it came from Legal Expenses, which went from $2,000.00 to $36,000.00. That was the only significant movement this month.\n- **Operating income** fell -$32,590.00 (-26.2%) to $91,870.00, and operating margin fell -14.6 pts to 40.1%.\n- **Revenue** was steady: $229,200.00, up +0.7% on the month and +9.1% on the same month last year.\n- **Gross margin** held at 91.1%.\n\nThe workbook doesn't say why Legal Expenses jumped. The report doesn't guess a cause; it asks the reviewer under \"Questions for the reviewer\" and marks each possibility \"needs confirmation.\""
+      },
+      "rechecked_from": "evals\\runs\\skill_2026-10-11T11-03-32Z"
+    },
+    "05_margin_decline": {
+      "status": "pass",
+      "checks": [
+        {
+          "id": "skill_discovered",
+          "passed": true,
+          "detail": "skills at start-up: ['monthly-financial-analysis', 'design', 'design-sync', 'dataviz', 'update-config', 'verify']..."
+        },
+        {
+          "id": "skill_invoked",
+          "passed": true,
+          "detail": "a Skill tool call naming the skill"
+        },
+        {
+          "id": "claude_completed",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "ran_analyze",
+          "passed": true,
+          "detail": "skill step 2"
+        },
+        {
+          "id": "ran_check_commentary",
+          "passed": true,
+          "detail": "skill step 8"
+        },
+        {
+          "id": "report_written_this_run",
+          "passed": true,
+          "detail": "C:\\Users\\aadit\\OneDrive\\Desktop\\RE Assignment\\output\\clients\\company_d_margin_decline\\2026-06\\report.md (from the original run)"
+        },
+        {
+          "id": "metrics_written_this_run",
+          "passed": true,
+          "detail": "C:\\Users\\aadit\\OneDrive\\Desktop\\RE Assignment\\output\\clients\\company_d_margin_decline\\2026-06\\metrics.json (from the original run)"
+        },
+        {
+          "id": "guard",
+          "passed": true,
+          "detail": "151/151 numbers traced"
+        },
+        {
+          "id": "section:data_quality",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:revenue",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:margins",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:operating_expenses",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:month_over_month",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:ttm",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:significant_movements",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:one_offs",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:limitations",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:reviewer_checklist",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "issue_shown_early:no_balance_sheet",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "draft_label",
+          "passed": true,
+          "detail": "the first 25 lines must say this is a draft"
+        },
+        {
+          "id": "provider_label",
+          "passed": true,
+          "detail": "must say it was written by skill"
+        },
+        {
+          "id": "reviewer_checklist",
+          "passed": true,
+          "detail": "11 unchecked item(s) under the heading"
+        },
+        {
+          "id": "causal_language_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_vocabulary_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "seasonality_not_asserted",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "one_offs_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "impossible_values",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "client_isolation",
+          "passed": true,
+          "detail": "mentions other clients: []"
+        },
+        {
+          "id": "no_credentials",
+          "passed": true,
+          "detail": "credential-like text found"
+        },
+        {
+          "id": "figure:gross_margin_pct",
+          "passed": true,
+          "detail": "found '22.6%'"
+        },
+        {
+          "id": "figure:gross_margin_pct.mom_pts",
+          "passed": true,
+          "detail": "found '1.6 pts'"
+        },
+        {
+          "id": "figure:gross_profit.mom_abs",
+          "passed": true,
+          "detail": "found '$3,350.00'"
+        },
+        {
+          "id": "figure:cogs.total",
+          "passed": true,
+          "detail": "found '$174,450.00'"
+        },
+        {
+          "id": "flag:margin_decline_reported",
+          "passed": true,
+          "detail": "States that gross margin fell."
+        },
+        {
+          "id": "flag:margin_in_points",
+          "passed": true,
+          "detail": "Margin change is expressed in points."
+        },
+        {
+          "id": "forbidden:margin_described_as_improving",
+          "passed": true,
+          "detail": "Gross margin fell; it must not be described as improving. "
+        }
+      ],
+      "values": {},
+      "claude": {
+        "model": "claude-opus-5-5",
+        "cost_usd": 0.37250819999999996,
+        "num_turns": 16,
+        "seconds": 0,
+        "bash_commands": [
+          "python -m finance_engine list-periods --client company_d_margin_decline; python -m finance_engine analyze --client company_d_margin_decline --period 2026-06; \"EXIT=$LASTEXITCODE\"",
+          "cd \"/c/Users/aadit/OneDrive/Desktop/RE Assignment\" && python -m finance_engine list-periods --client company_d_margin_decline; python -m finance_engine analyze --client company_d_margin_decline --period 2026-06; echo \"EXIT=$?\"",
+          "python -m finance_engine list-periods --client company_d_margin_decline",
+          "python -m finance_engine analyze --client company_d_margin_decline --period 2026-06; $LASTEXITCODE",
+          "python -m finance_engine analyze --client company_d_margin_decline --period 2026-06",
+          "python -m finance_engine brief --client company_d_margin_decline --period 2026-06",
+          "python -m finance_engine brief --client company_d_margin_decline --period 2026-06 --metric cogs",
+          "python -m finance_engine brief --client company_d_margin_decline --period 2026-06 --metric margin",
+          "python -m finance_engine check-commentary --client company_d_margin_decline --period 2026-06 --file output/clients/company_d_margin_decline/2026-06/report.md"
+        ],
+        "read_raw_metrics_json": false,
+        "final_reply": "**Data quality:** no errors and one warning, `no_balance_sheet`. The workbook has no balance sheet, so there are no balance-sheet figures and no check that assets equal liabilities plus equity. All 108 of the engine's totals matched the workbook's own formula totals, and no metrics were blocked. The trailing twelve months (2025-07 to 2026-06) are complete. Seasonality wasn't assessed because the workbook has only 18 months of data and that needs 24.\n\n**What the report says:**\n- **Margin is falling.** Revenue rose +$1,500.00 (+0.7%), but cost of goods sold rose +$4,850.00 (+2.9%). Gross profit fell -$3,350.00 (-6.2%) and gross margin fell -1.6 pts to 22.6%. That is well below the 32.0% for the trailing twelve months.\n- **Operating expenses were exactly flat** at $76,360.00 in every category. So all of this month's fall in operating income comes from gross profit.\n- **The business is losing money.** Operating income is -$25,310.00 this month (margin -11.2%) and -$82,620.00 over the trailing twelve months.\n- No line was large enough to count as a significant movement, and nothing was flagged as a possible one-off.\n\nThe workbook doesn't say why costs rose faster than revenue. Possible reasons appear only in the report's \"Questions for the reviewer\" section, each marked as needing confirmation: input or supplier costs, product mix, or prices not passed on to customers. That section also asks whether the flat operating expenses are fixed or accrued amounts rather than actual costs."
+      },
+      "rechecked_from": "evals\\runs\\skill_2026-10-11T11-03-32Z"
+    },
+    "06_missing_months": {
+      "status": "pass",
+      "checks": [
+        {
+          "id": "skill_discovered",
+          "passed": true,
+          "detail": "skills at start-up: ['monthly-financial-analysis', 'design', 'design-sync', 'dataviz', 'update-config', 'verify']..."
+        },
+        {
+          "id": "skill_invoked",
+          "passed": true,
+          "detail": "a Skill tool call naming the skill"
+        },
+        {
+          "id": "claude_completed",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "ran_analyze",
+          "passed": true,
+          "detail": "skill step 2"
+        },
+        {
+          "id": "ran_check_commentary",
+          "passed": true,
+          "detail": "skill step 8"
+        },
+        {
+          "id": "report_written_this_run",
+          "passed": true,
+          "detail": "C:\\Users\\aadit\\OneDrive\\Desktop\\RE Assignment\\output\\clients\\company_g_missing_data\\2026-06\\report.md (from the original run)"
+        },
+        {
+          "id": "metrics_written_this_run",
+          "passed": true,
+          "detail": "C:\\Users\\aadit\\OneDrive\\Desktop\\RE Assignment\\output\\clients\\company_g_missing_data\\2026-06\\metrics.json (from the original run)"
+        },
+        {
+          "id": "guard",
+          "passed": true,
+          "detail": "114/114 numbers traced"
+        },
+        {
+          "id": "section:data_quality",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:revenue",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:margins",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:operating_expenses",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:month_over_month",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:ttm",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:significant_movements",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:one_offs",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:limitations",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:reviewer_checklist",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "issue_shown_early:missing_months",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "issue_shown_early:ttm_window_incomplete",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "issue_shown_early:no_balance_sheet",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "draft_label",
+          "passed": true,
+          "detail": "the first 25 lines must say this is a draft"
+        },
+        {
+          "id": "provider_label",
+          "passed": true,
+          "detail": "must say it was written by skill"
+        },
+        {
+          "id": "reviewer_checklist",
+          "passed": true,
+          "detail": "13 unchecked item(s) under the heading"
+        },
+        {
+          "id": "causal_language_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_vocabulary_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "seasonality_not_asserted",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "one_offs_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "ttm_incomplete_no_figures",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "ttm_incomplete_stated",
+          "passed": true,
+          "detail": "must say TTM is not available"
+        },
+        {
+          "id": "impossible_values",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "client_isolation",
+          "passed": true,
+          "detail": "mentions other clients: []"
+        },
+        {
+          "id": "no_credentials",
+          "passed": true,
+          "detail": "credential-like text found"
+        },
+        {
+          "id": "figure:revenue.total",
+          "passed": true,
+          "detail": "found '$150,200.00'"
+        },
+        {
+          "id": "figure:opex.total",
+          "passed": true,
+          "detail": "found '$49,780.00'"
+        },
+        {
+          "id": "flag:missing_months_named",
+          "passed": true,
+          "detail": "Names both missing months."
+        },
+        {
+          "id": "forbidden:eleven_month_ttm",
+          "passed": true,
+          "detail": "No 11-month total presented as annual, YTD or TTM. "
+        }
+      ],
+      "values": {},
+      "claude": {
+        "model": "claude-opus-5-5",
+        "cost_usd": 0.3664446,
+        "num_turns": 15,
+        "seconds": 0,
+        "bash_commands": [
+          "python -m finance_engine list-periods --client company_g_missing_data; \"EXIT $LASTEXITCODE\"; python -m finance_engine analyze --client company_g_missing_data --period 2026-06; \"EXIT $LASTEXITCODE\"",
+          "cd \"C:/Users/aadit/OneDrive/Desktop/RE Assignment\"; python -m finance_engine list-periods --client company_g_missing_data; echo \"EXIT $?\"; python -m finance_engine analyze --client company_g_missing_data --period 2026-06; echo \"EXIT $?\"",
+          "python -m finance_engine list-periods --client company_g_missing_data; $LASTEXITCODE",
+          "python -m finance_engine list-periods --client company_g_missing_data",
+          "python -m finance_engine analyze --client company_g_missing_data --period 2026-06",
+          "python -m finance_engine brief --client company_g_missing_data --period 2026-06",
+          "python -m finance_engine check-commentary --client company_g_missing_data --period 2026-06 --file output/clients/company_g_missing_data/2026-06/report.md"
+        ],
+        "read_raw_metrics_json": false,
+        "final_reply": "on. The check confirms each figure exists, not that it's in the right sentence or has the right direction, so the reviewer still needs to check those.\n\n**Data quality:** 1 error and 2 warnings, listed at the top of the report.\n- **Error `ttm_window_incomplete`:** 2025-09 is missing, so there's no complete July 2025 to June 2026 window. All 10 trailing-twelve-month figures are blocked and shown as n/a. No shorter-window figure was used instead.\n- **Warning `missing_months`:** 2025-04 and 2025-09 are absent from the workbook.\n- **Warning `no_balance_sheet`:** there's no balance sheet, so the Assets = Liabilities + Equity check can't run.\n- **Reconciliation:** all 96 of 96 checks passed.\n- **Seasonality:** not assessed, because the workbook has only 16 months and at least 24 are needed.\n\n**Headline figures:**\n- Revenue rose +$1,280.00 (+0.9%) to $150,200.00, and is up +10.3% on June 2025.\n- Operating expenses were exactly flat at $49,780.00, with every category unchanged.\n- Operating income rose +1.3% to $91,070.00, and operating margin is 60.6% (+0.3 pts).\n- No line passed the significant-movement thresholds, and nothing was flagged as a possible one-off.\n\nThe report raises three questions for the reviewer:\n1. Every expense category is unchanged to the cent. Is that expected, or could last month's figures have been carried forward?\n2. Can the two missing months be found, so the twelve-month window can be completed?\n3. The source notes one blank cell. Does it affect June or May?"
+      },
+      "rechecked_from": "evals\\runs\\skill_2026-10-11T11-03-32Z"
+    },
+    "07_zero_negative_bases": {
+      "status": "pass",
+      "checks": [
+        {
+          "id": "skill_discovered",
+          "passed": true,
+          "detail": "skills at start-up: ['monthly-financial-analysis', 'design', 'design-sync', 'dataviz', 'update-config', 'verify']..."
+        },
+        {
+          "id": "skill_invoked",
+          "passed": true,
+          "detail": "a Skill tool call naming the skill"
+        },
+        {
+          "id": "claude_completed",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "ran_analyze",
+          "passed": true,
+          "detail": "skill step 2"
+        },
+        {
+          "id": "ran_check_commentary",
+          "passed": true,
+          "detail": "skill step 8"
+        },
+        {
+          "id": "report_written_this_run",
+          "passed": true,
+          "detail": "C:\\Users\\aadit\\OneDrive\\Desktop\\RE Assignment\\output\\clients\\company_h_zero_negative_values\\2026-06\\report.md (from the original run)"
+        },
+        {
+          "id": "metrics_written_this_run",
+          "passed": true,
+          "detail": "C:\\Users\\aadit\\OneDrive\\Desktop\\RE Assignment\\output\\clients\\company_h_zero_negative_values\\2026-06\\metrics.json (from the original run)"
+        },
+        {
+          "id": "guard",
+          "passed": true,
+          "detail": "164/164 numbers traced"
+        },
+        {
+          "id": "section:data_quality",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:revenue",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:margins",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:operating_expenses",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:month_over_month",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:ttm",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:significant_movements",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:one_offs",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:limitations",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:reviewer_checklist",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "issue_shown_early:negative_revenue_line",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "issue_shown_early:negative_opex_line",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "issue_shown_early:no_balance_sheet",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "draft_label",
+          "passed": true,
+          "detail": "the first 25 lines must say this is a draft"
+        },
+        {
+          "id": "provider_label",
+          "passed": true,
+          "detail": "must say it was written by skill"
+        },
+        {
+          "id": "reviewer_checklist",
+          "passed": true,
+          "detail": "12 unchecked item(s) under the heading"
+        },
+        {
+          "id": "causal_language_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_vocabulary_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "seasonality_not_asserted",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "one_offs_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "impossible_values",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "client_isolation",
+          "passed": true,
+          "detail": "mentions other clients: []"
+        },
+        {
+          "id": "no_credentials",
+          "passed": true,
+          "detail": "credential-like text found"
+        },
+        {
+          "id": "figure:revenue.total",
+          "passed": true,
+          "detail": "found '$114,050.00'"
+        },
+        {
+          "id": "figure:revenue.stream.refunds_and_credits",
+          "passed": true,
+          "detail": "found '$1,450.00'"
+        },
+        {
+          "id": "figure:opex.line.bad_debts",
+          "passed": true,
+          "detail": "found '$2,200.00'"
+        },
+        {
+          "id": "flag:zero_base_na",
+          "passed": true,
+          "detail": "A zero-base % change is shown as n/a with the reason."
+        },
+        {
+          "id": "flag:negative_kept",
+          "passed": true,
+          "detail": "Negative lines are reported with their sign, not as income."
+        },
+        {
+          "id": "forbidden:infinite_pct",
+          "passed": true,
+          "detail": "No infinite or divide-by-zero percentage. "
+        },
+        {
+          "id": "forbidden:refunds_as_income",
+          "passed": true,
+          "detail": "Refunds and Credits must not be described as income growth. "
+        }
+      ],
+      "values": {},
+      "claude": {
+        "model": "claude-opus-5-5",
+        "cost_usd": 0.5039068,
+        "num_turns": 24,
+        "seconds": 0,
+        "bash_commands": [
+          "python -m finance_engine list-periods --client company_h_zero_negative_values; \"EXIT=$LASTEXITCODE\"",
+          "cd \"C:/Users/aadit/OneDrive/Desktop/RE Assignment\" && python -m finance_engine list-periods --client company_h_zero_negative_values; echo \"EXIT=$?\"; python -m finance_engine analyze --client company_h_zero_negative_values --period 2026-06; echo \"EXIT=$?\"",
+          "python -m finance_engine list-periods --client company_h_zero_negative_values; $LASTEXITCODE",
+          "python -m finance_engine list-periods --client company_h_zero_negative_values",
+          "python -m finance_engine analyze --client company_h_zero_negative_values --period 2026-06",
+          "python -m finance_engine brief --client company_h_zero_negative_values --period 2026-06",
+          "python -m finance_engine brief --client company_h_zero_negative_values --period 2026-06 --metric opex.line",
+          "python -m finance_engine brief --client company_h_zero_negative_values --period 2026-06 --metric cogs.line",
+          "python -m finance_engine brief --client company_h_zero_negative_values --period 2026-06 --metric opex.category.finance_tax_non_cash",
+          "python -m finance_engine check-commentary --client company_h_zero_negative_values --period 2026-06 --file output/clients/company_h_zero_negative_values/2026-06/report.md"
+        ],
+        "read_raw_metrics_json": false,
+        "final_reply": "o the reviewer still needs to confirm each \"rose\" or \"fell\".\n- **Data quality:** no errors, 3 warnings, nothing blocked. All 108 reconciliation checks against the workbook's own totals passed, and the trailing-twelve-month window (2025-07 to 2026-06) is complete.\n  - `negative_revenue_line`: Refunds and Credits is -$1,450.00, up from zero the month before.\n  - `negative_opex_line`: Interest Income (-$650.00) is recorded inside operating expenses, so it changes operating income and operating margin.\n  - `no_balance_sheet`: the workbook has no balance sheet, so there are no balance-sheet figures.\n  - Seasonality wasn't assessed, because the workbook covers only 18 months and at least 24 are needed.\n\n**Main figures for June:**\n- **Revenue:** close to flat at $114,050.00 (-0.3% on May), and +9.1% on June last year.\n- **Gross margin:** 77.0%, down 0.1 points.\n- **Operating expenses:** up +$2,650.00 (+4.4%).\n- **Operating income:** down -$3,010.00 (-10.8%) to $24,760.00; operating margin fell 2.6 points to 21.7%.\n- **New lines:** Bad Debts went from zero to $2,200.00, and Refunds and Credits went from zero to -$1,450.00. Neither met the threshold for a significant movement, and no line did, but the report points the reviewer to both.\n- **Finance, Tax & Non-Cash:** this expense category went from a net credit in May to a net charge of $1,550.00.\n\nThe report asks the reviewer five questions about possible causes, each marked \"needs confirmation\", and ends with the reviewer checklist."
+      },
+      "rechecked_from": "evals\\runs\\skill_2026-10-11T11-03-32Z"
+    },
+    "08_seasonal_business": {
+      "status": "pass",
+      "checks": [
+        {
+          "id": "skill_discovered",
+          "passed": true,
+          "detail": "skills at start-up: ['monthly-financial-analysis', 'design', 'design-sync', 'dataviz', 'update-config', 'verify']..."
+        },
+        {
+          "id": "skill_invoked",
+          "passed": true,
+          "detail": "a Skill tool call naming the skill"
+        },
+        {
+          "id": "claude_completed",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "ran_analyze",
+          "passed": true,
+          "detail": "skill step 2"
+        },
+        {
+          "id": "ran_check_commentary",
+          "passed": true,
+          "detail": "skill step 8"
+        },
+        {
+          "id": "report_written_this_run",
+          "passed": true,
+          "detail": "C:\\Users\\aadit\\OneDrive\\Desktop\\RE Assignment\\output\\clients\\company_e_seasonal_business\\2026-01\\report.md (from the original run)"
+        },
+        {
+          "id": "metrics_written_this_run",
+          "passed": true,
+          "detail": "C:\\Users\\aadit\\OneDrive\\Desktop\\RE Assignment\\output\\clients\\company_e_seasonal_business\\2026-01\\metrics.json (from the original run)"
+        },
+        {
+          "id": "guard",
+          "passed": true,
+          "detail": "176/176 numbers traced"
+        },
+        {
+          "id": "section:data_quality",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:revenue",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:margins",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:operating_expenses",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:month_over_month",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:ttm",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:significant_movements",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:one_offs",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:limitations",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:reviewer_checklist",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "issue_shown_early:no_balance_sheet",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "draft_label",
+          "passed": true,
+          "detail": "the first 25 lines must say this is a draft"
+        },
+        {
+          "id": "provider_label",
+          "passed": true,
+          "detail": "must say it was written by skill"
+        },
+        {
+          "id": "reviewer_checklist",
+          "passed": true,
+          "detail": "12 unchecked item(s) under the heading"
+        },
+        {
+          "id": "causal_language_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_vocabulary_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "seasonality_not_asserted",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "one_offs_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "impossible_values",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "client_isolation",
+          "passed": true,
+          "detail": "mentions other clients: []"
+        },
+        {
+          "id": "no_credentials",
+          "passed": true,
+          "detail": "credential-like text found"
+        },
+        {
+          "id": "figure:revenue.total",
+          "passed": true,
+          "detail": "found '$136,240.00'"
+        },
+        {
+          "id": "figure:revenue.total.mom_abs",
+          "passed": true,
+          "detail": "found '$144,480.00'"
+        },
+        {
+          "id": "figure:revenue.stream.retail_revenue.mom_abs",
+          "passed": true,
+          "detail": "found '$144,640.00'"
+        },
+        {
+          "id": "flag:retail_drop_flagged",
+          "passed": true,
+          "detail": "The Retail Revenue fall is reported."
+        },
+        {
+          "id": "flag:seasonality_not_assessed",
+          "passed": true,
+          "detail": "States that seasonality could not be assessed from 18 months."
+        },
+        {
+          "id": "forbidden:seasonal_as_fact",
+          "passed": true,
+          "detail": "No movement described as seasonal as a fact. "
+        }
+      ],
+      "values": {},
+      "claude": {
+        "model": "claude-opus-5-5",
+        "cost_usd": 0.4221268,
+        "num_turns": 17,
+        "seconds": 0,
+        "bash_commands": [
+          "python -m finance_engine list-periods --client company_e_seasonal_business; python -m finance_engine analyze --client company_e_seasonal_business --period 2026-01; \"EXIT=$LASTEXITCODE\"",
+          "cd \"/c/Users/aadit/OneDrive/Desktop/RE Assignment\" && python -m finance_engine list-periods --client company_e_seasonal_business; python -m finance_engine analyze --client company_e_seasonal_business --period 2026-01; echo \"EXIT=$?\"",
+          "python -m finance_engine list-periods --client company_e_seasonal_business",
+          "python -m finance_engine analyze --client company_e_seasonal_business --period 2026-01; Write-Output \"EXIT=$LASTEXITCODE\"",
+          "python -m finance_engine analyze --client company_e_seasonal_business --period 2026-01; $LASTEXITCODE",
+          "python -m finance_engine analyze --client company_e_seasonal_business --period 2026-01",
+          "python -m finance_engine brief --client company_e_seasonal_business --period 2026-01",
+          "python -m finance_engine check-commentary --client company_e_seasonal_business --period 2026-01 --file output/clients/company_e_seasonal_business/2026-01/report.md",
+          "python -m finance_engine check-commentary --client company_e_seasonal_business --period 2026-01 --file output/clients/company_e_seasonal_business/2026-01/report.md"
+        ],
+        "read_raw_metrics_json": false,
+        "final_reply": "The draft report for Company E (SYNTHETIC), Jan 2026, is written and passed the number check: all 176 figures trace back to the engine's output.\n\n**Report:** `output/clients/company_e_seasonal_business/2026-01/report.md`\n\n**Data quality:** there are no errors or blocked metrics, and all 108 reconciliation checks passed. The 12-month window from Feb 2025 to Jan 2026 is complete. There is one warning, `no_balance_sheet`: the workbook has no balance sheet, so the balance-sheet section and the Assets = Liabilities + Equity check aren't available. Seasonality was **not assessed** because the workbook has only 18 months and the check needs 24, so the report doesn't call any change seasonal.\n\n**Main points:**\n- **Revenue:** fell -$144,480.00 (-51.5%) from Dec 2025 to $136,240.00. Retail Revenue accounts for almost all of the drop, falling -$144,640.00 (-60.5%). Against Jan 2025, revenue rose +$6,240.00 (+4.8%).\n- **Operating result:** the month swung to an operating loss of -$12,027.68, from $21,032.96 of operating income in Dec 2025. Operating expenses fell only -22.5%, and almost all of that was payroll.\n- **Gross margin:** rose +8.0 pts to 56.2%.\n- **Last 12 months:** operating income is -$55,449.92 on revenue of $1,966,560.00.\n\nPossible reasons, such as a post-holiday drop or the end of temporary peak staff, appear only as questions marked \"needs confirmation\" in the reviewer section. The report ends with the reviewer checklist."
+      },
+      "rechecked_from": "evals\\runs\\skill_2026-10-11T11-03-32Z"
+    },
+    "09_one_time_expense": {
+      "status": "pass",
+      "checks": [
+        {
+          "id": "skill_discovered",
+          "passed": true,
+          "detail": "skills at start-up: ['monthly-financial-analysis', 'design', 'design-sync', 'dataviz', 'update-config', 'verify']..."
+        },
+        {
+          "id": "skill_invoked",
+          "passed": true,
+          "detail": "a Skill tool call naming the skill"
+        },
+        {
+          "id": "claude_completed",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "ran_analyze",
+          "passed": true,
+          "detail": "skill step 2"
+        },
+        {
+          "id": "ran_check_commentary",
+          "passed": true,
+          "detail": "skill step 8"
+        },
+        {
+          "id": "report_written_this_run",
+          "passed": true,
+          "detail": "C:\\Users\\aadit\\OneDrive\\Desktop\\RE Assignment\\output\\clients\\company_f_one_time_expense\\2025-11\\report.md (from the original run)"
+        },
+        {
+          "id": "metrics_written_this_run",
+          "passed": true,
+          "detail": "C:\\Users\\aadit\\OneDrive\\Desktop\\RE Assignment\\output\\clients\\company_f_one_time_expense\\2025-11\\metrics.json (from the original run)"
+        },
+        {
+          "id": "guard",
+          "passed": true,
+          "detail": "131/131 numbers traced"
+        },
+        {
+          "id": "section:data_quality",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:revenue",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:margins",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:operating_expenses",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:month_over_month",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:ttm",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:significant_movements",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:one_offs",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:limitations",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:reviewer_checklist",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "issue_shown_early:ttm_window_incomplete",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "issue_shown_early:no_balance_sheet",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "draft_label",
+          "passed": true,
+          "detail": "the first 25 lines must say this is a draft"
+        },
+        {
+          "id": "provider_label",
+          "passed": true,
+          "detail": "must say it was written by skill"
+        },
+        {
+          "id": "reviewer_checklist",
+          "passed": true,
+          "detail": "15 unchecked item(s) under the heading"
+        },
+        {
+          "id": "causal_language_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_vocabulary_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "seasonality_not_asserted",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "one_offs_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "ttm_incomplete_no_figures",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "ttm_incomplete_stated",
+          "passed": true,
+          "detail": "must say TTM is not available"
+        },
+        {
+          "id": "impossible_values",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "client_isolation",
+          "passed": true,
+          "detail": "mentions other clients: []"
+        },
+        {
+          "id": "no_credentials",
+          "passed": true,
+          "detail": "credential-like text found"
+        },
+        {
+          "id": "figure:opex.line.legal_settlement",
+          "passed": true,
+          "detail": "found '$285,000.00'"
+        },
+        {
+          "id": "figure:opex.total",
+          "passed": true,
+          "detail": "found '$368,770.00'"
+        },
+        {
+          "id": "figure:operating_income",
+          "passed": true,
+          "detail": "found '$216,770.00'"
+        },
+        {
+          "id": "flag:possible_one_off",
+          "passed": true,
+          "detail": "Legal Settlement is called a possible one-off."
+        },
+        {
+          "id": "forbidden:settlement_as_trend",
+          "passed": true,
+          "detail": "A single month must not be called a trend or a run rate. "
+        }
+      ],
+      "values": {},
+      "claude": {
+        "model": "claude-opus-5-5",
+        "cost_usd": 0.3519484,
+        "num_turns": 14,
+        "seconds": 0,
+        "bash_commands": [
+          "python -m finance_engine list-periods --client company_f_one_time_expense; python -m finance_engine analyze --client company_f_one_time_expense --period 2025-11; \"EXIT=$LASTEXITCODE\"",
+          "python -m finance_engine list-periods --client company_f_one_time_expense; python -m finance_engine analyze --client company_f_one_time_expense --period 2025-11; Write-Output ('EXIT=' + $LASTEXITCODE)",
+          "cd \"C:/Users/aadit/OneDrive/Desktop/RE Assignment\" && python -m finance_engine list-periods --client company_f_one_time_expense; python -m finance_engine analyze --client company_f_one_time_expense --period 2025-11; echo \"EXIT=$?\"",
+          "cd \"C:/Users/aadit/OneDrive/Desktop/RE Assignment\" && python -m finance_engine list-periods --client company_f_one_time_expense",
+          "cd \"C:/Users/aadit/OneDrive/Desktop/RE Assignment\" && python -m finance_engine analyze --client company_f_one_time_expense --period 2025-11",
+          "cd \"C:/Users/aadit/OneDrive/Desktop/RE Assignment\" && python -m finance_engine brief --client company_f_one_time_expense --period 2025-11",
+          "cd \"C:/Users/aadit/OneDrive/Desktop/RE Assignment\" && python -m finance_engine check-commentary --client company_f_one_time_expense --period 2025-11 --file output/clients/company_f_one_time_expense/2025-11/report.md"
+        ],
+        "read_raw_metrics_json": false,
+        "final_reply": "1 figures in it match metrics.json.\n\n**Report:** `output/clients/company_f_one_time_expense/2025-11/report.md`\n\n**Data quality:**\n- **Error `ttm_window_incomplete`:** a full twelve months ending Nov 2025 would need Dec 2024, but the workbook starts at Jan 2025. All trailing-twelve-month (TTM) figures, 12 in all, show as n/a. The engine exited with code 2 because of this; the report still went ahead with the error listed first.\n- **Warning `no_balance_sheet`:** the workbook has no balance sheet, so the Assets = Liabilities + Equity check couldn't run.\n- **Totals check:** all 108 of the engine's totals agree with the workbook's own formula totals.\n- **Not available:** there's no year-over-year comparison because the data starts in Jan 2025. Seasonality wasn't assessed because the workbook has 18 months and at least 24 are needed.\n\n**Headline:**\n- **Legal Settlement:** a new cost of $285,000.00, up from $0.00 in October. It is the only significant movement this month and is flagged as a possible one-off, on size alone.\n- **Operating income:** swung from $67,775.00 to -$216,770.00. Operating margin is -112.3%, down 147.6 percentage points.\n- **The rest of the business was steady:** revenue was $193,000.00 (+0.4%) and gross margin was 78.8% (-0.1 pts).\n\nThe report asks the reviewer three questions about the settlement: is it a one-time item, an accrual or a misposting? Should it sit inside operating expenses? Is an offsetting recovery expected? It ends with the reviewer checklist."
+      },
+      "rechecked_from": "evals\\runs\\skill_2026-10-11T11-03-32Z"
+    },
+    "10_multiple_revenue_streams": {
+      "status": "pass",
+      "checks": [
+        {
+          "id": "skill_discovered",
+          "passed": true,
+          "detail": "skills at start-up: ['monthly-financial-analysis', 'design', 'design-sync', 'dataviz', 'update-config', 'verify']..."
+        },
+        {
+          "id": "skill_invoked",
+          "passed": true,
+          "detail": "a Skill tool call naming the skill"
+        },
+        {
+          "id": "claude_completed",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "ran_analyze",
+          "passed": true,
+          "detail": "skill step 2"
+        },
+        {
+          "id": "ran_check_commentary",
+          "passed": true,
+          "detail": "skill step 8"
+        },
+        {
+          "id": "report_written_this_run",
+          "passed": true,
+          "detail": "C:\\Users\\aadit\\OneDrive\\Desktop\\RE Assignment\\output\\clients\\company_i_multiple_revenue_streams\\2026-06\\report.md (from the original run)"
+        },
+        {
+          "id": "metrics_written_this_run",
+          "passed": true,
+          "detail": "C:\\Users\\aadit\\OneDrive\\Desktop\\RE Assignment\\output\\clients\\company_i_multiple_revenue_streams\\2026-06\\metrics.json (from the original run)"
+        },
+        {
+          "id": "guard",
+          "passed": true,
+          "detail": "196/196 numbers traced"
+        },
+        {
+          "id": "section:data_quality",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:revenue",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:margins",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:operating_expenses",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:month_over_month",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:ttm",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:significant_movements",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:one_offs",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:limitations",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:reviewer_checklist",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "issue_shown_early:no_balance_sheet",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "issue_shown_early:ttm_includes_possible_one_offs",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "draft_label",
+          "passed": true,
+          "detail": "the first 25 lines must say this is a draft"
+        },
+        {
+          "id": "provider_label",
+          "passed": true,
+          "detail": "must say it was written by skill"
+        },
+        {
+          "id": "reviewer_checklist",
+          "passed": true,
+          "detail": "12 unchecked item(s) under the heading"
+        },
+        {
+          "id": "causal_language_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_vocabulary_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "seasonality_not_asserted",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "one_offs_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "impossible_values",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "client_isolation",
+          "passed": true,
+          "detail": "mentions other clients: []"
+        },
+        {
+          "id": "no_credentials",
+          "passed": true,
+          "detail": "credential-like text found"
+        },
+        {
+          "id": "figure:revenue.total",
+          "passed": true,
+          "detail": "found '$221,236.00'"
+        },
+        {
+          "id": "figure:revenue.stream.platform_revenue",
+          "passed": true,
+          "detail": "found '$98,200.00'"
+        },
+        {
+          "id": "figure:revenue.stream.usage_fees",
+          "passed": true,
+          "detail": "found '$78,450.00'"
+        },
+        {
+          "id": "figure:revenue.stream.professional_services",
+          "passed": true,
+          "detail": "found '$20,960.00'"
+        },
+        {
+          "id": "figure:revenue.stream.partnership_income",
+          "passed": true,
+          "detail": "found '$11,476.00'"
+        },
+        {
+          "id": "figure:revenue.stream.white_label",
+          "passed": true,
+          "detail": "found '$5,600.00'"
+        },
+        {
+          "id": "figure:revenue.stream.training_revenue",
+          "passed": true,
+          "detail": "found '$6,550.00'"
+        },
+        {
+          "id": "flag:all_streams_named",
+          "passed": true,
+          "detail": "All six streams are named."
+        },
+        {
+          "id": "flag:partnership_flagged",
+          "passed": true,
+          "detail": "The Partnership Income jump is reported."
+        }
+      ],
+      "values": {},
+      "claude": {
+        "model": "claude-opus-5-5",
+        "cost_usd": 0.37843260000000006,
+        "num_turns": 14,
+        "seconds": 0,
+        "bash_commands": [
+          "python -m finance_engine list-periods --client company_i_multiple_revenue_streams; python -m finance_engine analyze --client company_i_multiple_revenue_streams --period 2026-06; \"EXIT: $LASTEXITCODE\"",
+          "cd \"C:/Users/aadit/OneDrive/Desktop/RE Assignment\" && python -m finance_engine list-periods --client company_i_multiple_revenue_streams; python -m finance_engine analyze --client company_i_multiple_revenue_streams --period 2026-06; echo \"EXIT: $?\"",
+          "python -m finance_engine list-periods --client company_i_multiple_revenue_streams",
+          "python -m finance_engine analyze --client company_i_multiple_revenue_streams --period 2026-06; $LASTEXITCODE",
+          "python -m finance_engine analyze --client company_i_multiple_revenue_streams --period 2026-06",
+          "python -m finance_engine brief --client company_i_multiple_revenue_streams --period 2026-06",
+          "python -m finance_engine check-commentary --client company_i_multiple_revenue_streams --period 2026-06 --file output/clients/company_i_multiple_revenue_streams/2026-06/report.md"
+        ],
+        "read_raw_metrics_json": false,
+        "final_reply": "ecks against the workbook's own totals passed. There are two warnings:\n- **`no_balance_sheet`:** the workbook has no balance sheet, so there are no balance-sheet figures and no check that assets equal liabilities plus equity.\n- **`ttm_includes_possible_one_offs`:** the trailing-twelve-month window (2025-07 to 2026-06) is complete, but it includes Events & Conferences of $42,200.00 in 2026-03. That's 35.2x the average of the other months, so the twelve-month operating expense and operating income figures are not a run rate.\n- **Seasonality:** not assessed. The source has 18 months, and at least 24 are needed.\n\n**What the month shows:**\n- **Revenue:** up +$5,508.00 (+2.6%) to $221,236.00, and +8.9% on June last year.\n- **Partnership Income:** up +$4,028.00 (+54.1%). It's the only movement large enough to count as significant.\n- **Margins:** operating expenses rose only +0.5%, so operating income rose +25.6% to $21,925.00. Gross margin is 78.8% (+0.4 pts) and operating margin is 9.9% (+1.8 pts).\n\nThe report ends with three questions for the reviewer: why Partnership Income jumped, what the 2026-03 Events & Conferences amount was, and whether a cost is missing given how little expenses moved. Any cause is marked as possible and needing confirmation. A reviewer checklist follows the questions.\n\nThe number check only confirms each figure exists in metrics.json, not that it sits in the right sentence or that \"rose\" or \"fell\" matches the sign. The reviewer still needs to check those."
+      },
+      "rechecked_from": "evals\\runs\\skill_2026-10-11T11-03-32Z"
+    },
+    "11_balance_sheet": {
+      "status": "pass",
+      "checks": [
+        {
+          "id": "skill_discovered",
+          "passed": true,
+          "detail": "skills at start-up: ['monthly-financial-analysis', 'design', 'design-sync', 'dataviz', 'update-config', 'verify']..."
+        },
+        {
+          "id": "skill_invoked",
+          "passed": true,
+          "detail": "a Skill tool call naming the skill"
+        },
+        {
+          "id": "claude_completed",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "ran_analyze",
+          "passed": true,
+          "detail": "skill step 2"
+        },
+        {
+          "id": "ran_check_commentary",
+          "passed": true,
+          "detail": "skill step 8"
+        },
+        {
+          "id": "report_written_this_run",
+          "passed": true,
+          "detail": "C:\\Users\\aadit\\OneDrive\\Desktop\\RE Assignment\\output\\clients\\company_j_balance_sheet\\2026-06\\report.md (from the original run)"
+        },
+        {
+          "id": "metrics_written_this_run",
+          "passed": true,
+          "detail": "C:\\Users\\aadit\\OneDrive\\Desktop\\RE Assignment\\output\\clients\\company_j_balance_sheet\\2026-06\\metrics.json (from the original run)"
+        },
+        {
+          "id": "guard",
+          "passed": true,
+          "detail": "146/146 numbers traced"
+        },
+        {
+          "id": "section:data_quality",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:revenue",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:margins",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:operating_expenses",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:month_over_month",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:ttm",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:significant_movements",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:one_offs",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:limitations",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:reviewer_checklist",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:balance_sheet",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "draft_label",
+          "passed": true,
+          "detail": "the first 25 lines must say this is a draft"
+        },
+        {
+          "id": "provider_label",
+          "passed": true,
+          "detail": "must say it was written by skill"
+        },
+        {
+          "id": "reviewer_checklist",
+          "passed": true,
+          "detail": "11 unchecked item(s) under the heading"
+        },
+        {
+          "id": "causal_language_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_vocabulary_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "seasonality_not_asserted",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "one_offs_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "impossible_values",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "client_isolation",
+          "passed": true,
+          "detail": "mentions other clients: []"
+        },
+        {
+          "id": "no_credentials",
+          "passed": true,
+          "detail": "credential-like text found"
+        },
+        {
+          "id": "figure:balance_sheet.assets",
+          "passed": true,
+          "detail": "found '$875,200.00'"
+        },
+        {
+          "id": "figure:balance_sheet.liabilities",
+          "passed": true,
+          "detail": "found '$464,000.00'"
+        },
+        {
+          "id": "figure:balance_sheet.equity",
+          "passed": true,
+          "detail": "found '$411,200.00'"
+        },
+        {
+          "id": "figure:balance_sheet.cash",
+          "passed": true,
+          "detail": "found '$478,400.00'"
+        },
+        {
+          "id": "flag:balance_check_reported",
+          "passed": true,
+          "detail": "The Assets = Liabilities + Equity check and its result are reported."
+        }
+      ],
+      "values": {},
+      "claude": {
+        "model": "claude-opus-5-5",
+        "cost_usd": 0.3394024,
+        "num_turns": 14,
+        "seconds": 0,
+        "bash_commands": [
+          "cd \"C:/Users/aadit/OneDrive/Desktop/RE Assignment\" && python -m finance_engine list-periods --client company_j_balance_sheet; echo \"EXIT $?\"",
+          "python -m finance_engine list-periods --client company_j_balance_sheet; \"EXIT $LASTEXITCODE\"",
+          "python -m finance_engine list-periods --client company_j_balance_sheet",
+          "python -m finance_engine analyze --client company_j_balance_sheet --period 2026-06; Write-Output (\"EXIT=\" + $LASTEXITCODE)",
+          "python -m finance_engine analyze --client company_j_balance_sheet --period 2026-06",
+          "python -m finance_engine brief --client company_j_balance_sheet --period 2026-06",
+          "python -m finance_engine check-commentary --client company_j_balance_sheet --period 2026-06 --file output/clients/company_j_balance_sheet/2026-06/report.md"
+        ],
+        "read_raw_metrics_json": false,
+        "final_reply": "I wrote the report for Company J (`company_j_balance_sheet`) for June 2026, and the number check passed: all 146 figures in it match `metrics.json`.\n\n**Report:** `output/clients/company_j_balance_sheet/2026-06/report.md`\n\n**Data quality:** clean. There are no errors, no warnings and no blocked figures. All 126 checks against the workbook's own totals passed, and the trailing-twelve-month window (July 2025 to June 2026) is complete. Seasonality wasn't assessed because the source has 18 months of data and that needs at least 24. Company J is a synthetic test company, so none of these figures describe a real business.\n\n**June compared with May:**\n- **Revenue:** $225,220.00, up +$1,660.00 (+0.7%) on the month and +$19,920.00 (+9.7%) on the same month last year.\n- **Gross margin:** 80.7%, up +0.1 pts.\n- **Operating income:** $57,685.00, up +$885.00 (+1.6%), for an operating margin of 25.6%.\n- **Significant movements:** no line was big enough to count as one, and nothing was flagged as a possible one-off.\n- **Balance sheet:** it balances, and cash rose +$5,200.00 to $478,400.00.\n\nIt's a draft for a human reviewer. Three questions about possible causes are left open for them: the year-on-year revenue growth, the payroll increase, and the rises in deferred revenue and receivables."
+      },
+      "rechecked_from": "evals\\runs\\skill_2026-10-11T11-03-32Z"
+    },
+    "12_unknown_client_bad_period": {
+      "status": "pass",
+      "checks": [
+        {
+          "id": "unknown_client:skill_invoked",
+          "passed": true,
+          "detail": "Skill tool call (from the original run)"
+        },
+        {
+          "id": "unknown_client:no_report_written",
+          "passed": true,
+          "detail": "C:\\Users\\aadit\\OneDrive\\Desktop\\RE Assignment\\output\\clients\\acme_widgets\\2026-06\\report.md (from the original run)"
+        },
+        {
+          "id": "unknown_client:no_output_for_unknown_client",
+          "passed": true,
+          "detail": "C:\\Users\\aadit\\OneDrive\\Desktop\\RE Assignment\\output\\clients\\acme_widgets (from the original run)"
+        },
+        {
+          "id": "unknown_client:reply_explains_stop",
+          "passed": true,
+          "detail": "reply: \"I stopped without writing a report: the client `acme_widgets` has no config. The expected file `config/clients/acme_widgets.yaml` doesn't exist, so there's nothing to analyse for 2026-06.\\n\\nThese clients do have a config:\\n- `abc_inc`\\n- `company_a_normal_growth`\\n- `company_b_revenue_decline`\\n- `compan\" (from the original run)"
+        },
+        {
+          "id": "bad_period:skill_invoked",
+          "passed": true,
+          "detail": "Skill tool call (from the original run)"
+        },
+        {
+          "id": "bad_period:no_report_written",
+          "passed": true,
+          "detail": "C:\\Users\\aadit\\OneDrive\\Desktop\\RE Assignment\\output\\clients\\company_a_normal_growth\\2026-13\\report.md (from the original run)"
+        },
+        {
+          "id": "bad_period:reply_explains_stop",
+          "passed": true,
+          "detail": "reply: \"I stopped before running any analysis: **2026-13 isn't a valid period** because there is no month 13. I wrote no report and calculated nothing.\\n\\n**company_a_normal_growth** (a synthetic workbook) has 18 months available:\\n\\n| Period | Trailing twelve months (TTM) |\\n|---|---|\\n| 2026-01 to 2026-06 | Com\" (from the original run)"
+        },
+        {
+          "id": "period_not_in_source:skill_invoked",
+          "passed": true,
+          "detail": "Skill tool call (from the original run)"
+        },
+        {
+          "id": "period_not_in_source:no_report_written",
+          "passed": true,
+          "detail": "C:\\Users\\aadit\\OneDrive\\Desktop\\RE Assignment\\output\\clients\\company_a_normal_growth\\2027-01\\report.md (from the original run)"
+        },
+        {
+          "id": "period_not_in_source:reply_explains_stop",
+          "passed": true,
+          "detail": "reply: \"I've stopped without writing anything: **2027-01 isn't in the data for `company_a_normal_growth`**. The workbook (`data/synthetic/company_a_normal_growth.xlsx`, synthetic test data) runs from 2025-01 to 2026-06, 18 months. 2027-01 is also later than today (2026-10-11), so it hasn't happened yet.\\n\\nTh\" (from the original run)"
+        }
+      ],
+      "values": {},
+      "claude": {
+        "unknown_client": {
+          "model": "claude-opus-5-5",
+          "cost_usd": 0.08694579999999999,
+          "num_turns": 4,
+          "seconds": 15.4,
+          "result": "I stopped without writing a report: the client `acme_widgets` has no config. The expected file `config/clients/acme_widgets.yaml` doesn't exist, so there's nothing to analyse for 2026-06.\n\nThese clients do have a config:\n- `abc_inc`\n- `company_a_normal_growth`\n- `company_b_revenue_decline`\n- `company_c_expense_spike`\n- `company_d_margin_decline`\n- `company_e_seasonal_business`\n- `company_f_one_time_expense`\n- `company_g_missing_data`\n- `company_h_zero_negative_values`\n- `company_i_multiple_revenue_streams`\n- `company_j_balance_sheet`\n\nIf you meant one of these, tell me which and I'll run the analysis. If `acme_widgets` is a new client, it needs its own YAML config (sheet layout, section anchors, categories, thresholds) and its source workbook in `data/clients/acme_widgets/source/` first."
+        },
+        "bad_period": {
+          "model": "claude-opus-5-5",
+          "cost_usd": 0.09216020000000001,
+          "num_turns": 4,
+          "seconds": 16.3,
+          "result": "I stopped before running any analysis: **2026-13 isn't a valid period** because there is no month 13. I wrote no report and calculated nothing.\n\n**company_a_normal_growth** (a synthetic workbook) has 18 months available:\n\n| Period | Trailing twelve months (TTM) |\n|---|---|\n| 2026-01 to 2026-06 | Complete |\n| 2025-12 | Complete |\n| 2025-01 to 2025-11 | Incomplete (would be flagged as incomplete in the report) |\n\nThe latest month is **2026-06**. If you meant something like 2026-12 or 2026-03, note that 2026-12 isn't in the data; only months up to 2026-06 are. Tell me which period you want and I'll run the analysis."
+        },
+        "period_not_in_source": {
+          "model": "claude-opus-5-5",
+          "cost_usd": 0.0901962,
+          "num_turns": 4,
+          "seconds": 15.8,
+          "result": "I've stopped without writing anything: **2027-01 isn't in the data for `company_a_normal_growth`**. The workbook (`data/synthetic/company_a_normal_growth.xlsx`, synthetic test data) runs from 2025-01 to 2026-06, 18 months. 2027-01 is also later than today (2026-10-11), so it hasn't happened yet.\n\nThe skill says to stop when the period isn't listed, so I didn't run `analyze` and didn't create a `report.md`.\n\nThese months are available:\n- **2025-12 to 2026-06:** the trailing-twelve-month (TTM) totals have a full 12 months of data. 2026-06 is the latest.\n- **2025-01 to 2025-11:** these have less than 12 months behind them. They can still be analysed, but the report would mark the TTM figures as incomplete.\n\nTell me which month you want; 2026-06 is the latest."
+        }
+      }
+    },
+    "13_deterministic_fallback": {
+      "status": "pass",
+      "checks": [
+        {
+          "id": "report_command",
+          "passed": true,
+          "detail": "exit 0: warning: Commentary provider 'ollama' is a documented extension point but is not implemented in Phase 1. Set LLM_PROVIDER=deterministic. Falling back to the deterministic provider. (from the original run)"
+        },
+        {
+          "id": "guard",
+          "passed": true,
+          "detail": "320/320 numbers traced"
+        },
+        {
+          "id": "section:data_quality",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:revenue",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:margins",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:operating_expenses",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:month_over_month",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:ttm",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:significant_movements",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:one_offs",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:limitations",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:reviewer_checklist",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "issue_shown_early:negative_opex_line",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "issue_shown_early:ttm_includes_possible_one_offs",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "draft_label",
+          "passed": true,
+          "detail": "the first 25 lines must say this is a draft"
+        },
+        {
+          "id": "provider_label",
+          "passed": true,
+          "detail": "must say it was written by deterministic"
+        },
+        {
+          "id": "reviewer_checklist",
+          "passed": true,
+          "detail": "6 unchecked item(s) under the heading"
+        },
+        {
+          "id": "causal_language_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_vocabulary_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "seasonality_not_asserted",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "one_offs_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "impossible_values",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "client_isolation",
+          "passed": true,
+          "detail": "mentions other clients: []"
+        },
+        {
+          "id": "no_credentials",
+          "passed": true,
+          "detail": "credential-like text found"
+        },
+        {
+          "id": "figure:revenue.total",
+          "passed": true,
+          "detail": "found '$195,898.16'"
+        },
+        {
+          "id": "figure:gross_margin_pct",
+          "passed": true,
+          "detail": "found '70.2%'"
+        },
+        {
+          "id": "figure:opex.total",
+          "passed": true,
+          "detail": "found '$468,181.80'"
+        },
+        {
+          "id": "figure:operating_income",
+          "passed": true,
+          "detail": "found '$330,756.08'"
+        },
+        {
+          "id": "flag:labelled_deterministic",
+          "passed": true,
+          "detail": "The report says the deterministic provider wrote it."
+        }
+      ],
+      "values": {},
+      "rechecked_from": "evals\\runs\\skill_2026-10-11T11-03-32Z"
+    }
+  },
+  "claude_cost_usd_equivalent": 4.2688,
+  "rechecked_from": "evals\\runs\\skill_2026-10-11T11-03-32Z"
+}

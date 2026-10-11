@@ -34,3 +34,5 @@ venv/
 .DS_Store
 Thumbs.db
 .claude/settings.local.json
+# Eval run artefacts (baselines in evals/baseline/ ARE committed)
+evals/runs/

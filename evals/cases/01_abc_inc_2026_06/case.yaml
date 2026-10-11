@@ -1,0 +1,61 @@
+id: 01_abc_inc_2026_06
+title: ABC Inc, June 2026 (the real client workbook)
+synthetic: false
+input:
+  client_id: abc_inc
+  period: "2026-06"
+  workbook: data/clients/abc_inc/source/ABC Inc - Financial Statements.xlsx
+  config: config/clients/abc_inc.yaml
+why: >
+  The real workbook. Expected values come from the workbook's own cached formula totals
+  (Total Income, Total Cost of Goods Sold, Gross Profit, Total Operating Expenses, Net
+  Income, the two subtotal groups and the balance-sheet totals) plus single cells read
+  directly as spot checks. evals/tools/build_expected.py reads them with openpyxl and
+  never imports finance_engine. The workbook is git-ignored client data, so this case
+  is SKIPPED, not passed, on a machine that does not have it.
+
+engine:
+  exit_code: 0
+  reconciliation_passed: true
+  ttm_complete: true
+  max_errors: 0
+  required_codes: [negative_opex_line, ttm_includes_possible_one_offs]
+  significant_includes: [Events & Conferences, Bad Debts, Usage Fees]
+  ttm_window_one_offs_include: [Income Tax Benefit, Stock-Based Compensation Expense]
+  seasonality_assessed: false
+
+skill:
+  run: true
+  required_figures:
+    - revenue.total
+    - revenue.total.mom_abs
+    - gross_margin_pct
+    - opex.total
+    - operating_income
+    - revenue.total.ttm
+    - opex.line.events_conferences.mom_abs
+  required_flags:
+    - id: events_flagged
+      description: The largest movement, Events & Conferences, is reported.
+      pattern: 'Events & Conferences'
+    - id: bad_debts_sign_change
+      description: Bad Debts is described as swinging from a charge to a credit, not as a % saving.
+      pattern: 'Bad Debts[^\n]{0,300}(sign change|crossed zero|charge to (a )?credit|swung|swing)|(sign change|crossed zero|charge to (a )?credit|swung|swing)[^\n]{0,300}Bad Debts'
+    - id: ttm_not_run_rate
+      description: The large TTM-window items are named and the affected TTM figures are said not to be a run rate.
+      pattern: 'Income Tax Benefit'
+    - id: ttm_run_rate_warning
+      description: Says the affected TTM figures are not a run rate.
+      pattern: 'not a run[- ]rate'
+    - id: classification_note
+      description: The workbook's operating income equals its net income because interest and tax sit inside opex.
+      pattern: 'operating income[^\n]{0,200}net income|net income[^\n]{0,200}operating income'
+  forbidden_claims:
+    - id: bad_debts_as_saving
+      description: A sign change must not be read as a percentage cost saving.
+      pattern: 'Bad Debts[^\n]{0,120}-?11[34](\.\d)?%'
+
+pass_criteria: >
+  Level 1: every expected value within tolerance, reconciliation 144/144, the two
+  warning codes present, the three largest movers flagged. Level 2: guard PASS, all
+  generic checks, the five required flags, no forbidden claim.

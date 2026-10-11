@@ -1,0 +1,59 @@
+{
+  "case_id": "13_deterministic_fallback",
+  "client_id": "abc_inc",
+  "period": "2026-06",
+  "generated_by": "evals/tools/build_expected.py",
+  "independent_of_engine": true,
+  "input_sha256": "75da8d679a89551f9e46b3563b7cfc724d9aaeabe0444b0214d455a0b335a0ea",
+  "source": "cached formula results and single cells of the ABC workbook, read with openpyxl by evals/tools/build_expected.py",
+  "ttm": {
+    "complete": true,
+    "window": [
+      "2025-07",
+      "2025-08",
+      "2025-09",
+      "2025-10",
+      "2025-11",
+      "2025-12",
+      "2026-01",
+      "2026-02",
+      "2026-03",
+      "2026-04",
+      "2026-05",
+      "2026-06"
+    ]
+  },
+  "values": [
+    {
+      "metric": "revenue.total",
+      "expected": 195898.16,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "cached formula Income Statement!C14 'Total Income' 2026-06"
+    },
+    {
+      "metric": "gross_margin_pct",
+      "expected": 70.15161347099942,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "Income Statement!C26 'Gross Profit' 2026-06 / Total Income x 100 = 137425.72 / 195898.16"
+    },
+    {
+      "metric": "opex.total",
+      "expected": 468181.79999999993,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "cached formula Income Statement!C103 'Total Operating Expenses' 2026-06"
+    },
+    {
+      "metric": "operating_income",
+      "expected": -330756.07999999996,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "Gross Profit - Total Operating Expenses = 137425.72 - 468181.79999999993; the workbook's Net Income row reads -330756.07999999996"
+    }
+  ],
+  "unavailable": [],
+  "evidence": {},
+  "manual_spot_check": "Open the workbook and confirm: Income Statement C14 Total Income 195,898.16; C11 Usage Fees 166,781.50; C65 Events & Conferences 29,294.58; C31 Bad Debts -1,806.24; Balance Sheet D37 Total Assets 4,191,851.55 = D71 Total Liabilities and Equity."
+}

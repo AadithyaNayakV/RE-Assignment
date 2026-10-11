@@ -1,0 +1,59 @@
+id: 12_unknown_client_bad_period
+title: Unknown client and bad periods must stop cleanly
+synthetic: true
+input:
+  client_id: acme_widgets
+  period: "2026-06"
+why: >
+  An unknown client, a malformed period, and a well-formed period outside the source.
+  The engine must refuse each with one clear line, never a traceback and never output
+  for a client that does not exist. The skill must stop and say so, not improvise.
+
+engine:
+  cli_checks:
+    - id: unknown_client
+      args: [analyze, --client, acme_widgets, --period, "2026-06"]
+      exit_code: 1
+      stderr: 'No config for client .acme_widgets.'
+      must_not_exist: acme_widgets
+    - id: unknown_client_list_periods
+      args: [list-periods, --client, acme_widgets]
+      exit_code: 1
+      stderr: 'No config for client'
+    - id: month_out_of_range
+      args: [analyze, --client, company_a_normal_growth, --period, "2026-13"]
+      exit_code: 1
+      stderr: 'Month out of range'
+    - id: malformed_period
+      args: [analyze, --client, company_a_normal_growth, --period, June-2026]
+      exit_code: 1
+      stderr: 'YYYY-MM'
+    - id: period_not_in_source
+      args: [analyze, --client, company_a_normal_growth, --period, "2027-01"]
+      exit_code: 2
+      stderr: 'period_not_in_source'
+      all_metrics_blocked: true
+
+skill:
+  run: true
+  stop_runs:
+    - id: unknown_client
+      prompt: Use the monthly-financial-analysis skill for client acme_widgets, period 2026-06.
+      client_id: acme_widgets
+      period: "2026-06"
+      reply_must_match: '(no config|not configured|no configuration|doesn.t have a config|does not have a config|unknown client|not a known client)'
+    - id: bad_period
+      prompt: Use the monthly-financial-analysis skill for client company_a_normal_growth, period 2026-13.
+      client_id: company_a_normal_growth
+      period: "2026-13"
+      reply_must_match: '(YYYY-MM|invalid|out of range|not a valid|no month 13|13)'
+    - id: period_not_in_source
+      prompt: Use the monthly-financial-analysis skill for client company_a_normal_growth, period 2027-01.
+      client_id: company_a_normal_growth
+      period: "2027-01"
+      reply_must_match: '(not in|isn.t in|outside|not available|available)'
+
+pass_criteria: >
+  Level 1: each CLI call exits with the stated code and message, no traceback, no output
+  directory for the unknown client. Level 2: for each prompt the skill writes no
+  report.md and its reply explains why it stopped.

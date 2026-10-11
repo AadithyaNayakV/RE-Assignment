@@ -1,0 +1,40 @@
+id: 03_revenue_decline
+title: Revenue decline (synthetic Company B)
+synthetic: true
+input:
+  client_id: company_b_revenue_decline
+  period: "2026-06"
+  workbook: data/synthetic/company_b_revenue_decline.xlsx
+  config: config/clients/company_b_revenue_decline.yaml
+why: >
+  Licence revenue falls 7,800 a month for twelve months. June alone (-7,950.00, -5.77%)
+  is below the significance thresholds, so the decline has to be reported from the
+  headline and the YoY comparison, not from the movements table.
+
+engine:
+  exit_code: 0
+  reconciliation_passed: true
+  ttm_complete: true
+  max_errors: 0
+  significant_count: 0
+  seasonality_assessed: false
+
+skill:
+  run: true
+  required_figures: [revenue.total, revenue.total.mom_abs, revenue.total.mom_pct, revenue.total.yoy_abs]
+  required_flags:
+    - id: decline_reported
+      description: States that revenue fell.
+      pattern: 'revenue[^.\n]{0,160}\b(fell|declin\w*|decreas\w*|down\b|lower|drop\w*)'
+  forbidden_claims:
+    - id: revenue_described_as_growing
+      description: Total revenue fell month over month; it must not be described as growing.
+      pattern: '\btotal revenue (grew|increased|rose|was up|improved|climbed)'
+    - id: invented_churn
+      description: No cause of the decline is in the data.
+      pattern: '\b(churn|lost (a |the )?(customer|client|contract)|price cut)'
+      unless: '(possib|may\b|might|could|confirm|whether|\?)'
+
+pass_criteria: >
+  Level 1: values match the independent expectation. Level 2: guard PASS, decline
+  stated with the MoM figures, no claim of growth, no invented cause.

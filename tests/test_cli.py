@@ -192,10 +192,13 @@ class TestUsageErrors:
         assert "No config for client" in capsys.readouterr().err
 
     @pytest.mark.parametrize("period", ["2026-13", "June", "2026/06", "26-06"])
-    def test_malformed_period(self, abc_workspace, period):
-        with pytest.raises(ValueError):
-            main(["analyze", "--client", "abc_inc", "--period", period,
-                  "--root", str(abc_workspace)])
+    def test_malformed_period(self, abc_workspace, period, capsys):
+        """A bad period is a one-line usage error, not a traceback (eval case 12)."""
+        code = main(["analyze", "--client", "abc_inc", "--period", period,
+                     "--root", str(abc_workspace)])
+        assert code == EXIT_USAGE
+        err = capsys.readouterr().err
+        assert "YYYY-MM" in err and "Traceback" not in err
 
     def test_a_period_outside_the_source_is_reported(self, abc_workspace, capsys):
         code = main(["analyze", "--client", "abc_inc", "--period", "2030-01",

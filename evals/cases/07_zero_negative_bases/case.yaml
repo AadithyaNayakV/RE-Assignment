@@ -1,0 +1,46 @@
+id: 07_zero_negative_bases
+title: Zero and negative bases (synthetic Company H)
+synthetic: true
+input:
+  client_id: company_h_zero_negative_values
+  period: "2026-06"
+  workbook: data/synthetic/company_h_zero_negative_values.xlsx
+  config: config/clients/company_h_zero_negative_values.yaml
+why: >
+  In May 2026 Legacy Revenue, Refunds and Credits and Bad Debts are exactly 0, and
+  Interest Income is -650 (shown inside opex). A % change from those bases is undefined
+  or reads backwards, so it must be n/a with a reason, never a number and never
+  infinity. This layout is also different: labels in C/D, data from column F, header
+  row 7, sheet "Profit and Loss". Only the config differs.
+
+engine:
+  exit_code: 0
+  reconciliation_passed: true
+  ttm_complete: true
+  max_errors: 0
+  required_codes: [negative_revenue_line, negative_opex_line]
+  seasonality_assessed: false
+
+skill:
+  run: true
+  required_figures: [revenue.total, revenue.stream.refunds_and_credits, opex.line.bad_debts]
+  required_flags:
+    - id: zero_base_na
+      description: A zero-base % change is shown as n/a with the reason.
+      pattern: 'n/a[^\n]{0,40}zero'
+    - id: negative_kept
+      description: Negative lines are reported with their sign, not as income.
+      pattern: 'negative'
+  forbidden_claims:
+    - id: infinite_pct
+      description: No infinite or divide-by-zero percentage.
+      pattern: '\b(infinite|infinity)\b|∞|#DIV'
+      unless: '\b(never|not|no)\b'
+    - id: refunds_as_income
+      description: Refunds and Credits must not be described as income growth.
+      pattern: 'Refunds and Credits[^.\n]{0,80}\b(grew|rose|increased)\b'
+
+pass_criteria: >
+  Level 1: the four zero/negative-base % changes are null with zero_base or
+  negative_base; values match. Level 2: guard PASS, n/a shown with reason, no
+  infinite percentage.

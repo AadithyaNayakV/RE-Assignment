@@ -1,0 +1,324 @@
+{
+  "case_id": "01_abc_inc_2026_06",
+  "client_id": "abc_inc",
+  "period": "2026-06",
+  "generated_by": "evals/tools/build_expected.py",
+  "independent_of_engine": true,
+  "input_sha256": "75da8d679a89551f9e46b3563b7cfc724d9aaeabe0444b0214d455a0b335a0ea",
+  "source": "cached formula results and single cells of the ABC workbook, read with openpyxl by evals/tools/build_expected.py",
+  "ttm": {
+    "complete": true,
+    "window": [
+      "2025-07",
+      "2025-08",
+      "2025-09",
+      "2025-10",
+      "2025-11",
+      "2025-12",
+      "2026-01",
+      "2026-02",
+      "2026-03",
+      "2026-04",
+      "2026-05",
+      "2026-06"
+    ]
+  },
+  "values": [
+    {
+      "metric": "revenue.total",
+      "expected": 195898.16,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "cached formula Income Statement!C14 'Total Income' 2026-06"
+    },
+    {
+      "metric": "gross_margin_pct",
+      "expected": 70.15161347099942,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "Income Statement!C26 'Gross Profit' 2026-06 / Total Income x 100 = 137425.72 / 195898.16"
+    },
+    {
+      "metric": "opex.total",
+      "expected": 468181.79999999993,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "cached formula Income Statement!C103 'Total Operating Expenses' 2026-06"
+    },
+    {
+      "metric": "operating_income",
+      "expected": -330756.07999999996,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "Gross Profit - Total Operating Expenses = 137425.72 - 468181.79999999993; the workbook's Net Income row reads -330756.07999999996"
+    },
+    {
+      "metric": "cogs.total",
+      "expected": 58472.439999999995,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "cached formula Income Statement!C24 'Total Cost of Goods Sold' 2026-06"
+    },
+    {
+      "metric": "gross_profit",
+      "expected": 137425.72,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "cached formula Income Statement!C26 'Gross Profit' 2026-06"
+    },
+    {
+      "metric": "net_income.reported",
+      "expected": -330756.07999999996,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "cached formula Income Statement!C107 'Net Income' 2026-06"
+    },
+    {
+      "metric": "revenue.total.mom_abs",
+      "expected": -12452.8,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "Total Income: 195898.16 - 208350.96 (2026-05)"
+    },
+    {
+      "metric": "revenue.total.mom_pct",
+      "expected": -5.976838311664121,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "Total Income: (195898.16 - 208350.96) / 208350.96 x 100"
+    },
+    {
+      "metric": "gross_profit.mom_abs",
+      "expected": -2255.709999999992,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "137425.72 - 139681.43"
+    },
+    {
+      "metric": "opex.total.mom_abs",
+      "expected": -10599.230000000098,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "Total Operating Expenses June - May"
+    },
+    {
+      "metric": "gross_margin_pct.mom_pts",
+      "expected": 3.1101993109686816,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "gross margin June - May, in points"
+    },
+    {
+      "metric": "operating_margin_pct",
+      "expected": -168.8408303579778,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "operating income / Total Income x 100"
+    },
+    {
+      "metric": "revenue.total.yoy_abs",
+      "expected": 5342.510000000009,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "Total Income 2026-06 - 2025-06"
+    },
+    {
+      "metric": "revenue.total.ttm",
+      "expected": 2303975.51,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "Total Income sum of the cached row over 2025-07..2026-06"
+    },
+    {
+      "metric": "cogs.total.ttm",
+      "expected": 703547.6,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "Total Cost of Goods Sold sum of the cached row over 2025-07..2026-06"
+    },
+    {
+      "metric": "gross_profit.ttm",
+      "expected": 1600427.91,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "Gross Profit sum of the cached row over 2025-07..2026-06"
+    },
+    {
+      "metric": "opex.total.ttm",
+      "expected": 4690207.5,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "Total Operating Expenses sum of the cached row over 2025-07..2026-06"
+    },
+    {
+      "metric": "operating_income.ttm",
+      "expected": -3089779.59,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "TTM Gross Profit - TTM opex"
+    },
+    {
+      "metric": "gross_margin_pct.ttm",
+      "expected": 69.46375528097519,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "TTM GP / TTM revenue x 100"
+    },
+    {
+      "metric": "opex.group.s_and_m_payroll",
+      "expected": 126575.18999999999,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "cached formula Income Statement!C59 'Total S & M Payroll' 2026-06"
+    },
+    {
+      "metric": "opex.group.s_and_m_payroll.mom_abs",
+      "expected": -1495.5500000000175,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "Total S & M Payroll June - May"
+    },
+    {
+      "metric": "opex.group.marketing",
+      "expected": 49392.69999999999,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "cached formula Income Statement!C71 'Total Marketing' 2026-06"
+    },
+    {
+      "metric": "opex.group.marketing.mom_abs",
+      "expected": 8763.849999999991,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "Total Marketing June - May"
+    },
+    {
+      "metric": "revenue.stream.usage_fees",
+      "expected": 166781.5,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "spot check Income Statement!C11 'Usage Fees' 2026-06"
+    },
+    {
+      "metric": "revenue.stream.usage_fees.mom_abs",
+      "expected": -11142.74,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "Usage Fees: 166781.5 - 177924.24 (2026-05)"
+    },
+    {
+      "metric": "revenue.stream.usage_fees.mom_pct",
+      "expected": -6.262631780807378,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "Usage Fees: (166781.5 - 177924.24) / 177924.24 x 100"
+    },
+    {
+      "metric": "opex.line.events_conferences",
+      "expected": 29294.58,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "spot check Income Statement!C65 'Events & Conferences' 2026-06"
+    },
+    {
+      "metric": "opex.line.events_conferences.mom_abs",
+      "expected": 17970.67,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "Events & Conferences: 29294.58 - 11323.91 (2026-05)"
+    },
+    {
+      "metric": "opex.line.events_conferences.mom_pct",
+      "expected": 158.6966869217435,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "Events & Conferences: (29294.58 - 11323.91) / 11323.91 x 100"
+    },
+    {
+      "metric": "opex.line.bad_debts",
+      "expected": -1806.24,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "spot check Income Statement!C31 'Bad Debts' 2026-06"
+    },
+    {
+      "metric": "opex.line.bad_debts.mom_abs",
+      "expected": -14741.53,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "Bad Debts: -1806.24 - 12935.29 (2026-05)"
+    },
+    {
+      "metric": "opex.line.legal_expenses",
+      "expected": 500.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "spot check Income Statement!C46 'Legal Expenses' 2026-06"
+    },
+    {
+      "metric": "opex.line.legal_expenses.mom_abs",
+      "expected": -1712.5,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "Legal Expenses: 500.0 - 2212.5 (2026-05)"
+    },
+    {
+      "metric": "opex.line.legal_expenses.mom_pct",
+      "expected": -77.40112994350282,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "Legal Expenses: (500.0 - 2212.5) / 2212.5 x 100"
+    },
+    {
+      "metric": "balance_sheet.assets",
+      "expected": 4191851.55,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "cached formula Balance Sheet!D37 'Total Assets' 2026-06"
+    },
+    {
+      "metric": "balance_sheet.liabilities",
+      "expected": 1002175.58,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "cached formula Balance Sheet!D59 'Total Liabilities' 2026-06"
+    },
+    {
+      "metric": "balance_sheet.equity",
+      "expected": 3189675.969999999,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "cached formula Balance Sheet!D70 'Total Equity' 2026-06"
+    },
+    {
+      "metric": "balance_sheet.liabilities_and_equity",
+      "expected": 4191851.549999999,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "cached formula Balance Sheet!D71 'Total Liabilities and Equity' 2026-06"
+    },
+    {
+      "metric": "balance_sheet.cash",
+      "expected": 713481.26,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "cached formula Balance Sheet!D15 'Total Cash and Cash Equivalents' 2026-06"
+    }
+  ],
+  "unavailable": [
+    {
+      "metric": "opex.line.bad_debts.mom_pct",
+      "reason": "sign_change",
+      "derivation": "Bad Debts 12,935.29 in May to -1,806.24 in June crosses zero"
+    }
+  ],
+  "evidence": {
+    "Income Tax Benefit non-zero months in TTM window": {
+      "2025-12": -1244429.84
+    },
+    "Stock-Based Compensation Expense non-zero months in TTM window": {
+      "2025-12": 334660.53
+    }
+  },
+  "manual_spot_check": "Open the workbook and confirm: Income Statement C14 Total Income 195,898.16; C11 Usage Fees 166,781.50; C65 Events & Conferences 29,294.58; C31 Bad Debts -1,806.24; Balance Sheet D37 Total Assets 4,191,851.55 = D71 Total Liabilities and Equity."
+}

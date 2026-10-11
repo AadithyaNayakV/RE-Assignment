@@ -1,0 +1,43 @@
+id: 13_deterministic_fallback
+title: No AI available (deterministic fallback), ABC Inc June 2026
+synthetic: false
+input:
+  client_id: abc_inc
+  period: "2026-06"
+  workbook: data/clients/abc_inc/source/ABC Inc - Financial Statements.xlsx
+  config: config/clients/abc_inc.yaml
+why: >
+  LLM_PROVIDER names a model provider that is not available (ollama). The pipeline must
+  still produce a complete report: it falls back to the deterministic template, labels
+  the report with the provider that actually wrote it, and the report passes the number
+  guard. No Claude call is made in either runner. Uses ABC because it is the client
+  shown in the demo, so this case is SKIPPED where the workbook is absent.
+
+engine:
+  command: report
+  env: {LLM_PROVIDER: ollama}
+  exit_code: 0
+  stderr: 'Falling back to the deterministic provider'
+  reconciliation_passed: true
+  ttm_complete: true
+  max_errors: 0
+  report_must_match:
+    - '`deterministic` commentary provider'
+    - '\| Commentary number check \| PASS \|'
+  report_guard_passes: true
+
+skill:
+  run: true
+  mode: deterministic
+  provider_label: deterministic
+  required_figures: [revenue.total, gross_margin_pct, opex.total, operating_income]
+  required_flags:
+    - id: labelled_deterministic
+      description: The report says the deterministic provider wrote it.
+      pattern: '`deterministic` commentary provider'
+  forbidden_claims: []
+
+pass_criteria: >
+  Level 1: exit 0 with the fallback warning, report labelled deterministic, guard PASS
+  in the report. Level 2: the deterministic report passes every generic check that a
+  Claude-written report must pass.

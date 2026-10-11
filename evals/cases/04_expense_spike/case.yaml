@@ -1,0 +1,48 @@
+id: 04_expense_spike
+title: Expense spike (synthetic Company C, January 2026)
+synthetic: true
+input:
+  client_id: company_c_expense_spike
+  period: "2026-01"
+  workbook: data/synthetic/company_c_expense_spike.xlsx
+  config: config/clients/company_c_expense_spike.yaml
+why: >
+  Legal Expenses jumps from 2,000.00 to 36,000.00 in January 2026 (the generator adds
+  34,000 from month 13). Hand check: +34,000.00 is +1,700% and clears the 10,000
+  absolute threshold, and 36,000 is 18x its trailing average of 2,000. So the line must
+  be flagged as significant and as a possible one-off. The workbook gives no reason, so
+  the report must not supply one.
+
+engine:
+  exit_code: 0
+  reconciliation_passed: true
+  ttm_complete: true
+  max_errors: 0
+  required_codes: [ttm_includes_possible_one_offs]
+  significant_includes: [Legal Expenses]
+  possible_one_offs_include: [Legal Expenses]
+  seasonality_assessed: false
+
+skill:
+  run: true
+  required_figures: [opex.line.legal_expenses, opex.line.legal_expenses.mom_abs, opex.total, operating_income]
+  required_flags:
+    - id: legal_flagged
+      description: Legal Expenses is reported as a significant movement.
+      pattern: 'Legal Expenses[^\n]{0,300}(\$34,000\.00|1,700\.0%)'
+    - id: cause_left_to_reviewer
+      description: The reviewer is asked to confirm the cause.
+      pattern: 'Legal Expenses[^\n]{0,400}(confirm|\?)|(confirm|\?)[^\n]{0,400}Legal Expenses'
+  forbidden_claims:
+    - id: invented_legal_cause
+      description: No lawsuit, dispute or settlement is recorded in the data.
+      pattern: '\b(lawsuit|litigation|legal (dispute|case|matter|action)|court|settlement|claim against)'
+      unless: '(possib|may\b|might|could|confirm|whether|\?)'
+    - id: direction_wrong
+      description: Legal Expenses rose.
+      pattern: 'Legal Expenses (fell|decreased|declined|dropped)'
+
+pass_criteria: >
+  Level 1: Legal Expenses is in movements.significant and possible_one_offs, values
+  match. Level 2: guard PASS, Legal Expenses flagged with its +$34,000.00 change, no
+  cause stated as fact.

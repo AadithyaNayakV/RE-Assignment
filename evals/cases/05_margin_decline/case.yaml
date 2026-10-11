@@ -1,0 +1,38 @@
+id: 05_margin_decline
+title: Margin decline (synthetic Company D)
+synthetic: true
+input:
+  client_id: company_d_margin_decline
+  period: "2026-06"
+  workbook: data/synthetic/company_d_margin_decline.xlsx
+  config: config/clients/company_d_margin_decline.yaml
+why: >
+  COGS grows faster than revenue all year, so gross margin narrows every month while
+  revenue still rises. The trap is to report "revenue up" and miss the margin. The
+  margin change must be in points, never a percent of a percent.
+
+engine:
+  exit_code: 0
+  reconciliation_passed: true
+  ttm_complete: true
+  max_errors: 0
+  seasonality_assessed: false
+
+skill:
+  run: true
+  required_figures: [gross_margin_pct, gross_margin_pct.mom_pts, gross_profit.mom_abs, cogs.total]
+  required_flags:
+    - id: margin_decline_reported
+      description: States that gross margin fell.
+      pattern: 'margin[^.\n]{0,160}\b(fell|declin\w*|decreas\w*|down\b|narrow\w*|shr[iu]nk\w*|contract\w*|lower|compress\w*|eroded)'
+    - id: margin_in_points
+      description: Margin change is expressed in points.
+      pattern: '\d\.\d pts|percentage points'
+  forbidden_claims:
+    - id: margin_described_as_improving
+      description: Gross margin fell; it must not be described as improving.
+      pattern: 'gross margin (improved|expanded|rose|increased|widened|grew)'
+
+pass_criteria: >
+  Level 1: margin and COGS values match the independent expectation. Level 2: guard
+  PASS, margin decline stated in points, no claim the margin improved.

@@ -1,0 +1,393 @@
+{
+  "case_id": "04_expense_spike",
+  "client_id": "company_c_expense_spike",
+  "period": "2026-01",
+  "generated_by": "evals/tools/build_expected.py",
+  "independent_of_engine": true,
+  "input_sha256": "33387b8cd67f190a0062ec43b5d004dd3b2bb59d4eb8851d7c953e483a47b617",
+  "source": "scripts/generate_synthetic.py scenarios() inputs and compute_expected(); derived values computed in evals/tools/build_expected.py",
+  "ttm": {
+    "complete": true,
+    "window": [
+      "2025-02",
+      "2025-03",
+      "2025-04",
+      "2025-05",
+      "2025-06",
+      "2025-07",
+      "2025-08",
+      "2025-09",
+      "2025-10",
+      "2025-11",
+      "2025-12",
+      "2026-01"
+    ]
+  },
+  "values": [
+    {
+      "metric": "revenue.total",
+      "expected": 229200,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "sum of revenue inputs (generator inputs for company_c_expense_spike, 2026-01)"
+    },
+    {
+      "metric": "cogs.total",
+      "expected": 20480,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "sum of COGS inputs (generator inputs for company_c_expense_spike, 2026-01)"
+    },
+    {
+      "metric": "gross_profit",
+      "expected": 208720,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "revenue - COGS"
+    },
+    {
+      "metric": "opex.total",
+      "expected": 116850.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "sum of every opex input, groups counted once (generator inputs for company_c_expense_spike, 2026-01)"
+    },
+    {
+      "metric": "operating_income",
+      "expected": 91870.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "gross profit - opex"
+    },
+    {
+      "metric": "gross_margin_pct",
+      "expected": 91.06457242582897,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "208720 / 229200 x 100"
+    },
+    {
+      "metric": "operating_margin_pct",
+      "expected": 40.082897033158815,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "91870.0 / 229200 x 100"
+    },
+    {
+      "metric": "revenue.total.mom_abs",
+      "expected": 1600,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "revenue.total: 229200 - 227600 (2025-12)"
+    },
+    {
+      "metric": "revenue.total.mom_pct",
+      "expected": 0.7029876977152899,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "revenue.total: (229200 - 227600) / 227600 x 100"
+    },
+    {
+      "metric": "cogs.total.mom_abs",
+      "expected": 190,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "cogs.total: 20480 - 20290 (2025-12)"
+    },
+    {
+      "metric": "cogs.total.mom_pct",
+      "expected": 0.9364218827008379,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "cogs.total: (20480 - 20290) / 20290 x 100"
+    },
+    {
+      "metric": "gross_profit.mom_abs",
+      "expected": 1410,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "gross_profit: 208720 - 207310 (2025-12)"
+    },
+    {
+      "metric": "gross_profit.mom_pct",
+      "expected": 0.6801408518643577,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "gross_profit: (208720 - 207310) / 207310 x 100"
+    },
+    {
+      "metric": "opex.total.mom_abs",
+      "expected": 34000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "opex.total: 116850.0 - 82850.0 (2025-12)"
+    },
+    {
+      "metric": "opex.total.mom_pct",
+      "expected": 41.03802051901026,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "opex.total: (116850.0 - 82850.0) / 82850.0 x 100"
+    },
+    {
+      "metric": "operating_income.mom_abs",
+      "expected": -32590.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "operating_income: 91870.0 - 124460.0 (2025-12)"
+    },
+    {
+      "metric": "operating_income.mom_pct",
+      "expected": -26.185119717178214,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "operating_income: (91870.0 - 124460.0) / 124460.0 x 100"
+    },
+    {
+      "metric": "gross_margin_pct.mom_pts",
+      "expected": -0.020664832519017295,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "gross margin 91.064572 - 91.085237 points"
+    },
+    {
+      "metric": "revenue.total.yoy_abs",
+      "expected": 19200,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "229200 - 210000 (2025-01)"
+    },
+    {
+      "metric": "revenue.total.yoy_pct",
+      "expected": 9.142857142857142,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "revenue YoY: (229200 - 210000) / 210000 x 100"
+    },
+    {
+      "metric": "revenue.stream.platform_revenue",
+      "expected": 160800,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "input 'Platform Revenue' 2026-01"
+    },
+    {
+      "metric": "revenue.stream.platform_revenue.share_of_revenue_pct",
+      "expected": 70.15706806282722,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "160800 / 229200 x 100"
+    },
+    {
+      "metric": "revenue.stream.platform_revenue.mom_abs",
+      "expected": 900,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "Platform Revenue: 160800 - 159900 (2025-12)"
+    },
+    {
+      "metric": "revenue.stream.platform_revenue.mom_pct",
+      "expected": 0.5628517823639775,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "Platform Revenue: (160800 - 159900) / 159900 x 100"
+    },
+    {
+      "metric": "revenue.stream.usage_fees",
+      "expected": 68400,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "input 'Usage Fees' 2026-01"
+    },
+    {
+      "metric": "revenue.stream.usage_fees.share_of_revenue_pct",
+      "expected": 29.84293193717277,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "68400 / 229200 x 100"
+    },
+    {
+      "metric": "revenue.stream.usage_fees.mom_abs",
+      "expected": 700,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "Usage Fees: 68400 - 67700 (2025-12)"
+    },
+    {
+      "metric": "revenue.stream.usage_fees.mom_pct",
+      "expected": 1.03397341211226,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "Usage Fees: (68400 - 67700) / 67700 x 100"
+    },
+    {
+      "metric": "opex.line.legal_expenses",
+      "expected": 36000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "input 'Legal Expenses' 2026-01"
+    },
+    {
+      "metric": "opex.line.legal_expenses.mom_abs",
+      "expected": 34000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "Legal Expenses: 36000.0 - 2000.0 (2025-12)"
+    },
+    {
+      "metric": "opex.line.legal_expenses.mom_pct",
+      "expected": 1700.0,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "Legal Expenses: (36000.0 - 2000.0) / 2000.0 x 100"
+    },
+    {
+      "metric": "opex.line.rent",
+      "expected": 8200.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "input 'Rent' 2026-01"
+    },
+    {
+      "metric": "opex.line.rent.mom_abs",
+      "expected": 0.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "Rent: 8200.0 - 8200.0 (2025-12)"
+    },
+    {
+      "metric": "opex.line.rent.mom_pct",
+      "expected": 0.0,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "Rent: (8200.0 - 8200.0) / 8200.0 x 100"
+    },
+    {
+      "metric": "opex.line.software_saas",
+      "expected": 7400.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "input 'Software & SaaS' 2026-01"
+    },
+    {
+      "metric": "opex.line.software_saas.mom_abs",
+      "expected": 0.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "Software & SaaS: 7400.0 - 7400.0 (2025-12)"
+    },
+    {
+      "metric": "opex.line.software_saas.mom_pct",
+      "expected": 0.0,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "Software & SaaS: (7400.0 - 7400.0) / 7400.0 x 100"
+    },
+    {
+      "metric": "opex.line.insurance",
+      "expected": 2600.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "input 'Insurance' 2026-01"
+    },
+    {
+      "metric": "opex.line.insurance.mom_abs",
+      "expected": 0.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "Insurance: 2600.0 - 2600.0 (2025-12)"
+    },
+    {
+      "metric": "opex.line.insurance.mom_pct",
+      "expected": 0.0,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "Insurance: (2600.0 - 2600.0) / 2600.0 x 100"
+    },
+    {
+      "metric": "opex.line.operations_payroll",
+      "expected": 58000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "input 'Operations - Payroll' 2026-01"
+    },
+    {
+      "metric": "opex.line.operations_payroll.mom_abs",
+      "expected": 0.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "Operations - Payroll: 58000.0 - 58000.0 (2025-12)"
+    },
+    {
+      "metric": "opex.line.operations_payroll.mom_pct",
+      "expected": 0.0,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "Operations - Payroll: (58000.0 - 58000.0) / 58000.0 x 100"
+    },
+    {
+      "metric": "opex.line.operations_payroll_taxes",
+      "expected": 4650.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "input 'Operations - Payroll Taxes' 2026-01"
+    },
+    {
+      "metric": "opex.line.operations_payroll_taxes.mom_abs",
+      "expected": 0.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "Operations - Payroll Taxes: 4650.0 - 4650.0 (2025-12)"
+    },
+    {
+      "metric": "opex.line.operations_payroll_taxes.mom_pct",
+      "expected": 0.0,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "Operations - Payroll Taxes: (4650.0 - 4650.0) / 4650.0 x 100"
+    },
+    {
+      "metric": "revenue.total.ttm",
+      "expected": 2644800,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "revenue sum over 2025-02..2026-01"
+    },
+    {
+      "metric": "cogs.total.ttm",
+      "expected": 233220,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "COGS sum over 2025-02..2026-01"
+    },
+    {
+      "metric": "opex.total.ttm",
+      "expected": 1028200.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "opex sum over 2025-02..2026-01"
+    },
+    {
+      "metric": "gross_profit.ttm",
+      "expected": 2411580,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "TTM revenue - TTM COGS"
+    },
+    {
+      "metric": "operating_income.ttm",
+      "expected": 1383380.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "TTM gross profit - TTM opex"
+    },
+    {
+      "metric": "gross_margin_pct.ttm",
+      "expected": 91.18194192377496,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "TTM gross profit / TTM revenue x 100"
+    }
+  ],
+  "unavailable": []
+}

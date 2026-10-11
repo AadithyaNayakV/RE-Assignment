@@ -68,10 +68,21 @@ _NUMBER = re.compile(
 
 # Spans that are never financial claims: dates, period keys, section/row references.
 _IGNORE_SPANS = [
+    # ISO timestamps, before the date rule: "2026-10-11T10:48:47+00:00" otherwise
+    # leaves "48" and "47" behind as figures.
+    re.compile(r"\b\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?"
+               r"(?:Z|[+-]\d{2}:\d{2})?"),
     re.compile(r"\b\d{4}-\d{2}(?:-\d{2})?\b"),                       # 2026-06
+    # Hex digests: a hash ending "...a5847036" otherwise yields the figure 5847036.
+    re.compile(r"\b[0-9a-f]{16,}\b", re.I),
+    # The guard's own result quoted back in a report: "30/30 numbers traced",
+    # "All 30 numbers in this section ...". Counts of the check, not financial claims.
+    re.compile(r"\b\d+\s*/\s*\d+\s+number(?:s|\(s\))?\s+traced", re.I),
+    re.compile(r"(?<![a-z])all\s+\d+\s+numbers\s+in\s+this\s+section", re.I),
     re.compile(r"\b(?:row|rows|line|lines)\s+\d+(?:\s*[-,]\s*\d+)*", re.I),
     re.compile(r"\b(?:schema[_ ]version|v)\s*\d+\b", re.I),
     re.compile(r"\bsha256[:=]?\s*[0-9a-f]{8,}\b", re.I),
+    re.compile(r"\bSHA-?256\b", re.I),       # the label itself: "-256" is not a figure
     re.compile(
         r"\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{4}\b", re.I
     ),
@@ -170,7 +181,11 @@ class NumberGuard:
                 continue
             value, tolerance, kind = parsed
             candidates = self._candidates(kind)
-            closest, diff = _closest(candidates, value)
+            # Magnitudes, as documented: every allowed value is also stored as its
+            # absolute value, so matching |written| makes the sign irrelevant both ways.
+            # Matching the signed value rejected "(2)" or "-$2,800.00" against a
+            # positive metric while accepting "+5.98%" against a negative one.
+            closest, diff = _closest(candidates, abs(value))
             supported = diff is not None and diff <= tolerance
             findings.append(Finding(
                 text=match.group(0).strip(),

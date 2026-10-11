@@ -1,0 +1,42 @@
+id: 02_normal_growth
+title: Normal growth (synthetic Company A)
+synthetic: true
+input:
+  client_id: company_a_normal_growth
+  period: "2026-06"
+  workbook: data/synthetic/company_a_normal_growth.xlsx
+  config: config/clients/company_a_normal_growth.yaml
+why: >
+  Steady growth with stable costs: the control case. Nothing should be flagged, and the
+  report must not manufacture drama. Revenue +2,800.00 (+1.53%) is below every
+  significance threshold (hand check: 2,800 < 10,000 and 1.53% < 25%).
+
+engine:
+  exit_code: 0
+  reconciliation_passed: true
+  ttm_complete: true
+  max_errors: 0
+  required_codes: [no_balance_sheet]
+  significant_count: 0
+  possible_one_offs_count: 0
+  seasonality_assessed: false
+
+skill:
+  run: true
+  required_figures: [revenue.total, revenue.total.mom_abs, gross_margin_pct, opex.total, revenue.total.ttm]
+  required_flags:
+    - id: revenue_rose
+      description: States that revenue rose.
+      pattern: 'revenue[^\n]{0,120}(\b(rose|grew|increased|up\b|higher)|\(\+\$)'
+    - id: nothing_significant
+      description: Says no line met the significance test.
+      pattern: '\b(no|none|nothing|zero|0)\b[^.\n]{0,100}(significan|qualif|threshold)'
+  forbidden_claims:
+    - id: invented_decline
+      description: Total revenue did not fall.
+      pattern: '(total )?revenue (fell|declined|decreased|dropped)'
+
+pass_criteria: >
+  Level 1: values match the generator's independent expectation; no errors; nothing
+  significant. Level 2: guard PASS, generic checks, revenue described as rising, no
+  invented significance.

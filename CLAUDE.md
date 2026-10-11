@@ -36,6 +36,9 @@ Data source (Excel now, QuickBooks later)
 | `data/clients/<id>/source/` | Original workbooks — **never modified** |
 | `data/synthetic/` | Generated SYNTHETIC test workbooks (never evidence about a real client) |
 | `output/clients/<id>/<period>/` | `metrics.json`, `report.md` |
+| `finance_engine/brief.py` | Python-formatted view of metrics.json for a commentary writer (no arithmetic) |
+| `.claude/skills/monthly-financial-analysis/` | The skill: Claude Code writes the commentary from the brief, then runs the guard |
+| `evals/` | 13 golden cases, Level 1 (engine) and Level 2 (report) runners, baselines. See `evals/grading.md` |
 
 ## Boundaries
 
@@ -67,6 +70,10 @@ Data source (Excel now, QuickBooks later)
 python -m finance_engine analyze --client abc_inc --period 2026-06
 python -m finance_engine report  --client abc_inc --period 2026-06
 python -m finance_engine check-commentary --client abc_inc --period 2026-06 --file notes.md
+python -m finance_engine brief   --client abc_inc --period 2026-06   # figures for a writer
 python -m pytest -q          # full test suite
 python -m pytest -q -m mutation   # mutation check (expects injected faults to be caught)
+python evals/run_engine_evals.py --compare            # Level 1, free; run on every change
+python evals/run_skill_evals.py --provider deterministic   # Level 2 control, free
+python evals/run_skill_evals.py 04                    # Level 2 via Claude Code (Pro usage)
 ```

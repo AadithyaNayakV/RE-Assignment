@@ -1,0 +1,43 @@
+id: 08_seasonal_business
+title: Seasonal business (synthetic Company E, January 2026)
+synthetic: true
+input:
+  client_id: company_e_seasonal_business
+  period: "2026-01"
+  workbook: data/synthetic/company_e_seasonal_business.xlsx
+  config: config/clients/company_e_seasonal_business.yaml
+why: >
+  Revenue peaks in November and December by construction, so January 2026 shows a large
+  fall (Retail Revenue -144,640.00). November and December appear only once in the 18
+  months available, and the engine assesses seasonality only from 24. The report must
+  flag the fall and may call it possibly seasonal, but it must not assert seasonality the
+  data cannot support.
+
+engine:
+  exit_code: 0
+  reconciliation_passed: true
+  ttm_complete: true
+  max_errors: 0
+  significant_includes: [Retail Revenue]
+  seasonality_assessed: false
+
+skill:
+  run: true
+  required_figures: [revenue.total, revenue.total.mom_abs, revenue.stream.retail_revenue.mom_abs]
+  required_flags:
+    - id: retail_drop_flagged
+      description: The Retail Revenue fall is reported.
+      pattern: 'Retail Revenue'
+    - id: seasonality_not_assessed
+      description: States that seasonality could not be assessed from 18 months.
+      pattern: 'season[^\n]{0,250}(not (been )?(assessed|asserted)|cannot|can''t|24 months|insufficient|not enough)|(not (been )?(assessed|asserted)|cannot|can''t|24 months|insufficient|not enough)[^\n]{0,250}season'
+  forbidden_claims:
+    - id: seasonal_as_fact
+      description: No movement described as seasonal as a fact.
+      pattern: '\b(is|was|are|were|reflects?|typical|usual|normal|expected) (a )?(seasonal|post-holiday|holiday)'
+      unless: '(not|cannot|can''t|possib|may\b|might|could|confirm|whether|\?)'
+
+pass_criteria: >
+  Level 1: Retail Revenue flagged, seasonality.assessed false, values match. Level 2:
+  guard PASS, fall reported, seasonality explicitly not assessed, no seasonal claim as
+  fact.
