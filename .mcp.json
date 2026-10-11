@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "quickbooks": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "./quickbooks-online-mcp-server/dist/index.js"
+      ],
+      "env": {}
+    }
+  }
+}

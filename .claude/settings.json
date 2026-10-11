@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__quickbooks__get_*",
+      "mcp__quickbooks__get-*",
+      "mcp__quickbooks__search_*",
+      "mcp__quickbooks__read_*"
+    ],
+    "deny": [
+      "mcp__quickbooks__create_*",
+      "mcp__quickbooks__create-*",
+      "mcp__quickbooks__update_*",
+      "mcp__quickbooks__update-*",
+      "mcp__quickbooks__delete_*",
+      "mcp__quickbooks__delete-*"
+    ]
+  }
+}
