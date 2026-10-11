@@ -315,7 +315,8 @@ class TestScenarioBehaviour:
 
         # Both renderers must cope with the absent multiple rather than crash.
         text = DeterministicProvider().generate(doc)
-        assert "no comparable spend in the trailing window" in text
+        # Same reason wording as the report's Multiple column.
+        assert "no multiple: average was zero" in text
         guard = check_commentary(text, doc)
         assert guard.passed, guard.summary()
         report = build_report(doc, text, "deterministic", guard.to_dict())

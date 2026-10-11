@@ -58,6 +58,44 @@ def points(value: float | None, decimals: int = 1) -> str:
     return f"{sign}{abs(value):,.{decimals}f} pts"
 
 
+#: Why a one-off has no multiple to report. The generic reasons above are written for a
+#: month-over-month comparison ("prior period was zero"), which is the wrong sentence
+#: when the denominator is an average over several months.
+_ONE_OFF_REASON_TEXT = {
+    "zero_base": "average was zero",
+    "negative_base": "average was negative",
+}
+
+
+def one_off_multiple_reason(code: str | None) -> str:
+    if not code:
+        return ""
+    return _ONE_OFF_REASON_TEXT.get(code, reason(code))
+
+
+def significance_rule(thresholds: dict, symbol: str = "$") -> str:
+    """The full significance test in words, including the absolute floor.
+
+    Stating only "25% or $10,000" hides the floor that actually removed half the list, so
+    a reader cannot tell why a line they expected to see is missing.
+    """
+    pct = thresholds.get("significant_mom_pct")
+    abs_floor = thresholds.get("significant_mom_abs")
+    min_abs = thresholds.get("significant_mom_min_abs")
+    parts = [f"an absolute change of at least {money(abs_floor, symbol)}"]
+    if pct is not None and min_abs is not None:
+        parts.append(
+            f"a change of at least {percent(pct)} that is also at least "
+            f"{money(min_abs, symbol)}"
+        )
+        parts.append(
+            f"a line crossing zero by at least {money(min_abs, symbol)}"
+        )
+    elif pct is not None:
+        parts.append(f"a change of at least {percent(pct)}")
+    return f"{', or '.join(parts[:-1])}, or {parts[-1]}"
+
+
 def reason(code: str | None) -> str:
     if not code:
         return ""

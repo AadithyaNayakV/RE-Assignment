@@ -107,6 +107,41 @@ def metrics_including_cogs_line(label: str) -> set[str]:
     return variants(cogs_line(label)) | variants(COGS_TOTAL, ttm=True)
 
 
+#: Reader-facing names for the TTM figures, so a warning can say *which* totals it
+#: applies to instead of claiming "every trailing-twelve-month figure".
+TTM_FIGURE_LABELS = {
+    f"{REVENUE_TOTAL}.ttm": "revenue",
+    f"{COGS_TOTAL}.ttm": "cost of goods sold",
+    f"{GROSS_PROFIT}.ttm": "gross profit",
+    f"{OPEX_TOTAL}.ttm": "operating expense",
+    f"{OPERATING_INCOME}.ttm": "operating income",
+}
+
+#: Order the figures the way a statement reads, not alphabetically.
+_FIGURE_ORDER = [
+    f"{REVENUE_TOTAL}.ttm",
+    f"{COGS_TOTAL}.ttm",
+    f"{GROSS_PROFIT}.ttm",
+    f"{OPEX_TOTAL}.ttm",
+    f"{OPERATING_INCOME}.ttm",
+]
+
+
+def ttm_figures_phrase(metric_names: set[str] | list[str]) -> str:
+    """"operating expense and operating income" for the headline TTM totals given.
+
+    Only the headline totals are named. Category and group TTM metrics are also tagged
+    by the warning, but listing them would bury the point.
+    """
+    labels = [TTM_FIGURE_LABELS[name] for name in _FIGURE_ORDER
+              if name in set(metric_names)]
+    if not labels:
+        return "trailing-twelve-month"
+    if len(labels) == 1:
+        return labels[0]
+    return f"{', '.join(labels[:-1])} and {labels[-1]}"
+
+
 def ttm_metrics_for_section(section: str) -> set[str]:
     """The TTM metrics whose totals include a given section.
 

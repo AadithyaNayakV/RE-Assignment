@@ -244,6 +244,7 @@ class MetricsBuilder:
         self.limitations: list[str] = []
         self.movements: dict[str, list[dict]] = {}
         self.window_one_offs: list[dict] = []
+        self.window_one_off_summary: dict = {}
         self.prior = prior_period(period)
         self.available = set(self.sheet.period_keys())
         self.ttm_window = trailing_window(
@@ -690,6 +691,7 @@ class MetricsBuilder:
             "top_decreases": [c for c in reversed(ranked) if c["change_abs"] < 0][:top_n],
             "possible_one_offs": self._possible_one_offs(),
             "ttm_window_one_offs": self.window_one_offs,
+            "ttm_window_one_offs_summary": self.window_one_off_summary,
         }
 
     # ---- one-off detection ---------------------------------------------
@@ -783,6 +785,7 @@ class MetricsBuilder:
         TTM metrics through the normal `affects` mechanism.
         """
         self.window_one_offs = []
+        self.window_one_off_summary = {}
         if not self.ttm_complete:
             return
 
@@ -823,20 +826,35 @@ class MetricsBuilder:
                 affects.add(f"{naming.opex_group(c['group_key'])}.ttm")
 
         section_phrase = " and ".join(_SECTION_PHRASES.get(s, s) for s in sections)
+        figures = naming.ttm_figures_phrase(affects)
+
+        # Both renderers read this instead of each working out its own phrasing, so the
+        # commentary and the report cannot describe the same finding differently.
+        self.window_one_off_summary = {
+            "count": len(self.window_one_offs),
+            "window_start": window[0],
+            "window_end": window[-1],
+            "sections": sections,
+            "section_phrase": section_phrase,
+            "affected_ttm_metrics": sorted(affects),
+            "affected_figures_phrase": figures,
+        }
+
         self.val.warn(
             "ttm_includes_possible_one_offs",
             f"The trailing-twelve-month window {window[0]}..{window[-1]} includes "
             f"{len(self.window_one_offs)} {section_phrase} item(s) that stand far above "
             f"the rest of the window and may be one-offs: {described}{extra}. The "
-            f"trailing-twelve-month figures that include these lines are therefore not a "
-            f"run rate. The workbook gives no reason for any of them; a reviewer must "
-            f"confirm or dismiss each.",
+            f"trailing-twelve-month {figures} figures include these lines and are "
+            f"therefore not a run rate. The workbook gives no reason for any of them; a "
+            f"reviewer must confirm or dismiss each.",
             tuple(sorted(affects)),
             items=[{"label": c["label"], "section": c["section"],
                     "period": c["period"], "value": c["current"],
                     "excess_over_average": c["excess_over_average"],
                     "row": c["row"]} for c in self.window_one_offs],
             sections=sections,
+            affected_figures_phrase=figures,
             window_start=window[0],
             window_end=window[-1],
         )

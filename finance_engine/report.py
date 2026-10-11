@@ -11,7 +11,9 @@ The report is a **draft for a human reviewer**, and says so. Rules it follows:
 
 from __future__ import annotations
 
-from finance_engine.formatting import Formatter, na_with_reason
+from finance_engine.formatting import (Formatter, na_with_reason,
+                                       one_off_multiple_reason,
+                                       significance_rule)
 
 NOT_AVAILABLE_NOTE = "_No supporting data for this section._"
 
@@ -360,15 +362,16 @@ def _movements(doc, fmt) -> str:
     significant = mv.get("significant") or []
     thresholds = mv.get("thresholds") or {}
     prior, period = doc.get("prior_period"), doc.get("period_label")
-    bar = (f"{fmt.percent(thresholds.get('significant_mom_pct'))} or "
-           f"{fmt.money(thresholds.get('significant_mom_abs'))}")
+    rule = significance_rule(thresholds, fmt.symbol)
     if not significant:
-        return ("## Significant movements\n\nNo line cleared the significance thresholds "
-                f"({bar}) between {prior} and {period}.")
+        return ("## Significant movements\n\nNo line met the significance test between "
+                f"{prior} and {period}. A line qualifies on {rule}.")
     lines = [
         "## Significant movements", "",
-        f"Lines that moved by at least {bar} between {prior} and {period}, largest "
-        f"absolute change first. {thresholds.get('rule', '')}", "",
+        f"Lines that met the significance test between {prior} and {period}, largest "
+        f"absolute change first — {len(significant)} of "
+        f"{mv.get('candidates_considered', 0)} lines that changed at all. A line "
+        f"qualifies on {rule}.", "",
         f"| Line | Section | Category | {prior} | {period} | Change | % change | "
         f"Direction |",
         "| --- | --- | --- | --: | --: | --: | --: | --- |",
@@ -403,15 +406,18 @@ def _ttm_one_offs(doc, fmt) -> str:
     items = (doc.get("movements") or {}).get("ttm_window_one_offs") or []
     if not items:
         return ""
+    summary = (doc.get("movements") or {}).get("ttm_window_one_offs_summary") or {}
     ttm = doc.get("ttm") or {}
     window = ttm.get("window") or []
     span = f"{window[0]} to {window[-1]}" if window else "the window"
+    figures = summary.get("affected_figures_phrase", "")
     lines = [
         "## Items inside the trailing-twelve-month window", "",
-        f"These sit inside {span} and stand far above the rest of the window, so every "
-        f"trailing-twelve-month figure above includes them. **A TTM total containing "
-        f"these is not a run rate.** As always this is a magnitude observation: the "
-        f"workbook records no reason for any of them.", "",
+        f"These {len(items)} item(s) sit inside {span} and stand far above the rest of "
+        f"the window. The trailing-twelve-month **{figures}** figures include them and "
+        f"are therefore **not a run rate**; the other trailing-twelve-month figures are "
+        f"unaffected. As always this is a magnitude observation: the workbook records no "
+        f"reason for any of them.", "",
         "| Line | Month | Amount | Average of the other months | Difference | "
         "Multiple |",
         "| --- | --- | --: | --: | --: | --: |",
@@ -427,10 +433,28 @@ def _ttm_one_offs(doc, fmt) -> str:
 
 
 def _one_offs(doc, fmt) -> str:
-    items = (doc.get("movements") or {}).get("possible_one_offs") or []
+    movements = doc.get("movements") or {}
+    items = movements.get("possible_one_offs") or []
+    window_items = movements.get("ttm_window_one_offs") or []
+    summary = movements.get("ttm_window_one_offs_summary") or {}
     if not items:
-        return ("## Possible one-offs\n\nNo expense line stood far enough above its own "
-                "trailing average to be flagged.")
+        lines = [
+            "## Possible one-offs", "",
+            f"No line in {doc.get('period_label')} itself stood far enough above its own "
+            f"trailing average to be flagged.",
+        ]
+        if window_items:
+            # Saying "none found" without this would contradict the window table above.
+            lines += [
+                "",
+                f"This is not the same as saying there are none in the period under "
+                f"review: the wider trailing-twelve-month window "
+                f"({summary.get('window_start')} to {summary.get('window_end')}) contains "
+                f"{len(window_items)}, listed under *Items inside the "
+                f"trailing-twelve-month window* above. None of them falls in "
+                f"{doc.get('period_label')}, which is why this month's scan is empty.",
+            ]
+        return "\n".join(lines)
     lines = [
         "## Possible one-offs", "",
         "Each line is large relative to its own trailing average. This is a **magnitude "
@@ -450,10 +474,16 @@ def _one_offs(doc, fmt) -> str:
 
 
 def _multiple(entry: dict) -> str:
-    """"3.4x", or n/a when the trailing average was zero or negative."""
+    """"3.4x", or n/a naming why the average gives no multiple.
+
+    The generic reason text is written for a month-over-month base ("prior period was
+    zero"), which is the wrong sentence when the denominator is an average over several
+    months.
+    """
     ratio = entry.get("multiple_of_average")
     if ratio is None:
-        return na_with_reason(entry.get("multiple_unavailable_reason"))
+        why = one_off_multiple_reason(entry.get("multiple_unavailable_reason"))
+        return f"n/a ({why})" if why else "n/a"
     return f"{ratio:,.1f}x"
 
 

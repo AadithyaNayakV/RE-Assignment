@@ -172,8 +172,11 @@ class TestTtmMetricsCarryTheWarning:
         warning = next(w for w in abc_metric_map["opex.total.ttm"]["warnings"]
                        if "trailing-twelve-month window" in w)
         assert "operating expense item(s)" in warning
-        assert "figures that include these lines" in warning
+        # Names the affected figures rather than claiming all of them.
+        assert ("trailing-twelve-month operating expense and operating income figures "
+                "include these lines") in warning
         assert "Every trailing-twelve-month figure" not in warning
+        assert "every trailing-twelve-month figure" not in warning
 
     def test_the_warning_names_the_items(self, abc_metric_map):
         warning = next(w for w in abc_metric_map["opex.total.ttm"]["warnings"]

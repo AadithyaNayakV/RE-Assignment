@@ -12,7 +12,8 @@ output passes the guard by construction rather than by luck.
 from __future__ import annotations
 
 from finance_engine.commentary.base import CommentaryProvider
-from finance_engine.formatting import Formatter, na_with_reason
+from finance_engine.formatting import (Formatter, na_with_reason,
+                                       one_off_multiple_reason, significance_rule)
 
 
 class DeterministicProvider(CommentaryProvider):
@@ -62,19 +63,25 @@ class DeterministicProvider(CommentaryProvider):
                 f"On a trailing twelve-month basis revenue was {fmt.metric(ttm)} and "
                 f"operating expenses were {fmt.metric(m.get('opex.total.ttm'))}.",
             ]
-            window_one_offs = (doc.get("movements") or {}).get("ttm_window_one_offs") or []
+            movements = doc.get("movements") or {}
+            window_one_offs = movements.get("ttm_window_one_offs") or []
+            summary = movements.get("ttm_window_one_offs_summary") or {}
             if window_one_offs:
+                # Every item is named. Saying "4 items" and then listing three invites
+                # the reader to wonder what was left out.
                 named = "; ".join(
                     f"{c['label']} {fmt.money(c['current'])} in {c['period']}"
-                    for c in window_one_offs[:3]
+                    for c in window_one_offs
                 )
+                figures = summary.get("affected_figures_phrase", "")
                 lines += [
                     "",
-                    f"**Those trailing-twelve-month figures are not a run rate.** The "
-                    f"window contains {len(window_one_offs)} item(s) that stand far "
-                    f"above the rest of it: {named}. They are included in every "
-                    f"trailing-twelve-month total above. The workbook gives no reason "
-                    f"for any of them.",
+                    f"**The trailing-twelve-month {figures} figures are not a run "
+                    f"rate.** The window contains {len(window_one_offs)} item(s) that "
+                    f"stand far above the rest of it: {named}. Those are the "
+                    f"trailing-twelve-month totals that include them; the other "
+                    f"trailing-twelve-month figures are unaffected. The workbook gives "
+                    f"no reason for any of them.",
                 ]
         else:
             window = (doc.get("ttm") or {}).get("window") or []
@@ -186,20 +193,21 @@ class DeterministicProvider(CommentaryProvider):
         return "\n".join(lines)
 
     def _movements(self, doc, m, fmt, period, prior) -> str:
-        mv = doc.get("movements") or {}
-        significant = mv.get("significant") or []
-        thresholds = mv.get("thresholds") or {}
-        bar = (f"{fmt.percent(thresholds.get('significant_mom_pct'))} or "
-               f"{fmt.money(thresholds.get('significant_mom_abs'))}")
+        movements = doc.get("movements") or {}
+        significant = movements.get("significant") or []
+        thresholds = movements.get("thresholds") or {}
+        rule = significance_rule(thresholds, fmt.symbol)
         if not significant:
-            return ("### What moved\n\nNo line cleared the significance thresholds "
-                    f"({bar} month-over-month) between {prior} and {period}.")
+            return ("### What moved\n\nNo line met the significance test between "
+                    f"{prior} and {period}. A line qualifies on {rule}.")
         lines = [
             "### What moved",
             "",
-            f"{len(significant)} line(s) moved by at least {bar} between {prior} and "
-            f"{period}. These are **confirmed figures from the workbook**; the workbook "
-            f"records no reason for any of them. Largest absolute changes:",
+            f"{len(significant)} line(s) met the significance test between {prior} and "
+            f"{period}, out of {movements.get('candidates_considered', 0)} that changed "
+            f"at all. A line qualifies on {rule}. These are **confirmed figures from the "
+            f"workbook**; the workbook records no reason for any of them. Largest "
+            f"absolute changes:",
             "",
         ]
         for c in significant[:5]:
@@ -223,10 +231,36 @@ class DeterministicProvider(CommentaryProvider):
         return "\n".join(lines)
 
     def _one_offs(self, doc, fmt) -> str:
-        items = (doc.get("movements") or {}).get("possible_one_offs") or []
+        movements = doc.get("movements") or {}
+        items = movements.get("possible_one_offs") or []
+        window_items = movements.get("ttm_window_one_offs") or []
+        summary = movements.get("ttm_window_one_offs_summary") or {}
+
         if not items:
-            return ("### Possible one-offs\n\nNo expense line stood far enough above its "
-                    "own trailing average to be flagged as a possible one-off.")
+            # "None found" alone would contradict the window scan, which looks at the
+            # same lines over twelve months rather than one.
+            lines = [
+                "### Possible one-offs",
+                "",
+                f"Nothing in {doc.get('period_label')} itself stood far enough above its "
+                f"own trailing average to be flagged.",
+            ]
+            if window_items:
+                named = "; ".join(
+                    f"{c['label']} {fmt.money(c['current'])} in {c['period']}"
+                    for c in window_items
+                )
+                lines += [
+                    "",
+                    f"The wider trailing-twelve-month window "
+                    f"({summary.get('window_start')} to {summary.get('window_end')}) does "
+                    f"contain {len(window_items)} such item(s), none of them in this "
+                    f"month: {named}. They affect the trailing-twelve-month "
+                    f"{summary.get('affected_figures_phrase', '')} figures rather than "
+                    f"this month's, and are listed in full in the report's "
+                    f"trailing-twelve-month window table.",
+                ]
+            return "\n".join(lines)
         lines = [
             "### Possible one-offs",
             "",
@@ -238,10 +272,13 @@ class DeterministicProvider(CommentaryProvider):
         ]
         for c in items[:5]:
             ratio = c.get("multiple_of_average")
-            comparison = (
-                f"({ratio:,.1f}x)" if ratio is not None
-                else "(no comparable spend in the trailing window, so no multiple)"
-            )
+            if ratio is not None:
+                comparison = f"({ratio:,.1f}x)"
+            else:
+                # Same reason text as the report's Multiple column, so the two cannot
+                # describe the same entry differently.
+                why = one_off_multiple_reason(c.get("multiple_unavailable_reason"))
+                comparison = f"(no multiple: {why})" if why else "(no multiple)"
             lines.append(
                 f"- **{c['label']}** at {fmt.money(c['current'])} against a trailing "
                 f"average of {fmt.money(c['comparison_average'])} {comparison}."

@@ -251,6 +251,9 @@ def collect_allowed_values(doc: dict) -> dict[str, set[float]]:
             add(STRUCTURAL_BUCKET, row.get("row"))
 
     movements = doc.get("movements") or {}
+    add(STRUCTURAL_BUCKET, movements.get("candidates_considered"))
+    add(STRUCTURAL_BUCKET, (movements.get("ttm_window_one_offs_summary") or {})
+        .get("count"))
     for key in ("significant", "top_increases", "top_decreases",
                 "possible_one_offs", "ttm_window_one_offs"):
         for entry in movements.get(key, []):
@@ -263,6 +266,7 @@ def collect_allowed_values(doc: dict) -> dict[str, set[float]]:
     thresholds = movements.get("thresholds") or {}
     add(PERCENT_BUCKET, thresholds.get("significant_mom_pct"))
     add(CURRENCY_BUCKET, thresholds.get("significant_mom_abs"))
+    add(CURRENCY_BUCKET, thresholds.get("significant_mom_min_abs"))
 
     recon = doc.get("reconciliation") or {}
     add(CURRENCY_BUCKET, recon.get("tolerance_abs"))
