@@ -1,0 +1,475 @@
+{
+  "note": "SYNTHETIC test data. Expected values computed by scripts/generate_synthetic.py without using finance_engine. Never evidence about a real client.",
+  "client_id": "company_b_revenue_decline",
+  "company_name": "Company B (SYNTHETIC)",
+  "scenario": "revenue declining for twelve months",
+  "periods": [
+    "2025-01",
+    "2025-02",
+    "2025-03",
+    "2025-04",
+    "2025-05",
+    "2025-06",
+    "2025-07",
+    "2025-08",
+    "2025-09",
+    "2025-10",
+    "2025-11",
+    "2025-12",
+    "2026-01",
+    "2026-02",
+    "2026-03",
+    "2026-04",
+    "2026-05",
+    "2026-06"
+  ],
+  "period_count": 18,
+  "reporting_period": "2026-06",
+  "prior_period": "2026-05",
+  "layout": {
+    "sheet_name": "Income Statement",
+    "header_row": 5,
+    "section_label_column": "A",
+    "item_label_column": "B",
+    "first_data_column": "C",
+    "date_order": "newest_first"
+  },
+  "ttm": {
+    "window": [
+      "2025-07",
+      "2025-08",
+      "2025-09",
+      "2025-10",
+      "2025-11",
+      "2025-12",
+      "2026-01",
+      "2026-02",
+      "2026-03",
+      "2026-04",
+      "2026-05",
+      "2026-06"
+    ],
+    "complete": true,
+    "totals": {
+      "total_revenue": 2082900,
+      "total_cogs": 507720.0,
+      "total_opex": 1262400.0
+    }
+  },
+  "month_over_month": {
+    "total_revenue": {
+      "abs": -7950,
+      "pct": -5.769231,
+      "reason": null
+    },
+    "total_opex": {
+      "abs": -200.0,
+      "pct": -0.191755,
+      "reason": null
+    },
+    "gross_profit": {
+      "abs": -7890.0,
+      "pct": -8.239348,
+      "reason": null
+    }
+  },
+  "per_period": {
+    "2025-01": {
+      "total_revenue": 211000,
+      "total_cogs": 43000.0,
+      "gross_profit": 168000.0,
+      "total_opex": 107500.0,
+      "operating_income": 60500.0,
+      "gross_margin_pct": 79.620853,
+      "revenue_by_stream": {
+        "Licence Revenue": 185000,
+        "Maintenance Revenue": 26000
+      },
+      "opex_by_line": {
+        "Rent": 9000.0,
+        "Marketing/Advertising": 14000,
+        "General Expenses": 2400.0,
+        "Engineering - Payroll": 76000.0,
+        "Engineering - Payroll Taxes": 6100.0
+      },
+      "group_subtotals": {
+        "Engineering Payroll": 82100.0
+      }
+    },
+    "2025-02": {
+      "total_revenue": 212050,
+      "total_cogs": 42940.0,
+      "gross_profit": 169110.0,
+      "total_opex": 107300.0,
+      "operating_income": 61810.0,
+      "gross_margin_pct": 79.750059,
+      "revenue_by_stream": {
+        "Licence Revenue": 186200,
+        "Maintenance Revenue": 25850
+      },
+      "opex_by_line": {
+        "Rent": 9000.0,
+        "Marketing/Advertising": 13800,
+        "General Expenses": 2400.0,
+        "Engineering - Payroll": 76000.0,
+        "Engineering - Payroll Taxes": 6100.0
+      },
+      "group_subtotals": {
+        "Engineering Payroll": 82100.0
+      }
+    },
+    "2025-03": {
+      "total_revenue": 213100,
+      "total_cogs": 42880.0,
+      "gross_profit": 170220.0,
+      "total_opex": 107100.0,
+      "operating_income": 63120.0,
+      "gross_margin_pct": 79.877992,
+      "revenue_by_stream": {
+        "Licence Revenue": 187400,
+        "Maintenance Revenue": 25700
+      },
+      "opex_by_line": {
+        "Rent": 9000.0,
+        "Marketing/Advertising": 13600,
+        "General Expenses": 2400.0,
+        "Engineering - Payroll": 76000.0,
+        "Engineering - Payroll Taxes": 6100.0
+      },
+      "group_subtotals": {
+        "Engineering Payroll": 82100.0
+      }
+    },
+    "2025-04": {
+      "total_revenue": 214150,
+      "total_cogs": 42820.0,
+      "gross_profit": 171330.0,
+      "total_opex": 106900.0,
+      "operating_income": 64430.0,
+      "gross_margin_pct": 80.00467,
+      "revenue_by_stream": {
+        "Licence Revenue": 188600,
+        "Maintenance Revenue": 25550
+      },
+      "opex_by_line": {
+        "Rent": 9000.0,
+        "Marketing/Advertising": 13400,
+        "General Expenses": 2400.0,
+        "Engineering - Payroll": 76000.0,
+        "Engineering - Payroll Taxes": 6100.0
+      },
+      "group_subtotals": {
+        "Engineering Payroll": 82100.0
+      }
+    },
+    "2025-05": {
+      "total_revenue": 215200,
+      "total_cogs": 42760.0,
+      "gross_profit": 172440.0,
+      "total_opex": 106700.0,
+      "operating_income": 65740.0,
+      "gross_margin_pct": 80.130112,
+      "revenue_by_stream": {
+        "Licence Revenue": 189800,
+        "Maintenance Revenue": 25400
+      },
+      "opex_by_line": {
+        "Rent": 9000.0,
+        "Marketing/Advertising": 13200,
+        "General Expenses": 2400.0,
+        "Engineering - Payroll": 76000.0,
+        "Engineering - Payroll Taxes": 6100.0
+      },
+      "group_subtotals": {
+        "Engineering Payroll": 82100.0
+      }
+    },
+    "2025-06": {
+      "total_revenue": 216250,
+      "total_cogs": 42700.0,
+      "gross_profit": 173550.0,
+      "total_opex": 106500.0,
+      "operating_income": 67050.0,
+      "gross_margin_pct": 80.254335,
+      "revenue_by_stream": {
+        "Licence Revenue": 191000,
+        "Maintenance Revenue": 25250
+      },
+      "opex_by_line": {
+        "Rent": 9000.0,
+        "Marketing/Advertising": 13000,
+        "General Expenses": 2400.0,
+        "Engineering - Payroll": 76000.0,
+        "Engineering - Payroll Taxes": 6100.0
+      },
+      "group_subtotals": {
+        "Engineering Payroll": 82100.0
+      }
+    },
+    "2025-07": {
+      "total_revenue": 217300,
+      "total_cogs": 42640.0,
+      "gross_profit": 174660.0,
+      "total_opex": 106300.0,
+      "operating_income": 68360.0,
+      "gross_margin_pct": 80.377358,
+      "revenue_by_stream": {
+        "Licence Revenue": 192200,
+        "Maintenance Revenue": 25100
+      },
+      "opex_by_line": {
+        "Rent": 9000.0,
+        "Marketing/Advertising": 12800,
+        "General Expenses": 2400.0,
+        "Engineering - Payroll": 76000.0,
+        "Engineering - Payroll Taxes": 6100.0
+      },
+      "group_subtotals": {
+        "Engineering Payroll": 82100.0
+      }
+    },
+    "2025-08": {
+      "total_revenue": 209350,
+      "total_cogs": 42580.0,
+      "gross_profit": 166770.0,
+      "total_opex": 106100.0,
+      "operating_income": 60670.0,
+      "gross_margin_pct": 79.660855,
+      "revenue_by_stream": {
+        "Licence Revenue": 184400,
+        "Maintenance Revenue": 24950
+      },
+      "opex_by_line": {
+        "Rent": 9000.0,
+        "Marketing/Advertising": 12600,
+        "General Expenses": 2400.0,
+        "Engineering - Payroll": 76000.0,
+        "Engineering - Payroll Taxes": 6100.0
+      },
+      "group_subtotals": {
+        "Engineering Payroll": 82100.0
+      }
+    },
+    "2025-09": {
+      "total_revenue": 201400,
+      "total_cogs": 42520.0,
+      "gross_profit": 158880.0,
+      "total_opex": 105900.0,
+      "operating_income": 52980.0,
+      "gross_margin_pct": 78.887786,
+      "revenue_by_stream": {
+        "Licence Revenue": 176600,
+        "Maintenance Revenue": 24800
+      },
+      "opex_by_line": {
+        "Rent": 9000.0,
+        "Marketing/Advertising": 12400,
+        "General Expenses": 2400.0,
+        "Engineering - Payroll": 76000.0,
+        "Engineering - Payroll Taxes": 6100.0
+      },
+      "group_subtotals": {
+        "Engineering Payroll": 82100.0
+      }
+    },
+    "2025-10": {
+      "total_revenue": 193450,
+      "total_cogs": 42460.0,
+      "gross_profit": 150990.0,
+      "total_opex": 105700.0,
+      "operating_income": 45290.0,
+      "gross_margin_pct": 78.051176,
+      "revenue_by_stream": {
+        "Licence Revenue": 168800,
+        "Maintenance Revenue": 24650
+      },
+      "opex_by_line": {
+        "Rent": 9000.0,
+        "Marketing/Advertising": 12200,
+        "General Expenses": 2400.0,
+        "Engineering - Payroll": 76000.0,
+        "Engineering - Payroll Taxes": 6100.0
+      },
+      "group_subtotals": {
+        "Engineering Payroll": 82100.0
+      }
+    },
+    "2025-11": {
+      "total_revenue": 185500,
+      "total_cogs": 42400.0,
+      "gross_profit": 143100.0,
+      "total_opex": 105500.0,
+      "operating_income": 37600.0,
+      "gross_margin_pct": 77.142857,
+      "revenue_by_stream": {
+        "Licence Revenue": 161000,
+        "Maintenance Revenue": 24500
+      },
+      "opex_by_line": {
+        "Rent": 9000.0,
+        "Marketing/Advertising": 12000,
+        "General Expenses": 2400.0,
+        "Engineering - Payroll": 76000.0,
+        "Engineering - Payroll Taxes": 6100.0
+      },
+      "group_subtotals": {
+        "Engineering Payroll": 82100.0
+      }
+    },
+    "2025-12": {
+      "total_revenue": 177550,
+      "total_cogs": 42340.0,
+      "gross_profit": 135210.0,
+      "total_opex": 105300.0,
+      "operating_income": 29910.0,
+      "gross_margin_pct": 76.153196,
+      "revenue_by_stream": {
+        "Licence Revenue": 153200,
+        "Maintenance Revenue": 24350
+      },
+      "opex_by_line": {
+        "Rent": 9000.0,
+        "Marketing/Advertising": 11800,
+        "General Expenses": 2400.0,
+        "Engineering - Payroll": 76000.0,
+        "Engineering - Payroll Taxes": 6100.0
+      },
+      "group_subtotals": {
+        "Engineering Payroll": 82100.0
+      }
+    },
+    "2026-01": {
+      "total_revenue": 169600,
+      "total_cogs": 42280.0,
+      "gross_profit": 127320.0,
+      "total_opex": 105100.0,
+      "operating_income": 22220.0,
+      "gross_margin_pct": 75.070755,
+      "revenue_by_stream": {
+        "Licence Revenue": 145400,
+        "Maintenance Revenue": 24200
+      },
+      "opex_by_line": {
+        "Rent": 9000.0,
+        "Marketing/Advertising": 11600,
+        "General Expenses": 2400.0,
+        "Engineering - Payroll": 76000.0,
+        "Engineering - Payroll Taxes": 6100.0
+      },
+      "group_subtotals": {
+        "Engineering Payroll": 82100.0
+      }
+    },
+    "2026-02": {
+      "total_revenue": 161650,
+      "total_cogs": 42220.0,
+      "gross_profit": 119430.0,
+      "total_opex": 104900.0,
+      "operating_income": 14530.0,
+      "gross_margin_pct": 73.881843,
+      "revenue_by_stream": {
+        "Licence Revenue": 137600,
+        "Maintenance Revenue": 24050
+      },
+      "opex_by_line": {
+        "Rent": 9000.0,
+        "Marketing/Advertising": 11400,
+        "General Expenses": 2400.0,
+        "Engineering - Payroll": 76000.0,
+        "Engineering - Payroll Taxes": 6100.0
+      },
+      "group_subtotals": {
+        "Engineering Payroll": 82100.0
+      }
+    },
+    "2026-03": {
+      "total_revenue": 153700,
+      "total_cogs": 42160.0,
+      "gross_profit": 111540.0,
+      "total_opex": 104700.0,
+      "operating_income": 6840.0,
+      "gross_margin_pct": 72.569941,
+      "revenue_by_stream": {
+        "Licence Revenue": 129800,
+        "Maintenance Revenue": 23900
+      },
+      "opex_by_line": {
+        "Rent": 9000.0,
+        "Marketing/Advertising": 11200,
+        "General Expenses": 2400.0,
+        "Engineering - Payroll": 76000.0,
+        "Engineering - Payroll Taxes": 6100.0
+      },
+      "group_subtotals": {
+        "Engineering Payroll": 82100.0
+      }
+    },
+    "2026-04": {
+      "total_revenue": 145750,
+      "total_cogs": 42100.0,
+      "gross_profit": 103650.0,
+      "total_opex": 104500.0,
+      "operating_income": -850.0,
+      "gross_margin_pct": 71.114923,
+      "revenue_by_stream": {
+        "Licence Revenue": 122000,
+        "Maintenance Revenue": 23750
+      },
+      "opex_by_line": {
+        "Rent": 9000.0,
+        "Marketing/Advertising": 11000,
+        "General Expenses": 2400.0,
+        "Engineering - Payroll": 76000.0,
+        "Engineering - Payroll Taxes": 6100.0
+      },
+      "group_subtotals": {
+        "Engineering Payroll": 82100.0
+      }
+    },
+    "2026-05": {
+      "total_revenue": 137800,
+      "total_cogs": 42040.0,
+      "gross_profit": 95760.0,
+      "total_opex": 104300.0,
+      "operating_income": -8540.0,
+      "gross_margin_pct": 69.492017,
+      "revenue_by_stream": {
+        "Licence Revenue": 114200,
+        "Maintenance Revenue": 23600
+      },
+      "opex_by_line": {
+        "Rent": 9000.0,
+        "Marketing/Advertising": 10800,
+        "General Expenses": 2400.0,
+        "Engineering - Payroll": 76000.0,
+        "Engineering - Payroll Taxes": 6100.0
+      },
+      "group_subtotals": {
+        "Engineering Payroll": 82100.0
+      }
+    },
+    "2026-06": {
+      "total_revenue": 129850,
+      "total_cogs": 41980.0,
+      "gross_profit": 87870.0,
+      "total_opex": 104100.0,
+      "operating_income": -16230.0,
+      "gross_margin_pct": 67.670389,
+      "revenue_by_stream": {
+        "Licence Revenue": 106400,
+        "Maintenance Revenue": 23450
+      },
+      "opex_by_line": {
+        "Rent": 9000.0,
+        "Marketing/Advertising": 10600,
+        "General Expenses": 2400.0,
+        "Engineering - Payroll": 76000.0,
+        "Engineering - Payroll Taxes": 6100.0
+      },
+      "group_subtotals": {
+        "Engineering Payroll": 82100.0
+      }
+    }
+  },
+  "has_balance_sheet": false
+}

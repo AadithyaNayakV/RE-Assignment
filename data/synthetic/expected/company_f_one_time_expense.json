@@ -1,0 +1,493 @@
+{
+  "note": "SYNTHETIC test data. Expected values computed by scripts/generate_synthetic.py without using finance_engine. Never evidence about a real client.",
+  "client_id": "company_f_one_time_expense",
+  "company_name": "Company F (SYNTHETIC)",
+  "scenario": "one large settlement in a single month; oldest-first layout",
+  "periods": [
+    "2025-01",
+    "2025-02",
+    "2025-03",
+    "2025-04",
+    "2025-05",
+    "2025-06",
+    "2025-07",
+    "2025-08",
+    "2025-09",
+    "2025-10",
+    "2025-11",
+    "2025-12",
+    "2026-01",
+    "2026-02",
+    "2026-03",
+    "2026-04",
+    "2026-05",
+    "2026-06"
+  ],
+  "period_count": 18,
+  "reporting_period": "2026-06",
+  "prior_period": "2026-05",
+  "layout": {
+    "sheet_name": "Income Statement",
+    "header_row": 5,
+    "section_label_column": "A",
+    "item_label_column": "B",
+    "first_data_column": "C",
+    "date_order": "oldest_first"
+  },
+  "ttm": {
+    "window": [
+      "2025-07",
+      "2025-08",
+      "2025-09",
+      "2025-10",
+      "2025-11",
+      "2025-12",
+      "2026-01",
+      "2026-02",
+      "2026-03",
+      "2026-04",
+      "2026-05",
+      "2026-06"
+    ],
+    "complete": true,
+    "totals": {
+      "total_revenue": 2330400.0,
+      "total_cogs": 497400,
+      "total_opex": 1291050.0
+    }
+  },
+  "month_over_month": {
+    "total_revenue": {
+      "abs": 800.0,
+      "pct": 0.404449,
+      "reason": null
+    },
+    "total_opex": {
+      "abs": 45.0,
+      "pct": 0.053546,
+      "reason": null
+    },
+    "gross_profit": {
+      "abs": 500.0,
+      "pct": 0.322581,
+      "reason": null
+    }
+  },
+  "per_period": {
+    "2025-01": {
+      "total_revenue": 185000.0,
+      "total_cogs": 38000,
+      "gross_profit": 147000.0,
+      "total_opex": 83320.0,
+      "operating_income": 63680.0,
+      "gross_margin_pct": 79.459459,
+      "revenue_by_stream": {
+        "Consulting Revenue": 140000,
+        "Retainer Revenue": 45000.0
+      },
+      "opex_by_line": {
+        "Legal Settlement": 0.0,
+        "Rent": 6800.0,
+        "Software & SaaS": 5200.0,
+        "Travel": 2200,
+        "Delivery - Payroll": 64000.0,
+        "Delivery - Payroll Taxes": 5120.0
+      },
+      "group_subtotals": {
+        "Delivery Payroll": 69120.0
+      }
+    },
+    "2025-02": {
+      "total_revenue": 185800.0,
+      "total_cogs": 38300,
+      "gross_profit": 147500.0,
+      "total_opex": 83365.0,
+      "operating_income": 64135.0,
+      "gross_margin_pct": 79.386437,
+      "revenue_by_stream": {
+        "Consulting Revenue": 140800,
+        "Retainer Revenue": 45000.0
+      },
+      "opex_by_line": {
+        "Legal Settlement": 0.0,
+        "Rent": 6800.0,
+        "Software & SaaS": 5200.0,
+        "Travel": 2245,
+        "Delivery - Payroll": 64000.0,
+        "Delivery - Payroll Taxes": 5120.0
+      },
+      "group_subtotals": {
+        "Delivery Payroll": 69120.0
+      }
+    },
+    "2025-03": {
+      "total_revenue": 186600.0,
+      "total_cogs": 38600,
+      "gross_profit": 148000.0,
+      "total_opex": 83410.0,
+      "operating_income": 64590.0,
+      "gross_margin_pct": 79.314041,
+      "revenue_by_stream": {
+        "Consulting Revenue": 141600,
+        "Retainer Revenue": 45000.0
+      },
+      "opex_by_line": {
+        "Legal Settlement": 0.0,
+        "Rent": 6800.0,
+        "Software & SaaS": 5200.0,
+        "Travel": 2290,
+        "Delivery - Payroll": 64000.0,
+        "Delivery - Payroll Taxes": 5120.0
+      },
+      "group_subtotals": {
+        "Delivery Payroll": 69120.0
+      }
+    },
+    "2025-04": {
+      "total_revenue": 187400.0,
+      "total_cogs": 38900,
+      "gross_profit": 148500.0,
+      "total_opex": 83455.0,
+      "operating_income": 65045.0,
+      "gross_margin_pct": 79.242263,
+      "revenue_by_stream": {
+        "Consulting Revenue": 142400,
+        "Retainer Revenue": 45000.0
+      },
+      "opex_by_line": {
+        "Legal Settlement": 0.0,
+        "Rent": 6800.0,
+        "Software & SaaS": 5200.0,
+        "Travel": 2335,
+        "Delivery - Payroll": 64000.0,
+        "Delivery - Payroll Taxes": 5120.0
+      },
+      "group_subtotals": {
+        "Delivery Payroll": 69120.0
+      }
+    },
+    "2025-05": {
+      "total_revenue": 188200.0,
+      "total_cogs": 39200,
+      "gross_profit": 149000.0,
+      "total_opex": 83500.0,
+      "operating_income": 65500.0,
+      "gross_margin_pct": 79.171095,
+      "revenue_by_stream": {
+        "Consulting Revenue": 143200,
+        "Retainer Revenue": 45000.0
+      },
+      "opex_by_line": {
+        "Legal Settlement": 0.0,
+        "Rent": 6800.0,
+        "Software & SaaS": 5200.0,
+        "Travel": 2380,
+        "Delivery - Payroll": 64000.0,
+        "Delivery - Payroll Taxes": 5120.0
+      },
+      "group_subtotals": {
+        "Delivery Payroll": 69120.0
+      }
+    },
+    "2025-06": {
+      "total_revenue": 189000.0,
+      "total_cogs": 39500,
+      "gross_profit": 149500.0,
+      "total_opex": 83545.0,
+      "operating_income": 65955.0,
+      "gross_margin_pct": 79.100529,
+      "revenue_by_stream": {
+        "Consulting Revenue": 144000,
+        "Retainer Revenue": 45000.0
+      },
+      "opex_by_line": {
+        "Legal Settlement": 0.0,
+        "Rent": 6800.0,
+        "Software & SaaS": 5200.0,
+        "Travel": 2425,
+        "Delivery - Payroll": 64000.0,
+        "Delivery - Payroll Taxes": 5120.0
+      },
+      "group_subtotals": {
+        "Delivery Payroll": 69120.0
+      }
+    },
+    "2025-07": {
+      "total_revenue": 189800.0,
+      "total_cogs": 39800,
+      "gross_profit": 150000.0,
+      "total_opex": 83590.0,
+      "operating_income": 66410.0,
+      "gross_margin_pct": 79.030558,
+      "revenue_by_stream": {
+        "Consulting Revenue": 144800,
+        "Retainer Revenue": 45000.0
+      },
+      "opex_by_line": {
+        "Legal Settlement": 0.0,
+        "Rent": 6800.0,
+        "Software & SaaS": 5200.0,
+        "Travel": 2470,
+        "Delivery - Payroll": 64000.0,
+        "Delivery - Payroll Taxes": 5120.0
+      },
+      "group_subtotals": {
+        "Delivery Payroll": 69120.0
+      }
+    },
+    "2025-08": {
+      "total_revenue": 190600.0,
+      "total_cogs": 40100,
+      "gross_profit": 150500.0,
+      "total_opex": 83635.0,
+      "operating_income": 66865.0,
+      "gross_margin_pct": 78.961175,
+      "revenue_by_stream": {
+        "Consulting Revenue": 145600,
+        "Retainer Revenue": 45000.0
+      },
+      "opex_by_line": {
+        "Legal Settlement": 0.0,
+        "Rent": 6800.0,
+        "Software & SaaS": 5200.0,
+        "Travel": 2515,
+        "Delivery - Payroll": 64000.0,
+        "Delivery - Payroll Taxes": 5120.0
+      },
+      "group_subtotals": {
+        "Delivery Payroll": 69120.0
+      }
+    },
+    "2025-09": {
+      "total_revenue": 191400.0,
+      "total_cogs": 40400,
+      "gross_profit": 151000.0,
+      "total_opex": 83680.0,
+      "operating_income": 67320.0,
+      "gross_margin_pct": 78.892372,
+      "revenue_by_stream": {
+        "Consulting Revenue": 146400,
+        "Retainer Revenue": 45000.0
+      },
+      "opex_by_line": {
+        "Legal Settlement": 0.0,
+        "Rent": 6800.0,
+        "Software & SaaS": 5200.0,
+        "Travel": 2560,
+        "Delivery - Payroll": 64000.0,
+        "Delivery - Payroll Taxes": 5120.0
+      },
+      "group_subtotals": {
+        "Delivery Payroll": 69120.0
+      }
+    },
+    "2025-10": {
+      "total_revenue": 192200.0,
+      "total_cogs": 40700,
+      "gross_profit": 151500.0,
+      "total_opex": 83725.0,
+      "operating_income": 67775.0,
+      "gross_margin_pct": 78.824142,
+      "revenue_by_stream": {
+        "Consulting Revenue": 147200,
+        "Retainer Revenue": 45000.0
+      },
+      "opex_by_line": {
+        "Legal Settlement": 0.0,
+        "Rent": 6800.0,
+        "Software & SaaS": 5200.0,
+        "Travel": 2605,
+        "Delivery - Payroll": 64000.0,
+        "Delivery - Payroll Taxes": 5120.0
+      },
+      "group_subtotals": {
+        "Delivery Payroll": 69120.0
+      }
+    },
+    "2025-11": {
+      "total_revenue": 193000.0,
+      "total_cogs": 41000,
+      "gross_profit": 152000.0,
+      "total_opex": 368770.0,
+      "operating_income": -216770.0,
+      "gross_margin_pct": 78.756477,
+      "revenue_by_stream": {
+        "Consulting Revenue": 148000,
+        "Retainer Revenue": 45000.0
+      },
+      "opex_by_line": {
+        "Legal Settlement": 285000.0,
+        "Rent": 6800.0,
+        "Software & SaaS": 5200.0,
+        "Travel": 2650,
+        "Delivery - Payroll": 64000.0,
+        "Delivery - Payroll Taxes": 5120.0
+      },
+      "group_subtotals": {
+        "Delivery Payroll": 69120.0
+      }
+    },
+    "2025-12": {
+      "total_revenue": 193800.0,
+      "total_cogs": 41300,
+      "gross_profit": 152500.0,
+      "total_opex": 83815.0,
+      "operating_income": 68685.0,
+      "gross_margin_pct": 78.68937,
+      "revenue_by_stream": {
+        "Consulting Revenue": 148800,
+        "Retainer Revenue": 45000.0
+      },
+      "opex_by_line": {
+        "Legal Settlement": 0.0,
+        "Rent": 6800.0,
+        "Software & SaaS": 5200.0,
+        "Travel": 2695,
+        "Delivery - Payroll": 64000.0,
+        "Delivery - Payroll Taxes": 5120.0
+      },
+      "group_subtotals": {
+        "Delivery Payroll": 69120.0
+      }
+    },
+    "2026-01": {
+      "total_revenue": 194600.0,
+      "total_cogs": 41600,
+      "gross_profit": 153000.0,
+      "total_opex": 83860.0,
+      "operating_income": 69140.0,
+      "gross_margin_pct": 78.622816,
+      "revenue_by_stream": {
+        "Consulting Revenue": 149600,
+        "Retainer Revenue": 45000.0
+      },
+      "opex_by_line": {
+        "Legal Settlement": 0.0,
+        "Rent": 6800.0,
+        "Software & SaaS": 5200.0,
+        "Travel": 2740,
+        "Delivery - Payroll": 64000.0,
+        "Delivery - Payroll Taxes": 5120.0
+      },
+      "group_subtotals": {
+        "Delivery Payroll": 69120.0
+      }
+    },
+    "2026-02": {
+      "total_revenue": 195400.0,
+      "total_cogs": 41900,
+      "gross_profit": 153500.0,
+      "total_opex": 83905.0,
+      "operating_income": 69595.0,
+      "gross_margin_pct": 78.556807,
+      "revenue_by_stream": {
+        "Consulting Revenue": 150400,
+        "Retainer Revenue": 45000.0
+      },
+      "opex_by_line": {
+        "Legal Settlement": 0.0,
+        "Rent": 6800.0,
+        "Software & SaaS": 5200.0,
+        "Travel": 2785,
+        "Delivery - Payroll": 64000.0,
+        "Delivery - Payroll Taxes": 5120.0
+      },
+      "group_subtotals": {
+        "Delivery Payroll": 69120.0
+      }
+    },
+    "2026-03": {
+      "total_revenue": 196200.0,
+      "total_cogs": 42200,
+      "gross_profit": 154000.0,
+      "total_opex": 83950.0,
+      "operating_income": 70050.0,
+      "gross_margin_pct": 78.491335,
+      "revenue_by_stream": {
+        "Consulting Revenue": 151200,
+        "Retainer Revenue": 45000.0
+      },
+      "opex_by_line": {
+        "Legal Settlement": 0.0,
+        "Rent": 6800.0,
+        "Software & SaaS": 5200.0,
+        "Travel": 2830,
+        "Delivery - Payroll": 64000.0,
+        "Delivery - Payroll Taxes": 5120.0
+      },
+      "group_subtotals": {
+        "Delivery Payroll": 69120.0
+      }
+    },
+    "2026-04": {
+      "total_revenue": 197000.0,
+      "total_cogs": 42500,
+      "gross_profit": 154500.0,
+      "total_opex": 83995.0,
+      "operating_income": 70505.0,
+      "gross_margin_pct": 78.426396,
+      "revenue_by_stream": {
+        "Consulting Revenue": 152000,
+        "Retainer Revenue": 45000.0
+      },
+      "opex_by_line": {
+        "Legal Settlement": 0.0,
+        "Rent": 6800.0,
+        "Software & SaaS": 5200.0,
+        "Travel": 2875,
+        "Delivery - Payroll": 64000.0,
+        "Delivery - Payroll Taxes": 5120.0
+      },
+      "group_subtotals": {
+        "Delivery Payroll": 69120.0
+      }
+    },
+    "2026-05": {
+      "total_revenue": 197800.0,
+      "total_cogs": 42800,
+      "gross_profit": 155000.0,
+      "total_opex": 84040.0,
+      "operating_income": 70960.0,
+      "gross_margin_pct": 78.361982,
+      "revenue_by_stream": {
+        "Consulting Revenue": 152800,
+        "Retainer Revenue": 45000.0
+      },
+      "opex_by_line": {
+        "Legal Settlement": 0.0,
+        "Rent": 6800.0,
+        "Software & SaaS": 5200.0,
+        "Travel": 2920,
+        "Delivery - Payroll": 64000.0,
+        "Delivery - Payroll Taxes": 5120.0
+      },
+      "group_subtotals": {
+        "Delivery Payroll": 69120.0
+      }
+    },
+    "2026-06": {
+      "total_revenue": 198600.0,
+      "total_cogs": 43100,
+      "gross_profit": 155500.0,
+      "total_opex": 84085.0,
+      "operating_income": 71415.0,
+      "gross_margin_pct": 78.298087,
+      "revenue_by_stream": {
+        "Consulting Revenue": 153600,
+        "Retainer Revenue": 45000.0
+      },
+      "opex_by_line": {
+        "Legal Settlement": 0.0,
+        "Rent": 6800.0,
+        "Software & SaaS": 5200.0,
+        "Travel": 2965,
+        "Delivery - Payroll": 64000.0,
+        "Delivery - Payroll Taxes": 5120.0
+      },
+      "group_subtotals": {
+        "Delivery Payroll": 69120.0
+      }
+    }
+  },
+  "has_balance_sheet": false
+}

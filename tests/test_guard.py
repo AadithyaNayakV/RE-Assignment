@@ -1,0 +1,230 @@
+"""The number guard: accepts figures that trace to metrics.json, rejects the rest.
+
+The guard is the control that makes a language-model commentary provider safe to add
+later, so these tests also pin down its *limits*. The false-pass rates measured in
+`TestMeasuredLimits` are quoted in docs/metrics_schema.md; if they move, the
+documentation is wrong and the tests should fail.
+"""
+
+from __future__ import annotations
+
+import random
+
+import pytest
+
+from finance_engine.guard import (CURRENCY_BUCKET, PERCENT_BUCKET, STRUCTURAL_BUCKET,
+                                  NumberGuard, _NUMBER, _parse_match, check_commentary,
+                                  collect_allowed_values)
+
+
+@pytest.fixture(scope="module")
+def guard(abc_metrics) -> NumberGuard:
+    return NumberGuard(abc_metrics)
+
+
+class TestNumberParsing:
+    @pytest.mark.parametrize("text,expected", [
+        ("195898.16", 195898.16),
+        ("$195,898.16", 195898.16),
+        ("195,898.16", 195898.16),
+        ("-$330,756.08", -330756.08),
+        ("(1,234.56)", -1234.56),           # accounting negative
+        ("70.2%", 70.2),
+        ("+158.7%", 158.7),
+        ("$2.3M", 2_300_000.0),
+        ("$196k", 196_000.0),
+        ("2.3 million", 2_300_000.0),
+    ])
+    def test_values_are_parsed(self, text, expected):
+        match = _NUMBER.search(text)
+        value, _, _ = _parse_match(match)
+        assert value == pytest.approx(expected)
+
+    def test_brackets_with_an_explicit_plus_stay_positive(self):
+        """"(+158.7%)" is a positive figure in brackets, not an accounting negative."""
+        value, _, kind = _parse_match(_NUMBER.search("(+158.7%)"))
+        assert value == pytest.approx(158.7)
+        assert kind == PERCENT_BUCKET
+
+    def test_precision_sets_the_tolerance(self):
+        # A number written to one decimal is held to half of that last digit.
+        _, tol_one_dp, _ = _parse_match(_NUMBER.search("70.2%"))
+        _, tol_two_dp, _ = _parse_match(_NUMBER.search("70.15%"))
+        assert tol_one_dp == pytest.approx(0.05)
+        assert tol_two_dp < tol_one_dp
+
+    def test_a_magnitude_suffix_widens_the_tolerance(self):
+        _, tol, _ = _parse_match(_NUMBER.search("$2.3M"))
+        assert tol == pytest.approx(50_000.0)   # half of 0.1M
+
+    @pytest.mark.parametrize("text,kind", [
+        ("70.2%", PERCENT_BUCKET),
+        ("$195,898.16", CURRENCY_BUCKET),
+        ("195,898.16", CURRENCY_BUCKET),        # thousands separator implies money
+        ("$2.3M", CURRENCY_BUCKET),
+        ("18", "any"),
+    ])
+    def test_quantity_kind_is_inferred_from_how_it_was_written(self, text, kind):
+        _, _, parsed_kind = _parse_match(_NUMBER.search(text))
+        assert parsed_kind == kind
+
+
+class TestAllowedValues:
+    def test_buckets_are_populated_from_the_document(self, abc_metrics):
+        buckets = collect_allowed_values(abc_metrics)
+        assert len(buckets[CURRENCY_BUCKET]) > 100
+        assert len(buckets[PERCENT_BUCKET]) > 10
+        assert len(buckets[STRUCTURAL_BUCKET]) > 5
+
+    def test_both_signs_are_allowed_for_prose(self, abc_metrics):
+        # Commentary writes "fell 6.0%" where the metric is -5.98.
+        buckets = collect_allowed_values(abc_metrics)
+        assert any(abs(v - 5.9768383116641) < 0.001 for v in buckets[PERCENT_BUCKET])
+        assert any(abs(v + 5.9768383116641) < 0.001 for v in buckets[PERCENT_BUCKET])
+
+    def test_an_empty_document_allows_no_financial_values(self):
+        """An empty document supports no amount and no percentage.
+
+        The structural bucket is not empty, because "0 metrics" and "0 warnings" are
+        true statements about an empty document. What matters is that no currency or
+        percentage figure can be sourced from it.
+        """
+        buckets = collect_allowed_values({})
+        assert buckets[CURRENCY_BUCKET] == set()
+        assert buckets[PERCENT_BUCKET] == set()
+        assert buckets[STRUCTURAL_BUCKET] == {0.0}
+
+    def test_every_number_in_a_text_is_rejected_when_nothing_is_allowed(self):
+        result = check_commentary("Revenue was $100.00.", {})
+        assert not result.passed
+        assert result.checked == 1
+
+
+class TestAcceptsSupportedFigures:
+    def test_exact_metric_values_pass(self, guard):
+        text = ("Total revenue was $195,898.16 and gross profit $137,425.72, "
+                "with operating income of -$330,756.08.")
+        result = guard.check(text)
+        assert result.passed, result.summary()
+        assert result.checked == 3
+
+    def test_rounded_percentages_pass(self, guard):
+        # Stored as 70.1516...; written to one decimal.
+        result = guard.check("Gross margin was 70.2%.")
+        assert result.passed, result.summary()
+
+    def test_magnitude_shorthand_passes(self, guard):
+        # TTM revenue is 2,303,975.51.
+        assert guard.check("Trailing revenue is about $2.3M.").passed
+
+    def test_source_row_values_pass(self, guard):
+        # Usage Fees for Jun 2026, a traced source row rather than a headline metric.
+        assert guard.check("Usage Fees contributed $166,781.50.").passed
+
+    def test_structural_numbers_pass(self, guard):
+        assert guard.check("The source covers 18 months across 144 checks.").passed
+
+    def test_row_and_date_references_are_not_treated_as_claims(self, guard):
+        text = ("See row 15 and rows 29-46 for detail; the period is 2026-06, "
+                "covering Jun 2026 and 30 Jun 2026.")
+        result = guard.check(text)
+        assert result.passed, result.summary()
+
+    def test_the_deterministic_provider_passes_its_own_output(self, abc_metrics):
+        from finance_engine.commentary.deterministic import DeterministicProvider
+        text = DeterministicProvider().generate(abc_metrics)
+        result = check_commentary(text, abc_metrics)
+        assert result.passed, result.summary()
+        assert result.checked > 20, "the commentary should contain real figures"
+
+
+class TestRejectsInventedFigures:
+    def test_an_invented_currency_amount_is_rejected(self, guard):
+        result = guard.check("Marketing spend was $88,500.00 last month.")
+        assert not result.passed
+        assert len(result.unsupported) == 1
+        assert result.unsupported[0].value == pytest.approx(88500.0)
+
+    def test_an_invented_large_amount_is_rejected(self, guard):
+        result = guard.check("The pipeline is worth $1,250,000.")
+        assert not result.passed
+
+    def test_a_plausible_but_wrong_total_is_rejected(self, guard):
+        # One digit different from the real $195,898.16.
+        result = guard.check("Total revenue was $195,998.16.")
+        assert not result.passed
+
+    def test_the_rejection_names_the_closest_supported_value(self, guard):
+        result = guard.check("Marketing spend was $88,500.00.")
+        finding = result.unsupported[0]
+        assert finding.closest_allowed is not None
+        assert finding.closest_difference > finding.tolerance
+        assert "88,500.00" in result.summary()
+        assert "closest supported value" in result.summary()
+
+    def test_a_mix_reports_only_the_unsupported_ones(self, guard):
+        result = guard.check("Revenue was $195,898.16 but forecast is $450,000.00.")
+        assert not result.passed
+        assert result.checked == 2
+        assert len(result.supported) == 1
+        assert len(result.unsupported) == 1
+
+    def test_a_currency_figure_cannot_be_rescued_by_a_percentage(self, guard):
+        # 70.15 exists as a percentage; "$70.15" must not borrow it.
+        result = guard.check("The fee was $70.15.")
+        assert not result.passed
+
+
+class TestProviderAgnostic:
+    def test_the_guard_does_not_inspect_who_wrote_the_text(self, abc_metrics):
+        """Identical text must get an identical verdict regardless of origin."""
+        text = "Revenue was $195,898.16 and the forecast is $999,999.00."
+        first = check_commentary(text, abc_metrics)
+        second = NumberGuard(abc_metrics).check(text)
+        assert first.passed == second.passed is False
+        assert len(first.unsupported) == len(second.unsupported) == 1
+
+    def test_result_serialises_for_the_report(self, guard):
+        payload = guard.check("Revenue was $195,898.16.").to_dict()
+        assert payload["passed"] is True
+        assert payload["numbers_checked"] == 1
+        assert "notes" in payload and payload["notes"]
+
+    def test_limits_are_stated_in_the_result(self, guard):
+        notes = " ".join(guard.check("Revenue was $195,898.16.").notes).lower()
+        assert "sign" in notes          # magnitudes compared, not direction
+        assert "right sentence" in notes
+
+
+class TestMeasuredLimits:
+    """Quantified false-pass rates. These are documented, not hidden.
+
+    The guard is strong on precisely written currency and weak on loosely rounded
+    figures, because hundreds of legitimate percentages densely cover 0-100.
+    """
+
+    def test_exact_currency_is_effectively_airtight(self, guard):
+        rng = random.Random(7)
+        trials = 2000
+        passes = sum(
+            1 for _ in range(trials)
+            if guard.check(f"${rng.randrange(0, 50_000_000) / 100:,.2f}").passed
+        )
+        rate = passes / trials
+        assert rate < 0.01, f"false-pass rate for exact currency was {rate:.3f}"
+
+    def test_one_decimal_percentages_are_weakly_constrained(self, guard):
+        rng = random.Random(7)
+        trials = 2000
+        passes = sum(
+            1 for _ in range(trials)
+            if guard.check(f"{rng.randrange(0, 1001) / 10:.1f}%").passed
+        )
+        rate = passes / trials
+        # Documented as roughly 15%. Asserting a band, so a big change is noticed.
+        assert 0.05 < rate < 0.30, f"false-pass rate for 1dp percentages was {rate:.3f}"
+
+    def test_a_number_cannot_pass_outside_every_bucket(self, guard):
+        # Far from any real figure in the workbook.
+        assert not guard.check("$77,777,777.77").passed
+        assert not guard.check("$0.07").passed

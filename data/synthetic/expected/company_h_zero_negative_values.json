@@ -1,0 +1,529 @@
+{
+  "note": "SYNTHETIC test data. Expected values computed by scripts/generate_synthetic.py without using finance_engine. Never evidence about a real client.",
+  "client_id": "company_h_zero_negative_values",
+  "company_name": "Company H (SYNTHETIC)",
+  "scenario": "zeros, negative lines and zero-base percentage changes; labels in C/D, data from F",
+  "periods": [
+    "2025-01",
+    "2025-02",
+    "2025-03",
+    "2025-04",
+    "2025-05",
+    "2025-06",
+    "2025-07",
+    "2025-08",
+    "2025-09",
+    "2025-10",
+    "2025-11",
+    "2025-12",
+    "2026-01",
+    "2026-02",
+    "2026-03",
+    "2026-04",
+    "2026-05",
+    "2026-06"
+  ],
+  "period_count": 18,
+  "reporting_period": "2026-06",
+  "prior_period": "2026-05",
+  "layout": {
+    "sheet_name": "Profit and Loss",
+    "header_row": 7,
+    "section_label_column": "C",
+    "item_label_column": "D",
+    "first_data_column": "F",
+    "date_order": "newest_first"
+  },
+  "ttm": {
+    "window": [
+      "2025-07",
+      "2025-08",
+      "2025-09",
+      "2025-10",
+      "2025-11",
+      "2025-12",
+      "2026-01",
+      "2026-02",
+      "2026-03",
+      "2026-04",
+      "2026-05",
+      "2026-06"
+    ],
+    "complete": true,
+    "totals": {
+      "total_revenue": 1301600.0,
+      "total_cogs": 310680.0,
+      "total_opex": 696460.0
+    }
+  },
+  "month_over_month": {
+    "total_revenue": {
+      "abs": -300.0,
+      "pct": -0.262352,
+      "reason": null
+    },
+    "total_opex": {
+      "abs": 2650.0,
+      "pct": 4.385965,
+      "reason": null
+    },
+    "gross_profit": {
+      "abs": -360.0,
+      "pct": -0.40821,
+      "reason": null
+    }
+  },
+  "per_period": {
+    "2025-01": {
+      "total_revenue": 104000.0,
+      "total_cogs": 25200.0,
+      "gross_profit": 78800.0,
+      "total_opex": 53770.0,
+      "operating_income": 25030.0,
+      "gross_margin_pct": 75.769231,
+      "revenue_by_stream": {
+        "Core Revenue": 95000,
+        "New Product Revenue": 0.0,
+        "Legacy Revenue": 9000,
+        "Refunds and Credits": 0.0
+      },
+      "opex_by_line": {
+        "Bad Debts": 1500.0,
+        "Rent": 5400.0,
+        "Marketing/Advertising": 0.0,
+        "Interest Income": -650.0,
+        "Product - Payroll": 44000.0,
+        "Product - Payroll Taxes": 3520.0
+      },
+      "group_subtotals": {
+        "Product Payroll": 47520.0
+      }
+    },
+    "2025-02": {
+      "total_revenue": 102900.0,
+      "total_cogs": 25260.0,
+      "gross_profit": 77640.0,
+      "total_opex": 50770.0,
+      "operating_income": 26870.0,
+      "gross_margin_pct": 75.451895,
+      "revenue_by_stream": {
+        "Core Revenue": 95700,
+        "New Product Revenue": 0.0,
+        "Legacy Revenue": 8400,
+        "Refunds and Credits": -1200.0
+      },
+      "opex_by_line": {
+        "Bad Debts": -1500.0,
+        "Rent": 5400.0,
+        "Marketing/Advertising": 0.0,
+        "Interest Income": -650.0,
+        "Product - Payroll": 44000.0,
+        "Product - Payroll Taxes": 3520.0
+      },
+      "group_subtotals": {
+        "Product Payroll": 47520.0
+      }
+    },
+    "2025-03": {
+      "total_revenue": 104200.0,
+      "total_cogs": 25320.0,
+      "gross_profit": 78880.0,
+      "total_opex": 52270.0,
+      "operating_income": 26610.0,
+      "gross_margin_pct": 75.700576,
+      "revenue_by_stream": {
+        "Core Revenue": 96400,
+        "New Product Revenue": 0.0,
+        "Legacy Revenue": 7800,
+        "Refunds and Credits": 0.0
+      },
+      "opex_by_line": {
+        "Bad Debts": 0.0,
+        "Rent": 5400.0,
+        "Marketing/Advertising": 0.0,
+        "Interest Income": -650.0,
+        "Product - Payroll": 44000.0,
+        "Product - Payroll Taxes": 3520.0
+      },
+      "group_subtotals": {
+        "Product Payroll": 47520.0
+      }
+    },
+    "2025-04": {
+      "total_revenue": 100900.0,
+      "total_cogs": 25380.0,
+      "gross_profit": 75520.0,
+      "total_opex": 56470.0,
+      "operating_income": 19050.0,
+      "gross_margin_pct": 74.846383,
+      "revenue_by_stream": {
+        "Core Revenue": 97100,
+        "New Product Revenue": 0.0,
+        "Legacy Revenue": 7200,
+        "Refunds and Credits": -3400.0
+      },
+      "opex_by_line": {
+        "Bad Debts": 4200.0,
+        "Rent": 5400.0,
+        "Marketing/Advertising": 0.0,
+        "Interest Income": -650.0,
+        "Product - Payroll": 44000.0,
+        "Product - Payroll Taxes": 3520.0
+      },
+      "group_subtotals": {
+        "Product Payroll": 47520.0
+      }
+    },
+    "2025-05": {
+      "total_revenue": 104400.0,
+      "total_cogs": 25440.0,
+      "gross_profit": 78960.0,
+      "total_opex": 51450.0,
+      "operating_income": 27510.0,
+      "gross_margin_pct": 75.632184,
+      "revenue_by_stream": {
+        "Core Revenue": 97800,
+        "New Product Revenue": 0.0,
+        "Legacy Revenue": 6600,
+        "Refunds and Credits": 0.0
+      },
+      "opex_by_line": {
+        "Bad Debts": -820.0,
+        "Rent": 5400.0,
+        "Marketing/Advertising": 0.0,
+        "Interest Income": -650.0,
+        "Product - Payroll": 44000.0,
+        "Product - Payroll Taxes": 3520.0
+      },
+      "group_subtotals": {
+        "Product Payroll": 47520.0
+      }
+    },
+    "2025-06": {
+      "total_revenue": 104500.0,
+      "total_cogs": 25500.0,
+      "gross_profit": 79000.0,
+      "total_opex": 52270.0,
+      "operating_income": 26730.0,
+      "gross_margin_pct": 75.598086,
+      "revenue_by_stream": {
+        "Core Revenue": 98500,
+        "New Product Revenue": 0.0,
+        "Legacy Revenue": 6000,
+        "Refunds and Credits": 0.0
+      },
+      "opex_by_line": {
+        "Bad Debts": 0.0,
+        "Rent": 5400.0,
+        "Marketing/Advertising": 0.0,
+        "Interest Income": -650.0,
+        "Product - Payroll": 44000.0,
+        "Product - Payroll Taxes": 3520.0
+      },
+      "group_subtotals": {
+        "Product Payroll": 47520.0
+      }
+    },
+    "2025-07": {
+      "total_revenue": 103710.0,
+      "total_cogs": 25560.0,
+      "gross_profit": 78150.0,
+      "total_opex": 54870.0,
+      "operating_income": 23280.0,
+      "gross_margin_pct": 75.354353,
+      "revenue_by_stream": {
+        "Core Revenue": 99200,
+        "New Product Revenue": 0.0,
+        "Legacy Revenue": 5400,
+        "Refunds and Credits": -890.0
+      },
+      "opex_by_line": {
+        "Bad Debts": 2600.0,
+        "Rent": 5400.0,
+        "Marketing/Advertising": 0.0,
+        "Interest Income": -650.0,
+        "Product - Payroll": 44000.0,
+        "Product - Payroll Taxes": 3520.0
+      },
+      "group_subtotals": {
+        "Product Payroll": 47520.0
+      }
+    },
+    "2025-08": {
+      "total_revenue": 104700.0,
+      "total_cogs": 25620.0,
+      "gross_profit": 79080.0,
+      "total_opex": 52270.0,
+      "operating_income": 26810.0,
+      "gross_margin_pct": 75.530086,
+      "revenue_by_stream": {
+        "Core Revenue": 99900,
+        "New Product Revenue": 0.0,
+        "Legacy Revenue": 4800,
+        "Refunds and Credits": 0.0
+      },
+      "opex_by_line": {
+        "Bad Debts": 0.0,
+        "Rent": 5400.0,
+        "Marketing/Advertising": 0.0,
+        "Interest Income": -650.0,
+        "Product - Payroll": 44000.0,
+        "Product - Payroll Taxes": 3520.0
+      },
+      "group_subtotals": {
+        "Product Payroll": 47520.0
+      }
+    },
+    "2025-09": {
+      "total_revenue": 104800.0,
+      "total_cogs": 25680.0,
+      "gross_profit": 79120.0,
+      "total_opex": 51960.0,
+      "operating_income": 27160.0,
+      "gross_margin_pct": 75.496183,
+      "revenue_by_stream": {
+        "Core Revenue": 100600,
+        "New Product Revenue": 0.0,
+        "Legacy Revenue": 4200,
+        "Refunds and Credits": 0.0
+      },
+      "opex_by_line": {
+        "Bad Debts": -310.0,
+        "Rent": 5400.0,
+        "Marketing/Advertising": 0.0,
+        "Interest Income": -650.0,
+        "Product - Payroll": 44000.0,
+        "Product - Payroll Taxes": 3520.0
+      },
+      "group_subtotals": {
+        "Product Payroll": 47520.0
+      }
+    },
+    "2025-10": {
+      "total_revenue": 101100.0,
+      "total_cogs": 25740.0,
+      "gross_profit": 75360.0,
+      "total_opex": 57270.0,
+      "operating_income": 18090.0,
+      "gross_margin_pct": 74.540059,
+      "revenue_by_stream": {
+        "Core Revenue": 101300,
+        "New Product Revenue": 5000,
+        "Legacy Revenue": 0.0,
+        "Refunds and Credits": -5200.0
+      },
+      "opex_by_line": {
+        "Bad Debts": 0.0,
+        "Rent": 5400.0,
+        "Marketing/Advertising": 5000,
+        "Interest Income": -650.0,
+        "Product - Payroll": 44000.0,
+        "Product - Payroll Taxes": 3520.0
+      },
+      "group_subtotals": {
+        "Product Payroll": 47520.0
+      }
+    },
+    "2025-11": {
+      "total_revenue": 107450.0,
+      "total_cogs": 25800.0,
+      "gross_profit": 81650.0,
+      "total_opex": 59520.0,
+      "operating_income": 22130.0,
+      "gross_margin_pct": 75.988832,
+      "revenue_by_stream": {
+        "Core Revenue": 102000,
+        "New Product Revenue": 5450,
+        "Legacy Revenue": 0.0,
+        "Refunds and Credits": 0.0
+      },
+      "opex_by_line": {
+        "Bad Debts": 1800.0,
+        "Rent": 5400.0,
+        "Marketing/Advertising": 5450,
+        "Interest Income": -650.0,
+        "Product - Payroll": 44000.0,
+        "Product - Payroll Taxes": 3520.0
+      },
+      "group_subtotals": {
+        "Product Payroll": 47520.0
+      }
+    },
+    "2025-12": {
+      "total_revenue": 108600.0,
+      "total_cogs": 25860.0,
+      "gross_profit": 82740.0,
+      "total_opex": 57220.0,
+      "operating_income": 25520.0,
+      "gross_margin_pct": 76.187845,
+      "revenue_by_stream": {
+        "Core Revenue": 102700,
+        "New Product Revenue": 5900,
+        "Legacy Revenue": 0.0,
+        "Refunds and Credits": 0.0
+      },
+      "opex_by_line": {
+        "Bad Debts": -950.0,
+        "Rent": 5400.0,
+        "Marketing/Advertising": 5900,
+        "Interest Income": -650.0,
+        "Product - Payroll": 44000.0,
+        "Product - Payroll Taxes": 3520.0
+      },
+      "group_subtotals": {
+        "Product Payroll": 47520.0
+      }
+    },
+    "2026-01": {
+      "total_revenue": 108990.0,
+      "total_cogs": 25920.0,
+      "gross_profit": 83070.0,
+      "total_opex": 58620.0,
+      "operating_income": 24450.0,
+      "gross_margin_pct": 76.218002,
+      "revenue_by_stream": {
+        "Core Revenue": 103400,
+        "New Product Revenue": 6350,
+        "Legacy Revenue": 0.0,
+        "Refunds and Credits": -760.0
+      },
+      "opex_by_line": {
+        "Bad Debts": 0.0,
+        "Rent": 5400.0,
+        "Marketing/Advertising": 6350,
+        "Interest Income": -650.0,
+        "Product - Payroll": 44000.0,
+        "Product - Payroll Taxes": 3520.0
+      },
+      "group_subtotals": {
+        "Product Payroll": 47520.0
+      }
+    },
+    "2026-02": {
+      "total_revenue": 110900.0,
+      "total_cogs": 25980.0,
+      "gross_profit": 84920.0,
+      "total_opex": 62170.0,
+      "operating_income": 22750.0,
+      "gross_margin_pct": 76.57349,
+      "revenue_by_stream": {
+        "Core Revenue": 104100,
+        "New Product Revenue": 6800,
+        "Legacy Revenue": 0.0,
+        "Refunds and Credits": 0.0
+      },
+      "opex_by_line": {
+        "Bad Debts": 3100.0,
+        "Rent": 5400.0,
+        "Marketing/Advertising": 6800,
+        "Interest Income": -650.0,
+        "Product - Payroll": 44000.0,
+        "Product - Payroll Taxes": 3520.0
+      },
+      "group_subtotals": {
+        "Product Payroll": 47520.0
+      }
+    },
+    "2026-03": {
+      "total_revenue": 109750.0,
+      "total_cogs": 26040.0,
+      "gross_profit": 83710.0,
+      "total_opex": 59520.0,
+      "operating_income": 24190.0,
+      "gross_margin_pct": 76.273349,
+      "revenue_by_stream": {
+        "Core Revenue": 104800,
+        "New Product Revenue": 7250,
+        "Legacy Revenue": 0.0,
+        "Refunds and Credits": -2300.0
+      },
+      "opex_by_line": {
+        "Bad Debts": 0.0,
+        "Rent": 5400.0,
+        "Marketing/Advertising": 7250,
+        "Interest Income": -650.0,
+        "Product - Payroll": 44000.0,
+        "Product - Payroll Taxes": 3520.0
+      },
+      "group_subtotals": {
+        "Product Payroll": 47520.0
+      }
+    },
+    "2026-04": {
+      "total_revenue": 113200.0,
+      "total_cogs": 26100.0,
+      "gross_profit": 87100.0,
+      "total_opex": 59550.0,
+      "operating_income": 27550.0,
+      "gross_margin_pct": 76.943463,
+      "revenue_by_stream": {
+        "Core Revenue": 105500,
+        "New Product Revenue": 7700,
+        "Legacy Revenue": 0.0,
+        "Refunds and Credits": 0.0
+      },
+      "opex_by_line": {
+        "Bad Debts": -420.0,
+        "Rent": 5400.0,
+        "Marketing/Advertising": 7700,
+        "Interest Income": -650.0,
+        "Product - Payroll": 44000.0,
+        "Product - Payroll Taxes": 3520.0
+      },
+      "group_subtotals": {
+        "Product Payroll": 47520.0
+      }
+    },
+    "2026-05": {
+      "total_revenue": 114350.0,
+      "total_cogs": 26160.0,
+      "gross_profit": 88190.0,
+      "total_opex": 60420.0,
+      "operating_income": 27770.0,
+      "gross_margin_pct": 77.122868,
+      "revenue_by_stream": {
+        "Core Revenue": 106200,
+        "New Product Revenue": 8150,
+        "Legacy Revenue": 0.0,
+        "Refunds and Credits": 0.0
+      },
+      "opex_by_line": {
+        "Bad Debts": 0.0,
+        "Rent": 5400.0,
+        "Marketing/Advertising": 8150,
+        "Interest Income": -650.0,
+        "Product - Payroll": 44000.0,
+        "Product - Payroll Taxes": 3520.0
+      },
+      "group_subtotals": {
+        "Product Payroll": 47520.0
+      }
+    },
+    "2026-06": {
+      "total_revenue": 114050.0,
+      "total_cogs": 26220.0,
+      "gross_profit": 87830.0,
+      "total_opex": 63070.0,
+      "operating_income": 24760.0,
+      "gross_margin_pct": 77.010083,
+      "revenue_by_stream": {
+        "Core Revenue": 106900,
+        "New Product Revenue": 8600,
+        "Legacy Revenue": 0.0,
+        "Refunds and Credits": -1450.0
+      },
+      "opex_by_line": {
+        "Bad Debts": 2200.0,
+        "Rent": 5400.0,
+        "Marketing/Advertising": 8600,
+        "Interest Income": -650.0,
+        "Product - Payroll": 44000.0,
+        "Product - Payroll Taxes": 3520.0
+      },
+      "group_subtotals": {
+        "Product Payroll": 47520.0
+      }
+    }
+  },
+  "has_balance_sheet": false
+}

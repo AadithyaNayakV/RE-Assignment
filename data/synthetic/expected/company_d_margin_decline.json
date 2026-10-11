@@ -1,0 +1,457 @@
+{
+  "note": "SYNTHETIC test data. Expected values computed by scripts/generate_synthetic.py without using finance_engine. Never evidence about a real client.",
+  "client_id": "company_d_margin_decline",
+  "company_name": "Company D (SYNTHETIC)",
+  "scenario": "COGS outgrows revenue, margin shrinks",
+  "periods": [
+    "2025-01",
+    "2025-02",
+    "2025-03",
+    "2025-04",
+    "2025-05",
+    "2025-06",
+    "2025-07",
+    "2025-08",
+    "2025-09",
+    "2025-10",
+    "2025-11",
+    "2025-12",
+    "2026-01",
+    "2026-02",
+    "2026-03",
+    "2026-04",
+    "2026-05",
+    "2026-06"
+  ],
+  "period_count": 18,
+  "reporting_period": "2026-06",
+  "prior_period": "2026-05",
+  "layout": {
+    "sheet_name": "Income Statement",
+    "header_row": 5,
+    "section_label_column": "A",
+    "item_label_column": "B",
+    "first_data_column": "C",
+    "date_order": "newest_first"
+  },
+  "ttm": {
+    "window": [
+      "2025-07",
+      "2025-08",
+      "2025-09",
+      "2025-10",
+      "2025-11",
+      "2025-12",
+      "2026-01",
+      "2026-02",
+      "2026-03",
+      "2026-04",
+      "2026-05",
+      "2026-06"
+    ],
+    "complete": true,
+    "totals": {
+      "total_revenue": 2607000,
+      "total_cogs": 1773300,
+      "total_opex": 916320.0
+    }
+  },
+  "month_over_month": {
+    "total_revenue": {
+      "abs": 1500,
+      "pct": 0.669643,
+      "reason": null
+    },
+    "total_opex": {
+      "abs": 0.0,
+      "pct": 0.0,
+      "reason": null
+    },
+    "gross_profit": {
+      "abs": -3350,
+      "pct": -6.158088,
+      "reason": null
+    }
+  },
+  "per_period": {
+    "2025-01": {
+      "total_revenue": 200000,
+      "total_cogs": 92000,
+      "gross_profit": 108000,
+      "total_opex": 76360.0,
+      "operating_income": 31640.0,
+      "gross_margin_pct": 54.0,
+      "revenue_by_stream": {
+        "Product Revenue": 200000
+      },
+      "opex_by_line": {
+        "Rent": 11000.0,
+        "Marketing/Advertising": 16000.0,
+        "Accounting & Tax": 4000.0,
+        "Admin - Payroll": 42000.0,
+        "Admin - Payroll Taxes": 3360.0
+      },
+      "group_subtotals": {
+        "Admin Payroll": 45360.0
+      }
+    },
+    "2025-02": {
+      "total_revenue": 201500,
+      "total_cogs": 96850,
+      "gross_profit": 104650,
+      "total_opex": 76360.0,
+      "operating_income": 28290.0,
+      "gross_margin_pct": 51.935484,
+      "revenue_by_stream": {
+        "Product Revenue": 201500
+      },
+      "opex_by_line": {
+        "Rent": 11000.0,
+        "Marketing/Advertising": 16000.0,
+        "Accounting & Tax": 4000.0,
+        "Admin - Payroll": 42000.0,
+        "Admin - Payroll Taxes": 3360.0
+      },
+      "group_subtotals": {
+        "Admin Payroll": 45360.0
+      }
+    },
+    "2025-03": {
+      "total_revenue": 203000,
+      "total_cogs": 101700,
+      "gross_profit": 101300,
+      "total_opex": 76360.0,
+      "operating_income": 24940.0,
+      "gross_margin_pct": 49.901478,
+      "revenue_by_stream": {
+        "Product Revenue": 203000
+      },
+      "opex_by_line": {
+        "Rent": 11000.0,
+        "Marketing/Advertising": 16000.0,
+        "Accounting & Tax": 4000.0,
+        "Admin - Payroll": 42000.0,
+        "Admin - Payroll Taxes": 3360.0
+      },
+      "group_subtotals": {
+        "Admin Payroll": 45360.0
+      }
+    },
+    "2025-04": {
+      "total_revenue": 204500,
+      "total_cogs": 106550,
+      "gross_profit": 97950,
+      "total_opex": 76360.0,
+      "operating_income": 21590.0,
+      "gross_margin_pct": 47.897311,
+      "revenue_by_stream": {
+        "Product Revenue": 204500
+      },
+      "opex_by_line": {
+        "Rent": 11000.0,
+        "Marketing/Advertising": 16000.0,
+        "Accounting & Tax": 4000.0,
+        "Admin - Payroll": 42000.0,
+        "Admin - Payroll Taxes": 3360.0
+      },
+      "group_subtotals": {
+        "Admin Payroll": 45360.0
+      }
+    },
+    "2025-05": {
+      "total_revenue": 206000,
+      "total_cogs": 111400,
+      "gross_profit": 94600,
+      "total_opex": 76360.0,
+      "operating_income": 18240.0,
+      "gross_margin_pct": 45.92233,
+      "revenue_by_stream": {
+        "Product Revenue": 206000
+      },
+      "opex_by_line": {
+        "Rent": 11000.0,
+        "Marketing/Advertising": 16000.0,
+        "Accounting & Tax": 4000.0,
+        "Admin - Payroll": 42000.0,
+        "Admin - Payroll Taxes": 3360.0
+      },
+      "group_subtotals": {
+        "Admin Payroll": 45360.0
+      }
+    },
+    "2025-06": {
+      "total_revenue": 207500,
+      "total_cogs": 116250,
+      "gross_profit": 91250,
+      "total_opex": 76360.0,
+      "operating_income": 14890.0,
+      "gross_margin_pct": 43.975904,
+      "revenue_by_stream": {
+        "Product Revenue": 207500
+      },
+      "opex_by_line": {
+        "Rent": 11000.0,
+        "Marketing/Advertising": 16000.0,
+        "Accounting & Tax": 4000.0,
+        "Admin - Payroll": 42000.0,
+        "Admin - Payroll Taxes": 3360.0
+      },
+      "group_subtotals": {
+        "Admin Payroll": 45360.0
+      }
+    },
+    "2025-07": {
+      "total_revenue": 209000,
+      "total_cogs": 121100,
+      "gross_profit": 87900,
+      "total_opex": 76360.0,
+      "operating_income": 11540.0,
+      "gross_margin_pct": 42.057416,
+      "revenue_by_stream": {
+        "Product Revenue": 209000
+      },
+      "opex_by_line": {
+        "Rent": 11000.0,
+        "Marketing/Advertising": 16000.0,
+        "Accounting & Tax": 4000.0,
+        "Admin - Payroll": 42000.0,
+        "Admin - Payroll Taxes": 3360.0
+      },
+      "group_subtotals": {
+        "Admin Payroll": 45360.0
+      }
+    },
+    "2025-08": {
+      "total_revenue": 210500,
+      "total_cogs": 125950,
+      "gross_profit": 84550,
+      "total_opex": 76360.0,
+      "operating_income": 8190.0,
+      "gross_margin_pct": 40.166271,
+      "revenue_by_stream": {
+        "Product Revenue": 210500
+      },
+      "opex_by_line": {
+        "Rent": 11000.0,
+        "Marketing/Advertising": 16000.0,
+        "Accounting & Tax": 4000.0,
+        "Admin - Payroll": 42000.0,
+        "Admin - Payroll Taxes": 3360.0
+      },
+      "group_subtotals": {
+        "Admin Payroll": 45360.0
+      }
+    },
+    "2025-09": {
+      "total_revenue": 212000,
+      "total_cogs": 130800,
+      "gross_profit": 81200,
+      "total_opex": 76360.0,
+      "operating_income": 4840.0,
+      "gross_margin_pct": 38.301887,
+      "revenue_by_stream": {
+        "Product Revenue": 212000
+      },
+      "opex_by_line": {
+        "Rent": 11000.0,
+        "Marketing/Advertising": 16000.0,
+        "Accounting & Tax": 4000.0,
+        "Admin - Payroll": 42000.0,
+        "Admin - Payroll Taxes": 3360.0
+      },
+      "group_subtotals": {
+        "Admin Payroll": 45360.0
+      }
+    },
+    "2025-10": {
+      "total_revenue": 213500,
+      "total_cogs": 135650,
+      "gross_profit": 77850,
+      "total_opex": 76360.0,
+      "operating_income": 1490.0,
+      "gross_margin_pct": 36.4637,
+      "revenue_by_stream": {
+        "Product Revenue": 213500
+      },
+      "opex_by_line": {
+        "Rent": 11000.0,
+        "Marketing/Advertising": 16000.0,
+        "Accounting & Tax": 4000.0,
+        "Admin - Payroll": 42000.0,
+        "Admin - Payroll Taxes": 3360.0
+      },
+      "group_subtotals": {
+        "Admin Payroll": 45360.0
+      }
+    },
+    "2025-11": {
+      "total_revenue": 215000,
+      "total_cogs": 140500,
+      "gross_profit": 74500,
+      "total_opex": 76360.0,
+      "operating_income": -1860.0,
+      "gross_margin_pct": 34.651163,
+      "revenue_by_stream": {
+        "Product Revenue": 215000
+      },
+      "opex_by_line": {
+        "Rent": 11000.0,
+        "Marketing/Advertising": 16000.0,
+        "Accounting & Tax": 4000.0,
+        "Admin - Payroll": 42000.0,
+        "Admin - Payroll Taxes": 3360.0
+      },
+      "group_subtotals": {
+        "Admin Payroll": 45360.0
+      }
+    },
+    "2025-12": {
+      "total_revenue": 216500,
+      "total_cogs": 145350,
+      "gross_profit": 71150,
+      "total_opex": 76360.0,
+      "operating_income": -5210.0,
+      "gross_margin_pct": 32.863741,
+      "revenue_by_stream": {
+        "Product Revenue": 216500
+      },
+      "opex_by_line": {
+        "Rent": 11000.0,
+        "Marketing/Advertising": 16000.0,
+        "Accounting & Tax": 4000.0,
+        "Admin - Payroll": 42000.0,
+        "Admin - Payroll Taxes": 3360.0
+      },
+      "group_subtotals": {
+        "Admin Payroll": 45360.0
+      }
+    },
+    "2026-01": {
+      "total_revenue": 218000,
+      "total_cogs": 150200,
+      "gross_profit": 67800,
+      "total_opex": 76360.0,
+      "operating_income": -8560.0,
+      "gross_margin_pct": 31.100917,
+      "revenue_by_stream": {
+        "Product Revenue": 218000
+      },
+      "opex_by_line": {
+        "Rent": 11000.0,
+        "Marketing/Advertising": 16000.0,
+        "Accounting & Tax": 4000.0,
+        "Admin - Payroll": 42000.0,
+        "Admin - Payroll Taxes": 3360.0
+      },
+      "group_subtotals": {
+        "Admin Payroll": 45360.0
+      }
+    },
+    "2026-02": {
+      "total_revenue": 219500,
+      "total_cogs": 155050,
+      "gross_profit": 64450,
+      "total_opex": 76360.0,
+      "operating_income": -11910.0,
+      "gross_margin_pct": 29.362187,
+      "revenue_by_stream": {
+        "Product Revenue": 219500
+      },
+      "opex_by_line": {
+        "Rent": 11000.0,
+        "Marketing/Advertising": 16000.0,
+        "Accounting & Tax": 4000.0,
+        "Admin - Payroll": 42000.0,
+        "Admin - Payroll Taxes": 3360.0
+      },
+      "group_subtotals": {
+        "Admin Payroll": 45360.0
+      }
+    },
+    "2026-03": {
+      "total_revenue": 221000,
+      "total_cogs": 159900,
+      "gross_profit": 61100,
+      "total_opex": 76360.0,
+      "operating_income": -15260.0,
+      "gross_margin_pct": 27.647059,
+      "revenue_by_stream": {
+        "Product Revenue": 221000
+      },
+      "opex_by_line": {
+        "Rent": 11000.0,
+        "Marketing/Advertising": 16000.0,
+        "Accounting & Tax": 4000.0,
+        "Admin - Payroll": 42000.0,
+        "Admin - Payroll Taxes": 3360.0
+      },
+      "group_subtotals": {
+        "Admin Payroll": 45360.0
+      }
+    },
+    "2026-04": {
+      "total_revenue": 222500,
+      "total_cogs": 164750,
+      "gross_profit": 57750,
+      "total_opex": 76360.0,
+      "operating_income": -18610.0,
+      "gross_margin_pct": 25.955056,
+      "revenue_by_stream": {
+        "Product Revenue": 222500
+      },
+      "opex_by_line": {
+        "Rent": 11000.0,
+        "Marketing/Advertising": 16000.0,
+        "Accounting & Tax": 4000.0,
+        "Admin - Payroll": 42000.0,
+        "Admin - Payroll Taxes": 3360.0
+      },
+      "group_subtotals": {
+        "Admin Payroll": 45360.0
+      }
+    },
+    "2026-05": {
+      "total_revenue": 224000,
+      "total_cogs": 169600,
+      "gross_profit": 54400,
+      "total_opex": 76360.0,
+      "operating_income": -21960.0,
+      "gross_margin_pct": 24.285714,
+      "revenue_by_stream": {
+        "Product Revenue": 224000
+      },
+      "opex_by_line": {
+        "Rent": 11000.0,
+        "Marketing/Advertising": 16000.0,
+        "Accounting & Tax": 4000.0,
+        "Admin - Payroll": 42000.0,
+        "Admin - Payroll Taxes": 3360.0
+      },
+      "group_subtotals": {
+        "Admin Payroll": 45360.0
+      }
+    },
+    "2026-06": {
+      "total_revenue": 225500,
+      "total_cogs": 174450,
+      "gross_profit": 51050,
+      "total_opex": 76360.0,
+      "operating_income": -25310.0,
+      "gross_margin_pct": 22.638581,
+      "revenue_by_stream": {
+        "Product Revenue": 225500
+      },
+      "opex_by_line": {
+        "Rent": 11000.0,
+        "Marketing/Advertising": 16000.0,
+        "Accounting & Tax": 4000.0,
+        "Admin - Payroll": 42000.0,
+        "Admin - Payroll Taxes": 3360.0
+      },
+      "group_subtotals": {
+        "Admin Payroll": 45360.0
+      }
+    }
+  },
+  "has_balance_sheet": false
+}

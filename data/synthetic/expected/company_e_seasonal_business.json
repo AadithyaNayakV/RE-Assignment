@@ -1,0 +1,475 @@
+{
+  "note": "SYNTHETIC test data. Expected values computed by scripts/generate_synthetic.py without using finance_engine. Never evidence about a real client.",
+  "client_id": "company_e_seasonal_business",
+  "company_name": "Company E (SYNTHETIC)",
+  "scenario": "pronounced Nov/Dec seasonal peak",
+  "periods": [
+    "2025-01",
+    "2025-02",
+    "2025-03",
+    "2025-04",
+    "2025-05",
+    "2025-06",
+    "2025-07",
+    "2025-08",
+    "2025-09",
+    "2025-10",
+    "2025-11",
+    "2025-12",
+    "2026-01",
+    "2026-02",
+    "2026-03",
+    "2026-04",
+    "2026-05",
+    "2026-06"
+  ],
+  "period_count": 18,
+  "reporting_period": "2026-06",
+  "prior_period": "2026-05",
+  "layout": {
+    "sheet_name": "Income Statement",
+    "header_row": 5,
+    "section_label_column": "A",
+    "item_label_column": "B",
+    "first_data_column": "C",
+    "date_order": "newest_first"
+  },
+  "ttm": {
+    "window": [
+      "2025-07",
+      "2025-08",
+      "2025-09",
+      "2025-10",
+      "2025-11",
+      "2025-12",
+      "2026-01",
+      "2026-02",
+      "2026-03",
+      "2026-04",
+      "2026-05",
+      "2026-06"
+    ],
+    "complete": true,
+    "totals": {
+      "total_revenue": 1997760.0,
+      "total_cogs": 887464.0,
+      "total_opex": 1164584.32
+    }
+  },
+  "month_over_month": {
+    "total_revenue": {
+      "abs": 520.0,
+      "pct": 0.37594,
+      "reason": null
+    },
+    "total_opex": {
+      "abs": 272.64,
+      "pct": 0.30421,
+      "reason": null
+    },
+    "gross_profit": {
+      "abs": 292.0,
+      "pct": 0.37594,
+      "reason": null
+    }
+  },
+  "per_period": {
+    "2025-01": {
+      "total_revenue": 130000.0,
+      "total_cogs": 57000.0,
+      "gross_profit": 73000.0,
+      "total_opex": 85260.0,
+      "operating_income": -12260.0,
+      "gross_margin_pct": 56.153846,
+      "revenue_by_stream": {
+        "Retail Revenue": 90000.0,
+        "Wholesale Revenue": 40000.0
+      },
+      "opex_by_line": {
+        "Rent": 13000.0,
+        "Marketing/Advertising": 12000.0,
+        "Software & SaaS": 4100.0,
+        "Store - Payroll": 52000.0,
+        "Store - Payroll Taxes": 4160.0
+      },
+      "group_subtotals": {
+        "Store Payroll": 56160.0
+      }
+    },
+    "2025-02": {
+      "total_revenue": 130520.0,
+      "total_cogs": 57228.0,
+      "gross_profit": 73292.0,
+      "total_opex": 85532.64,
+      "operating_income": -12240.64,
+      "gross_margin_pct": 56.153846,
+      "revenue_by_stream": {
+        "Retail Revenue": 90360.0,
+        "Wholesale Revenue": 40160.0
+      },
+      "opex_by_line": {
+        "Rent": 13000.0,
+        "Marketing/Advertising": 12048.0,
+        "Software & SaaS": 4100.0,
+        "Store - Payroll": 52208.0,
+        "Store - Payroll Taxes": 4176.64
+      },
+      "group_subtotals": {
+        "Store Payroll": 56384.64
+      }
+    },
+    "2025-03": {
+      "total_revenue": 131040.0,
+      "total_cogs": 57456.0,
+      "gross_profit": 73584.0,
+      "total_opex": 85805.28,
+      "operating_income": -12221.28,
+      "gross_margin_pct": 56.153846,
+      "revenue_by_stream": {
+        "Retail Revenue": 90720.0,
+        "Wholesale Revenue": 40320.0
+      },
+      "opex_by_line": {
+        "Rent": 13000.0,
+        "Marketing/Advertising": 12096.0,
+        "Software & SaaS": 4100.0,
+        "Store - Payroll": 52416.0,
+        "Store - Payroll Taxes": 4193.28
+      },
+      "group_subtotals": {
+        "Store Payroll": 56609.28
+      }
+    },
+    "2025-04": {
+      "total_revenue": 131560.0,
+      "total_cogs": 57684.0,
+      "gross_profit": 73876.0,
+      "total_opex": 86077.92,
+      "operating_income": -12201.92,
+      "gross_margin_pct": 56.153846,
+      "revenue_by_stream": {
+        "Retail Revenue": 91080.0,
+        "Wholesale Revenue": 40480.0
+      },
+      "opex_by_line": {
+        "Rent": 13000.0,
+        "Marketing/Advertising": 12144.0,
+        "Software & SaaS": 4100.0,
+        "Store - Payroll": 52624.0,
+        "Store - Payroll Taxes": 4209.92
+      },
+      "group_subtotals": {
+        "Store Payroll": 56833.92
+      }
+    },
+    "2025-05": {
+      "total_revenue": 132080.0,
+      "total_cogs": 57912.0,
+      "gross_profit": 74168.0,
+      "total_opex": 86350.56,
+      "operating_income": -12182.56,
+      "gross_margin_pct": 56.153846,
+      "revenue_by_stream": {
+        "Retail Revenue": 91440.0,
+        "Wholesale Revenue": 40640.0
+      },
+      "opex_by_line": {
+        "Rent": 13000.0,
+        "Marketing/Advertising": 12192.0,
+        "Software & SaaS": 4100.0,
+        "Store - Payroll": 52832.0,
+        "Store - Payroll Taxes": 4226.56
+      },
+      "group_subtotals": {
+        "Store Payroll": 57058.56
+      }
+    },
+    "2025-06": {
+      "total_revenue": 132600.0,
+      "total_cogs": 58140.0,
+      "gross_profit": 74460.0,
+      "total_opex": 86623.2,
+      "operating_income": -12163.2,
+      "gross_margin_pct": 56.153846,
+      "revenue_by_stream": {
+        "Retail Revenue": 91800.0,
+        "Wholesale Revenue": 40800.0
+      },
+      "opex_by_line": {
+        "Rent": 13000.0,
+        "Marketing/Advertising": 12240.0,
+        "Software & SaaS": 4100.0,
+        "Store - Payroll": 53040.0,
+        "Store - Payroll Taxes": 4243.2
+      },
+      "group_subtotals": {
+        "Store Payroll": 57283.2
+      }
+    },
+    "2025-07": {
+      "total_revenue": 133120.0,
+      "total_cogs": 58368.0,
+      "gross_profit": 74752.0,
+      "total_opex": 86895.84,
+      "operating_income": -12143.84,
+      "gross_margin_pct": 56.153846,
+      "revenue_by_stream": {
+        "Retail Revenue": 92160.0,
+        "Wholesale Revenue": 40960.0
+      },
+      "opex_by_line": {
+        "Rent": 13000.0,
+        "Marketing/Advertising": 12288.0,
+        "Software & SaaS": 4100.0,
+        "Store - Payroll": 53248.0,
+        "Store - Payroll Taxes": 4259.84
+      },
+      "group_subtotals": {
+        "Store Payroll": 57507.84
+      }
+    },
+    "2025-08": {
+      "total_revenue": 133640.0,
+      "total_cogs": 58596.0,
+      "gross_profit": 75044.0,
+      "total_opex": 87168.48,
+      "operating_income": -12124.48,
+      "gross_margin_pct": 56.153846,
+      "revenue_by_stream": {
+        "Retail Revenue": 92520.0,
+        "Wholesale Revenue": 41120.0
+      },
+      "opex_by_line": {
+        "Rent": 13000.0,
+        "Marketing/Advertising": 12336.0,
+        "Software & SaaS": 4100.0,
+        "Store - Payroll": 53456.0,
+        "Store - Payroll Taxes": 4276.48
+      },
+      "group_subtotals": {
+        "Store Payroll": 57732.48
+      }
+    },
+    "2025-09": {
+      "total_revenue": 134160.0,
+      "total_cogs": 58824.0,
+      "gross_profit": 75336.0,
+      "total_opex": 87441.12,
+      "operating_income": -12105.12,
+      "gross_margin_pct": 56.153846,
+      "revenue_by_stream": {
+        "Retail Revenue": 92880.0,
+        "Wholesale Revenue": 41280.0
+      },
+      "opex_by_line": {
+        "Rent": 13000.0,
+        "Marketing/Advertising": 12384.0,
+        "Software & SaaS": 4100.0,
+        "Store - Payroll": 53664.0,
+        "Store - Payroll Taxes": 4293.12
+      },
+      "group_subtotals": {
+        "Store Payroll": 57957.12
+      }
+    },
+    "2025-10": {
+      "total_revenue": 172680.0,
+      "total_cogs": 59052.0,
+      "gross_profit": 113628.0,
+      "total_opex": 113713.76,
+      "operating_income": -85.76,
+      "gross_margin_pct": 65.802641,
+      "revenue_by_stream": {
+        "Retail Revenue": 93240.0,
+        "Wholesale Revenue": 79440.0
+      },
+      "opex_by_line": {
+        "Rent": 13000.0,
+        "Marketing/Advertising": 38432.0,
+        "Software & SaaS": 4100.0,
+        "Store - Payroll": 53872.0,
+        "Store - Payroll Taxes": 4309.76
+      },
+      "group_subtotals": {
+        "Store Payroll": 58181.76
+      }
+    },
+    "2025-11": {
+      "total_revenue": 318200.0,
+      "total_cogs": 145280.0,
+      "gross_profit": 172920.0,
+      "total_opex": 139906.4,
+      "operating_income": 33013.6,
+      "gross_margin_pct": 54.34318,
+      "revenue_by_stream": {
+        "Retail Revenue": 238600.0,
+        "Wholesale Revenue": 79600.0
+      },
+      "opex_by_line": {
+        "Rent": 13000.0,
+        "Marketing/Advertising": 38480.0,
+        "Software & SaaS": 4100.0,
+        "Store - Payroll": 78080.0,
+        "Store - Payroll Taxes": 6246.4
+      },
+      "group_subtotals": {
+        "Store Payroll": 84326.4
+      }
+    },
+    "2025-12": {
+      "total_revenue": 280720.0,
+      "total_cogs": 145508.0,
+      "gross_profit": 135212.0,
+      "total_opex": 114179.04,
+      "operating_income": 21032.96,
+      "gross_margin_pct": 48.166144,
+      "revenue_by_stream": {
+        "Retail Revenue": 238960.0,
+        "Wholesale Revenue": 41760.0
+      },
+      "opex_by_line": {
+        "Rent": 13000.0,
+        "Marketing/Advertising": 12528.0,
+        "Software & SaaS": 4100.0,
+        "Store - Payroll": 78288.0,
+        "Store - Payroll Taxes": 6263.04
+      },
+      "group_subtotals": {
+        "Store Payroll": 84551.04
+      }
+    },
+    "2026-01": {
+      "total_revenue": 136240.0,
+      "total_cogs": 59736.0,
+      "gross_profit": 76504.0,
+      "total_opex": 88531.68,
+      "operating_income": -12027.68,
+      "gross_margin_pct": 56.153846,
+      "revenue_by_stream": {
+        "Retail Revenue": 94320.0,
+        "Wholesale Revenue": 41920.0
+      },
+      "opex_by_line": {
+        "Rent": 13000.0,
+        "Marketing/Advertising": 12576.0,
+        "Software & SaaS": 4100.0,
+        "Store - Payroll": 54496.0,
+        "Store - Payroll Taxes": 4359.68
+      },
+      "group_subtotals": {
+        "Store Payroll": 58855.68
+      }
+    },
+    "2026-02": {
+      "total_revenue": 136760.0,
+      "total_cogs": 59964.0,
+      "gross_profit": 76796.0,
+      "total_opex": 88804.32,
+      "operating_income": -12008.32,
+      "gross_margin_pct": 56.153846,
+      "revenue_by_stream": {
+        "Retail Revenue": 94680.0,
+        "Wholesale Revenue": 42080.0
+      },
+      "opex_by_line": {
+        "Rent": 13000.0,
+        "Marketing/Advertising": 12624.0,
+        "Software & SaaS": 4100.0,
+        "Store - Payroll": 54704.0,
+        "Store - Payroll Taxes": 4376.32
+      },
+      "group_subtotals": {
+        "Store Payroll": 59080.32
+      }
+    },
+    "2026-03": {
+      "total_revenue": 137280.0,
+      "total_cogs": 60192.0,
+      "gross_profit": 77088.0,
+      "total_opex": 89076.96,
+      "operating_income": -11988.96,
+      "gross_margin_pct": 56.153846,
+      "revenue_by_stream": {
+        "Retail Revenue": 95040.0,
+        "Wholesale Revenue": 42240.0
+      },
+      "opex_by_line": {
+        "Rent": 13000.0,
+        "Marketing/Advertising": 12672.0,
+        "Software & SaaS": 4100.0,
+        "Store - Payroll": 54912.0,
+        "Store - Payroll Taxes": 4392.96
+      },
+      "group_subtotals": {
+        "Store Payroll": 59304.96
+      }
+    },
+    "2026-04": {
+      "total_revenue": 137800.0,
+      "total_cogs": 60420.0,
+      "gross_profit": 77380.0,
+      "total_opex": 89349.6,
+      "operating_income": -11969.6,
+      "gross_margin_pct": 56.153846,
+      "revenue_by_stream": {
+        "Retail Revenue": 95400.0,
+        "Wholesale Revenue": 42400.0
+      },
+      "opex_by_line": {
+        "Rent": 13000.0,
+        "Marketing/Advertising": 12720.0,
+        "Software & SaaS": 4100.0,
+        "Store - Payroll": 55120.0,
+        "Store - Payroll Taxes": 4409.6
+      },
+      "group_subtotals": {
+        "Store Payroll": 59529.6
+      }
+    },
+    "2026-05": {
+      "total_revenue": 138320.0,
+      "total_cogs": 60648.0,
+      "gross_profit": 77672.0,
+      "total_opex": 89622.24,
+      "operating_income": -11950.24,
+      "gross_margin_pct": 56.153846,
+      "revenue_by_stream": {
+        "Retail Revenue": 95760.0,
+        "Wholesale Revenue": 42560.0
+      },
+      "opex_by_line": {
+        "Rent": 13000.0,
+        "Marketing/Advertising": 12768.0,
+        "Software & SaaS": 4100.0,
+        "Store - Payroll": 55328.0,
+        "Store - Payroll Taxes": 4426.24
+      },
+      "group_subtotals": {
+        "Store Payroll": 59754.24
+      }
+    },
+    "2026-06": {
+      "total_revenue": 138840.0,
+      "total_cogs": 60876.0,
+      "gross_profit": 77964.0,
+      "total_opex": 89894.88,
+      "operating_income": -11930.88,
+      "gross_margin_pct": 56.153846,
+      "revenue_by_stream": {
+        "Retail Revenue": 96120.0,
+        "Wholesale Revenue": 42720.0
+      },
+      "opex_by_line": {
+        "Rent": 13000.0,
+        "Marketing/Advertising": 12816.0,
+        "Software & SaaS": 4100.0,
+        "Store - Payroll": 55536.0,
+        "Store - Payroll Taxes": 4442.88
+      },
+      "group_subtotals": {
+        "Store Payroll": 59978.88
+      }
+    }
+  },
+  "has_balance_sheet": false
+}

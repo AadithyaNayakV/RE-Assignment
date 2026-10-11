@@ -1,0 +1,493 @@
+{
+  "note": "SYNTHETIC test data. Expected values computed by scripts/generate_synthetic.py without using finance_engine. Never evidence about a real client.",
+  "client_id": "company_a_normal_growth",
+  "company_name": "Company A (SYNTHETIC)",
+  "scenario": "steady revenue growth, stable costs",
+  "periods": [
+    "2025-01",
+    "2025-02",
+    "2025-03",
+    "2025-04",
+    "2025-05",
+    "2025-06",
+    "2025-07",
+    "2025-08",
+    "2025-09",
+    "2025-10",
+    "2025-11",
+    "2025-12",
+    "2026-01",
+    "2026-02",
+    "2026-03",
+    "2026-04",
+    "2026-05",
+    "2026-06"
+  ],
+  "period_count": 18,
+  "reporting_period": "2026-06",
+  "prior_period": "2026-05",
+  "layout": {
+    "sheet_name": "Income Statement",
+    "header_row": 5,
+    "section_label_column": "A",
+    "item_label_column": "B",
+    "first_data_column": "C",
+    "date_order": "newest_first"
+  },
+  "ttm": {
+    "window": [
+      "2025-07",
+      "2025-08",
+      "2025-09",
+      "2025-10",
+      "2025-11",
+      "2025-12",
+      "2026-01",
+      "2026-02",
+      "2026-03",
+      "2026-04",
+      "2026-05",
+      "2026-06"
+    ],
+    "complete": true,
+    "totals": {
+      "total_revenue": 2042400,
+      "total_cogs": 388560.0,
+      "total_opex": 914256.0
+    }
+  },
+  "month_over_month": {
+    "total_revenue": {
+      "abs": 2800,
+      "pct": 1.531729,
+      "reason": null
+    },
+    "total_opex": {
+      "abs": 512.0,
+      "pct": 0.652296,
+      "reason": null
+    },
+    "gross_profit": {
+      "abs": 2680.0,
+      "pct": 1.788097,
+      "reason": null
+    }
+  },
+  "per_period": {
+    "2025-01": {
+      "total_revenue": 138000,
+      "total_cogs": 31000.0,
+      "gross_profit": 107000.0,
+      "total_opex": 70300.0,
+      "operating_income": 36700.0,
+      "gross_margin_pct": 77.536232,
+      "revenue_by_stream": {
+        "Subscription Revenue": 120000,
+        "Services Revenue": 18000
+      },
+      "opex_by_line": {
+        "Rent": 7500.0,
+        "Software & SaaS": 6000,
+        "Accounting & Tax": 3200.0,
+        "Travel": 1800.0,
+        "Sales - Payroll": 48000,
+        "Sales - Payroll Taxes": 3800
+      },
+      "group_subtotals": {
+        "Sales Payroll": 51800
+      }
+    },
+    "2025-02": {
+      "total_revenue": 140800,
+      "total_cogs": 31120.0,
+      "gross_profit": 109680.0,
+      "total_opex": 70812.0,
+      "operating_income": 38868.0,
+      "gross_margin_pct": 77.897727,
+      "revenue_by_stream": {
+        "Subscription Revenue": 122500,
+        "Services Revenue": 18300
+      },
+      "opex_by_line": {
+        "Rent": 7500.0,
+        "Software & SaaS": 6080,
+        "Accounting & Tax": 3200.0,
+        "Travel": 1800.0,
+        "Sales - Payroll": 48400,
+        "Sales - Payroll Taxes": 3832
+      },
+      "group_subtotals": {
+        "Sales Payroll": 52232
+      }
+    },
+    "2025-03": {
+      "total_revenue": 143600,
+      "total_cogs": 31240.0,
+      "gross_profit": 112360.0,
+      "total_opex": 71324.0,
+      "operating_income": 41036.0,
+      "gross_margin_pct": 78.245125,
+      "revenue_by_stream": {
+        "Subscription Revenue": 125000,
+        "Services Revenue": 18600
+      },
+      "opex_by_line": {
+        "Rent": 7500.0,
+        "Software & SaaS": 6160,
+        "Accounting & Tax": 3200.0,
+        "Travel": 1800.0,
+        "Sales - Payroll": 48800,
+        "Sales - Payroll Taxes": 3864
+      },
+      "group_subtotals": {
+        "Sales Payroll": 52664
+      }
+    },
+    "2025-04": {
+      "total_revenue": 146400,
+      "total_cogs": 31360.0,
+      "gross_profit": 115040.0,
+      "total_opex": 71836.0,
+      "operating_income": 43204.0,
+      "gross_margin_pct": 78.579235,
+      "revenue_by_stream": {
+        "Subscription Revenue": 127500,
+        "Services Revenue": 18900
+      },
+      "opex_by_line": {
+        "Rent": 7500.0,
+        "Software & SaaS": 6240,
+        "Accounting & Tax": 3200.0,
+        "Travel": 1800.0,
+        "Sales - Payroll": 49200,
+        "Sales - Payroll Taxes": 3896
+      },
+      "group_subtotals": {
+        "Sales Payroll": 53096
+      }
+    },
+    "2025-05": {
+      "total_revenue": 149200,
+      "total_cogs": 31480.0,
+      "gross_profit": 117720.0,
+      "total_opex": 72348.0,
+      "operating_income": 45372.0,
+      "gross_margin_pct": 78.900804,
+      "revenue_by_stream": {
+        "Subscription Revenue": 130000,
+        "Services Revenue": 19200
+      },
+      "opex_by_line": {
+        "Rent": 7500.0,
+        "Software & SaaS": 6320,
+        "Accounting & Tax": 3200.0,
+        "Travel": 1800.0,
+        "Sales - Payroll": 49600,
+        "Sales - Payroll Taxes": 3928
+      },
+      "group_subtotals": {
+        "Sales Payroll": 53528
+      }
+    },
+    "2025-06": {
+      "total_revenue": 152000,
+      "total_cogs": 31600.0,
+      "gross_profit": 120400.0,
+      "total_opex": 72860.0,
+      "operating_income": 47540.0,
+      "gross_margin_pct": 79.210526,
+      "revenue_by_stream": {
+        "Subscription Revenue": 132500,
+        "Services Revenue": 19500
+      },
+      "opex_by_line": {
+        "Rent": 7500.0,
+        "Software & SaaS": 6400,
+        "Accounting & Tax": 3200.0,
+        "Travel": 1800.0,
+        "Sales - Payroll": 50000,
+        "Sales - Payroll Taxes": 3960
+      },
+      "group_subtotals": {
+        "Sales Payroll": 53960
+      }
+    },
+    "2025-07": {
+      "total_revenue": 154800,
+      "total_cogs": 31720.0,
+      "gross_profit": 123080.0,
+      "total_opex": 73372.0,
+      "operating_income": 49708.0,
+      "gross_margin_pct": 79.509044,
+      "revenue_by_stream": {
+        "Subscription Revenue": 135000,
+        "Services Revenue": 19800
+      },
+      "opex_by_line": {
+        "Rent": 7500.0,
+        "Software & SaaS": 6480,
+        "Accounting & Tax": 3200.0,
+        "Travel": 1800.0,
+        "Sales - Payroll": 50400,
+        "Sales - Payroll Taxes": 3992
+      },
+      "group_subtotals": {
+        "Sales Payroll": 54392
+      }
+    },
+    "2025-08": {
+      "total_revenue": 157600,
+      "total_cogs": 31840.0,
+      "gross_profit": 125760.0,
+      "total_opex": 73884.0,
+      "operating_income": 51876.0,
+      "gross_margin_pct": 79.796954,
+      "revenue_by_stream": {
+        "Subscription Revenue": 137500,
+        "Services Revenue": 20100
+      },
+      "opex_by_line": {
+        "Rent": 7500.0,
+        "Software & SaaS": 6560,
+        "Accounting & Tax": 3200.0,
+        "Travel": 1800.0,
+        "Sales - Payroll": 50800,
+        "Sales - Payroll Taxes": 4024
+      },
+      "group_subtotals": {
+        "Sales Payroll": 54824
+      }
+    },
+    "2025-09": {
+      "total_revenue": 160400,
+      "total_cogs": 31960.0,
+      "gross_profit": 128440.0,
+      "total_opex": 74396.0,
+      "operating_income": 54044.0,
+      "gross_margin_pct": 80.074813,
+      "revenue_by_stream": {
+        "Subscription Revenue": 140000,
+        "Services Revenue": 20400
+      },
+      "opex_by_line": {
+        "Rent": 7500.0,
+        "Software & SaaS": 6640,
+        "Accounting & Tax": 3200.0,
+        "Travel": 1800.0,
+        "Sales - Payroll": 51200,
+        "Sales - Payroll Taxes": 4056
+      },
+      "group_subtotals": {
+        "Sales Payroll": 55256
+      }
+    },
+    "2025-10": {
+      "total_revenue": 163200,
+      "total_cogs": 32080.0,
+      "gross_profit": 131120.0,
+      "total_opex": 74908.0,
+      "operating_income": 56212.0,
+      "gross_margin_pct": 80.343137,
+      "revenue_by_stream": {
+        "Subscription Revenue": 142500,
+        "Services Revenue": 20700
+      },
+      "opex_by_line": {
+        "Rent": 7500.0,
+        "Software & SaaS": 6720,
+        "Accounting & Tax": 3200.0,
+        "Travel": 1800.0,
+        "Sales - Payroll": 51600,
+        "Sales - Payroll Taxes": 4088
+      },
+      "group_subtotals": {
+        "Sales Payroll": 55688
+      }
+    },
+    "2025-11": {
+      "total_revenue": 166000,
+      "total_cogs": 32200.0,
+      "gross_profit": 133800.0,
+      "total_opex": 75420.0,
+      "operating_income": 58380.0,
+      "gross_margin_pct": 80.60241,
+      "revenue_by_stream": {
+        "Subscription Revenue": 145000,
+        "Services Revenue": 21000
+      },
+      "opex_by_line": {
+        "Rent": 7500.0,
+        "Software & SaaS": 6800,
+        "Accounting & Tax": 3200.0,
+        "Travel": 1800.0,
+        "Sales - Payroll": 52000,
+        "Sales - Payroll Taxes": 4120
+      },
+      "group_subtotals": {
+        "Sales Payroll": 56120
+      }
+    },
+    "2025-12": {
+      "total_revenue": 168800,
+      "total_cogs": 32320.0,
+      "gross_profit": 136480.0,
+      "total_opex": 75932.0,
+      "operating_income": 60548.0,
+      "gross_margin_pct": 80.853081,
+      "revenue_by_stream": {
+        "Subscription Revenue": 147500,
+        "Services Revenue": 21300
+      },
+      "opex_by_line": {
+        "Rent": 7500.0,
+        "Software & SaaS": 6880,
+        "Accounting & Tax": 3200.0,
+        "Travel": 1800.0,
+        "Sales - Payroll": 52400,
+        "Sales - Payroll Taxes": 4152
+      },
+      "group_subtotals": {
+        "Sales Payroll": 56552
+      }
+    },
+    "2026-01": {
+      "total_revenue": 171600,
+      "total_cogs": 32440.0,
+      "gross_profit": 139160.0,
+      "total_opex": 76444.0,
+      "operating_income": 62716.0,
+      "gross_margin_pct": 81.095571,
+      "revenue_by_stream": {
+        "Subscription Revenue": 150000,
+        "Services Revenue": 21600
+      },
+      "opex_by_line": {
+        "Rent": 7500.0,
+        "Software & SaaS": 6960,
+        "Accounting & Tax": 3200.0,
+        "Travel": 1800.0,
+        "Sales - Payroll": 52800,
+        "Sales - Payroll Taxes": 4184
+      },
+      "group_subtotals": {
+        "Sales Payroll": 56984
+      }
+    },
+    "2026-02": {
+      "total_revenue": 174400,
+      "total_cogs": 32560.0,
+      "gross_profit": 141840.0,
+      "total_opex": 76956.0,
+      "operating_income": 64884.0,
+      "gross_margin_pct": 81.330275,
+      "revenue_by_stream": {
+        "Subscription Revenue": 152500,
+        "Services Revenue": 21900
+      },
+      "opex_by_line": {
+        "Rent": 7500.0,
+        "Software & SaaS": 7040,
+        "Accounting & Tax": 3200.0,
+        "Travel": 1800.0,
+        "Sales - Payroll": 53200,
+        "Sales - Payroll Taxes": 4216
+      },
+      "group_subtotals": {
+        "Sales Payroll": 57416
+      }
+    },
+    "2026-03": {
+      "total_revenue": 177200,
+      "total_cogs": 32680.0,
+      "gross_profit": 144520.0,
+      "total_opex": 77468.0,
+      "operating_income": 67052.0,
+      "gross_margin_pct": 81.557562,
+      "revenue_by_stream": {
+        "Subscription Revenue": 155000,
+        "Services Revenue": 22200
+      },
+      "opex_by_line": {
+        "Rent": 7500.0,
+        "Software & SaaS": 7120,
+        "Accounting & Tax": 3200.0,
+        "Travel": 1800.0,
+        "Sales - Payroll": 53600,
+        "Sales - Payroll Taxes": 4248
+      },
+      "group_subtotals": {
+        "Sales Payroll": 57848
+      }
+    },
+    "2026-04": {
+      "total_revenue": 180000,
+      "total_cogs": 32800.0,
+      "gross_profit": 147200.0,
+      "total_opex": 77980.0,
+      "operating_income": 69220.0,
+      "gross_margin_pct": 81.777778,
+      "revenue_by_stream": {
+        "Subscription Revenue": 157500,
+        "Services Revenue": 22500
+      },
+      "opex_by_line": {
+        "Rent": 7500.0,
+        "Software & SaaS": 7200,
+        "Accounting & Tax": 3200.0,
+        "Travel": 1800.0,
+        "Sales - Payroll": 54000,
+        "Sales - Payroll Taxes": 4280
+      },
+      "group_subtotals": {
+        "Sales Payroll": 58280
+      }
+    },
+    "2026-05": {
+      "total_revenue": 182800,
+      "total_cogs": 32920.0,
+      "gross_profit": 149880.0,
+      "total_opex": 78492.0,
+      "operating_income": 71388.0,
+      "gross_margin_pct": 81.991247,
+      "revenue_by_stream": {
+        "Subscription Revenue": 160000,
+        "Services Revenue": 22800
+      },
+      "opex_by_line": {
+        "Rent": 7500.0,
+        "Software & SaaS": 7280,
+        "Accounting & Tax": 3200.0,
+        "Travel": 1800.0,
+        "Sales - Payroll": 54400,
+        "Sales - Payroll Taxes": 4312
+      },
+      "group_subtotals": {
+        "Sales Payroll": 58712
+      }
+    },
+    "2026-06": {
+      "total_revenue": 185600,
+      "total_cogs": 33040.0,
+      "gross_profit": 152560.0,
+      "total_opex": 79004.0,
+      "operating_income": 73556.0,
+      "gross_margin_pct": 82.198276,
+      "revenue_by_stream": {
+        "Subscription Revenue": 162500,
+        "Services Revenue": 23100
+      },
+      "opex_by_line": {
+        "Rent": 7500.0,
+        "Software & SaaS": 7360,
+        "Accounting & Tax": 3200.0,
+        "Travel": 1800.0,
+        "Sales - Payroll": 54800,
+        "Sales - Payroll Taxes": 4344
+      },
+      "group_subtotals": {
+        "Sales Payroll": 59144
+      }
+    }
+  },
+  "has_balance_sheet": false
+}

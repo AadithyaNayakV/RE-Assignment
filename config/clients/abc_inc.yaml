@@ -1,0 +1,162 @@
+# ABC Inc — layout and classification map.
+# Verified against data/clients/abc_inc/source/ABC Inc - Financial Statements.xlsx
+# A new company = a new file like this one, not new code.
+
+client_id: abc_inc
+company_name: ABC Inc
+currency: USD
+currency_symbol: "$"
+# The workbook states plain dollar amounts (no "in thousands" scaling anywhere).
+units_scale: 1
+
+source:
+  type: excel
+  filename: "ABC Inc - Financial Statements.xlsx"
+
+sheets:
+  income_statement:
+    name: "Income Statement"
+    header_row: 5
+    # Section headers and some totals sit in column A; line items sit in column B.
+    # The reader takes the first non-empty label across these columns, in order.
+    label_columns: [A, B]
+    first_data_column: C
+    last_data_column: T
+    date_order: newest_first
+    date_formats: ["%b %Y"]
+  balance_sheet:
+    name: "Balance Sheet"
+    header_row: 5
+    label_columns: [A, B, C]
+    first_data_column: D
+    last_data_column: U
+    date_order: newest_first
+    date_formats: ["%d %b %Y"]
+
+# Section membership is structural: rows strictly between a section's header label and its
+# total label. Names are never used to decide revenue vs COGS vs opex.
+income_statement:
+  sections:
+    - key: revenue
+      header_label: "Income"
+      total_label: "Total Income"
+    - key: cogs
+      header_label: "Cost of Goods Sold"
+      total_label: "Total Cost of Goods Sold"
+    - key: opex
+      header_label: "Operating Expenses"
+      total_label: "Total Operating Expenses"
+      # Subtotal groups nested inside this section. Their member rows are excluded from
+      # the section's direct items so nothing is double-counted; the group subtotal is
+      # added once. This mirrors the workbook formula
+      #   Total Operating Expenses = SUM(C29:C46, C72:C102) + C59 + C71
+      subtotal_groups:
+        - key: s_and_m_payroll
+          name: "S & M Payroll"
+          header_label: "S & M Payroll"
+          total_label: "Total S & M Payroll"
+        - key: marketing
+          name: "Marketing"
+          header_label: "Marketing"
+          total_label: "Total Marketing"
+  # Rows the workbook derives itself. Used for reconciliation, not as calculation inputs.
+  reported_lines:
+    gross_profit: "Gross Profit"
+    operating_income: "Operating Income"
+    net_income: "Net Income"
+
+balance_sheet:
+  reported_totals:
+    assets: "Total Assets"
+    liabilities_and_equity: "Total Liabilities and Equity"
+    liabilities: "Total Liabilities"
+    equity: "Total Equity"
+  # Trend lines reported when present. Missing lines are reported as unavailable, not zero.
+  trend_lines:
+    - key: cash
+      label: "Total Cash and Cash Equivalents"
+    - key: accounts_receivable
+      label: "Accounts Receivable"
+    - key: deferred_revenue
+      label: "Deferred Revenue"
+
+# Presentation categories for operating expenses. Rules are applied in order; the first
+# match wins. These group lines *within* the opex section for reporting — they never decide
+# whether a line is an operating expense in the first place.
+opex_categories:
+  - name: "Payroll & People Costs"
+    match_contains: ["payroll", "bonus", "severance", "recruiting", "training",
+                     "health insurance", "workers comp", "401k", "benefits"]
+  - name: "Commissions"
+    match_contains: ["commission"]
+  - name: "Contractors"
+    match_contains: ["contractor"]
+  - name: "Marketing & Advertising"
+    match_contains: ["marketing/advertising", "events & conferences"]
+  - name: "Software, Hosting & AI"
+    match_contains: ["software", "saas", "hosting", "ai token"]
+  - name: "Professional & Legal Fees"
+    match_contains: ["accounting", "legal", "consulting", "advisory", "professional fees"]
+  - name: "Occupancy & Insurance"
+    match_contains: ["rent", "insurance"]
+  - name: "Travel, Meals & Office"
+    match_contains: ["travel", "meals", "office", "postage", "printing",
+                     "telephone", "general expenses"]
+  - name: "Finance, Tax & Non-Cash"
+    match_contains: ["interest", "depreciation", "bad debts", "tax", "bank service",
+                     "merchant fees", "stock-based", "charities"]
+fallback_opex_category: "Other Operating Expenses"
+
+reconciliation:
+  # Absolute currency tolerance. The workbook's own SUM() results carry IEEE-754 float
+  # noise (e.g. Total Income Apr 2026 caches as 204512.41999999998), so a cent of slack
+  # is required; anything larger is a real discrepancy.
+  tolerance_abs: 0.01
+  checks:
+    - key: revenue_items_vs_total
+      description: "Sum of revenue line items equals the workbook's Total Income"
+    - key: cogs_items_vs_total
+      description: "Sum of COGS line items equals the workbook's Total Cost of Goods Sold"
+    - key: opex_items_vs_total
+      description: "Direct opex items plus group subtotals equal Total Operating Expenses"
+    - key: opex_group_subtotals
+      description: "Each subtotal group's members equal its own subtotal row"
+    - key: gross_profit
+      description: "Total Income minus Total COGS equals the reported Gross Profit"
+    - key: operating_income
+      description: "Gross Profit minus Total Operating Expenses equals reported Operating Income"
+    - key: balance_sheet_balances
+      description: "Total Assets equals Total Liabilities and Equity"
+
+# Known, deliberate classification facts about this workbook. Reported as notes on every
+# run. The engine does not silently reclassify anything.
+classification_notes:
+  - "Interest Income, Interest Expense, Bad Debts and Income Tax Benefit are presented
+     inside Operating Expenses in this workbook. As a result the workbook's Operating
+     Income equals its Net Income, and the reported operating margin is not comparable to
+     a statement that separates these items below the operating line."
+  - "Bad Debts can be negative (a recovery or reversal). Negative expense lines are kept
+     with their sign and never treated as income."
+
+thresholds:
+  # A movement is "significant" if EITHER its absolute change clears significant_mom_abs,
+  # OR its percentage change clears significant_mom_pct *and* its absolute change clears
+  # significant_mom_min_abs. The second floor matters: without it a line moving 400 -> 600
+  # is "+50%" and crowds out the movements that actually affect the month.
+  significant_mom_pct: 25.0
+  significant_mom_abs: 10000.0
+  significant_mom_min_abs: 1000.0
+  # A month is a "possible one-off" if it exceeds the trailing average by this multiple
+  # and the absolute gap clears the floor. Labelled "possible" — never a stated cause.
+  oneoff_multiple: 3.0
+  oneoff_min_abs: 5000.0
+  oneoff_trailing_months: 6
+  # Separate, higher floor for scanning the whole trailing-twelve-month window. A TTM
+  # total silently carries whatever happened eleven months ago, so anything this large
+  # inside the window earns a warning on every TTM metric.
+  oneoff_window_min_abs: 25000.0
+  # Movements ranked in the report
+  top_movements: 5
+
+ttm:
+  months: 12

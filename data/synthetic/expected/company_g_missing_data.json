@@ -1,0 +1,409 @@
+{
+  "note": "SYNTHETIC test data. Expected values computed by scripts/generate_synthetic.py without using finance_engine. Never evidence about a real client.",
+  "client_id": "company_g_missing_data",
+  "company_name": "Company G (SYNTHETIC)",
+  "scenario": "two months absent from the workbook and one blank cell; oldest-first layout",
+  "periods": [
+    "2025-01",
+    "2025-02",
+    "2025-03",
+    "2025-05",
+    "2025-06",
+    "2025-07",
+    "2025-08",
+    "2025-10",
+    "2025-11",
+    "2025-12",
+    "2026-01",
+    "2026-02",
+    "2026-03",
+    "2026-04",
+    "2026-05",
+    "2026-06"
+  ],
+  "period_count": 16,
+  "reporting_period": "2026-06",
+  "prior_period": "2026-05",
+  "layout": {
+    "sheet_name": "Income Statement",
+    "header_row": 5,
+    "section_label_column": "A",
+    "item_label_column": "B",
+    "first_data_column": "C",
+    "date_order": "oldest_first"
+  },
+  "ttm": {
+    "window": [
+      "2025-07",
+      "2025-08",
+      "2025-09",
+      "2025-10",
+      "2025-11",
+      "2025-12",
+      "2026-01",
+      "2026-02",
+      "2026-03",
+      "2026-04",
+      "2026-05",
+      "2026-06"
+    ],
+    "complete": false,
+    "totals": {}
+  },
+  "month_over_month": {
+    "total_revenue": {
+      "abs": 1280,
+      "pct": 0.859522,
+      "reason": null
+    },
+    "total_opex": {
+      "abs": 0.0,
+      "pct": 0.0,
+      "reason": null
+    },
+    "gross_profit": {
+      "abs": 1190,
+      "pct": 0.852069,
+      "reason": null
+    }
+  },
+  "per_period": {
+    "2025-01": {
+      "total_revenue": 131000,
+      "total_cogs": 8000,
+      "gross_profit": 123000,
+      "total_opex": 49780.0,
+      "operating_income": 73220.0,
+      "gross_margin_pct": 93.89313,
+      "revenue_by_stream": {
+        "Subscription Revenue": 110000,
+        "Services Revenue": 21000
+      },
+      "opex_by_line": {
+        "Rent": 7000.0,
+        "Software & SaaS": 3900.0,
+        "Support - Payroll": 36000.0,
+        "Support - Payroll Taxes": 2880.0
+      },
+      "group_subtotals": {
+        "Support Payroll": 38880.0
+      }
+    },
+    "2025-02": {
+      "total_revenue": 132280,
+      "total_cogs": 8090,
+      "gross_profit": 124190,
+      "total_opex": 49780.0,
+      "operating_income": 74410.0,
+      "gross_margin_pct": 93.884185,
+      "revenue_by_stream": {
+        "Subscription Revenue": 111100,
+        "Services Revenue": 21180
+      },
+      "opex_by_line": {
+        "Rent": 7000.0,
+        "Software & SaaS": 3900.0,
+        "Support - Payroll": 36000.0,
+        "Support - Payroll Taxes": 2880.0
+      },
+      "group_subtotals": {
+        "Support Payroll": 38880.0
+      }
+    },
+    "2025-03": {
+      "total_revenue": 133560,
+      "total_cogs": 8180,
+      "gross_profit": 125380,
+      "total_opex": 49780.0,
+      "operating_income": 75600.0,
+      "gross_margin_pct": 93.875412,
+      "revenue_by_stream": {
+        "Subscription Revenue": 112200,
+        "Services Revenue": 21360
+      },
+      "opex_by_line": {
+        "Rent": 7000.0,
+        "Software & SaaS": 3900.0,
+        "Support - Payroll": 36000.0,
+        "Support - Payroll Taxes": 2880.0
+      },
+      "group_subtotals": {
+        "Support Payroll": 38880.0
+      }
+    },
+    "2025-05": {
+      "total_revenue": 134840,
+      "total_cogs": 8270,
+      "gross_profit": 126570,
+      "total_opex": 49780.0,
+      "operating_income": 76790.0,
+      "gross_margin_pct": 93.866805,
+      "revenue_by_stream": {
+        "Subscription Revenue": 113300,
+        "Services Revenue": 21540
+      },
+      "opex_by_line": {
+        "Rent": 7000.0,
+        "Software & SaaS": 3900.0,
+        "Support - Payroll": 36000.0,
+        "Support - Payroll Taxes": 2880.0
+      },
+      "group_subtotals": {
+        "Support Payroll": 38880.0
+      }
+    },
+    "2025-06": {
+      "total_revenue": 136120,
+      "total_cogs": 8360,
+      "gross_profit": 127760,
+      "total_opex": 49780.0,
+      "operating_income": 77980.0,
+      "gross_margin_pct": 93.85836,
+      "revenue_by_stream": {
+        "Subscription Revenue": 114400,
+        "Services Revenue": 21720
+      },
+      "opex_by_line": {
+        "Rent": 7000.0,
+        "Software & SaaS": 3900.0,
+        "Support - Payroll": 36000.0,
+        "Support - Payroll Taxes": 2880.0
+      },
+      "group_subtotals": {
+        "Support Payroll": 38880.0
+      }
+    },
+    "2025-07": {
+      "total_revenue": 137400,
+      "total_cogs": 8450,
+      "gross_profit": 128950,
+      "total_opex": 49780.0,
+      "operating_income": 79170.0,
+      "gross_margin_pct": 93.850073,
+      "revenue_by_stream": {
+        "Subscription Revenue": 115500,
+        "Services Revenue": 21900
+      },
+      "opex_by_line": {
+        "Rent": 7000.0,
+        "Software & SaaS": 3900.0,
+        "Support - Payroll": 36000.0,
+        "Support - Payroll Taxes": 2880.0
+      },
+      "group_subtotals": {
+        "Support Payroll": 38880.0
+      }
+    },
+    "2025-08": {
+      "total_revenue": 138680,
+      "total_cogs": 8540,
+      "gross_profit": 130140,
+      "total_opex": 49780.0,
+      "operating_income": 80360.0,
+      "gross_margin_pct": 93.841938,
+      "revenue_by_stream": {
+        "Subscription Revenue": 116600,
+        "Services Revenue": 22080
+      },
+      "opex_by_line": {
+        "Rent": 7000.0,
+        "Software & SaaS": 3900.0,
+        "Support - Payroll": 36000.0,
+        "Support - Payroll Taxes": 2880.0
+      },
+      "group_subtotals": {
+        "Support Payroll": 38880.0
+      }
+    },
+    "2025-10": {
+      "total_revenue": 117700,
+      "total_cogs": 8630,
+      "gross_profit": 109070,
+      "total_opex": 49780.0,
+      "operating_income": 59290.0,
+      "gross_margin_pct": 92.667799,
+      "revenue_by_stream": {
+        "Subscription Revenue": 117700,
+        "Services Revenue": null
+      },
+      "opex_by_line": {
+        "Rent": 7000.0,
+        "Software & SaaS": 3900.0,
+        "Support - Payroll": 36000.0,
+        "Support - Payroll Taxes": 2880.0
+      },
+      "group_subtotals": {
+        "Support Payroll": 38880.0
+      }
+    },
+    "2025-11": {
+      "total_revenue": 141240,
+      "total_cogs": 8720,
+      "gross_profit": 132520,
+      "total_opex": 49780.0,
+      "operating_income": 82740.0,
+      "gross_margin_pct": 93.826112,
+      "revenue_by_stream": {
+        "Subscription Revenue": 118800,
+        "Services Revenue": 22440
+      },
+      "opex_by_line": {
+        "Rent": 7000.0,
+        "Software & SaaS": 3900.0,
+        "Support - Payroll": 36000.0,
+        "Support - Payroll Taxes": 2880.0
+      },
+      "group_subtotals": {
+        "Support Payroll": 38880.0
+      }
+    },
+    "2025-12": {
+      "total_revenue": 142520,
+      "total_cogs": 8810,
+      "gross_profit": 133710,
+      "total_opex": 49780.0,
+      "operating_income": 83930.0,
+      "gross_margin_pct": 93.818411,
+      "revenue_by_stream": {
+        "Subscription Revenue": 119900,
+        "Services Revenue": 22620
+      },
+      "opex_by_line": {
+        "Rent": 7000.0,
+        "Software & SaaS": 3900.0,
+        "Support - Payroll": 36000.0,
+        "Support - Payroll Taxes": 2880.0
+      },
+      "group_subtotals": {
+        "Support Payroll": 38880.0
+      }
+    },
+    "2026-01": {
+      "total_revenue": 143800,
+      "total_cogs": 8900,
+      "gross_profit": 134900,
+      "total_opex": 49780.0,
+      "operating_income": 85120.0,
+      "gross_margin_pct": 93.810848,
+      "revenue_by_stream": {
+        "Subscription Revenue": 121000,
+        "Services Revenue": 22800
+      },
+      "opex_by_line": {
+        "Rent": 7000.0,
+        "Software & SaaS": 3900.0,
+        "Support - Payroll": 36000.0,
+        "Support - Payroll Taxes": 2880.0
+      },
+      "group_subtotals": {
+        "Support Payroll": 38880.0
+      }
+    },
+    "2026-02": {
+      "total_revenue": 145080,
+      "total_cogs": 8990,
+      "gross_profit": 136090,
+      "total_opex": 49780.0,
+      "operating_income": 86310.0,
+      "gross_margin_pct": 93.803419,
+      "revenue_by_stream": {
+        "Subscription Revenue": 122100,
+        "Services Revenue": 22980
+      },
+      "opex_by_line": {
+        "Rent": 7000.0,
+        "Software & SaaS": 3900.0,
+        "Support - Payroll": 36000.0,
+        "Support - Payroll Taxes": 2880.0
+      },
+      "group_subtotals": {
+        "Support Payroll": 38880.0
+      }
+    },
+    "2026-03": {
+      "total_revenue": 146360,
+      "total_cogs": 9080,
+      "gross_profit": 137280,
+      "total_opex": 49780.0,
+      "operating_income": 87500.0,
+      "gross_margin_pct": 93.796119,
+      "revenue_by_stream": {
+        "Subscription Revenue": 123200,
+        "Services Revenue": 23160
+      },
+      "opex_by_line": {
+        "Rent": 7000.0,
+        "Software & SaaS": 3900.0,
+        "Support - Payroll": 36000.0,
+        "Support - Payroll Taxes": 2880.0
+      },
+      "group_subtotals": {
+        "Support Payroll": 38880.0
+      }
+    },
+    "2026-04": {
+      "total_revenue": 147640,
+      "total_cogs": 9170,
+      "gross_profit": 138470,
+      "total_opex": 49780.0,
+      "operating_income": 88690.0,
+      "gross_margin_pct": 93.788946,
+      "revenue_by_stream": {
+        "Subscription Revenue": 124300,
+        "Services Revenue": 23340
+      },
+      "opex_by_line": {
+        "Rent": 7000.0,
+        "Software & SaaS": 3900.0,
+        "Support - Payroll": 36000.0,
+        "Support - Payroll Taxes": 2880.0
+      },
+      "group_subtotals": {
+        "Support Payroll": 38880.0
+      }
+    },
+    "2026-05": {
+      "total_revenue": 148920,
+      "total_cogs": 9260,
+      "gross_profit": 139660,
+      "total_opex": 49780.0,
+      "operating_income": 89880.0,
+      "gross_margin_pct": 93.781896,
+      "revenue_by_stream": {
+        "Subscription Revenue": 125400,
+        "Services Revenue": 23520
+      },
+      "opex_by_line": {
+        "Rent": 7000.0,
+        "Software & SaaS": 3900.0,
+        "Support - Payroll": 36000.0,
+        "Support - Payroll Taxes": 2880.0
+      },
+      "group_subtotals": {
+        "Support Payroll": 38880.0
+      }
+    },
+    "2026-06": {
+      "total_revenue": 150200,
+      "total_cogs": 9350,
+      "gross_profit": 140850,
+      "total_opex": 49780.0,
+      "operating_income": 91070.0,
+      "gross_margin_pct": 93.774967,
+      "revenue_by_stream": {
+        "Subscription Revenue": 126500,
+        "Services Revenue": 23700
+      },
+      "opex_by_line": {
+        "Rent": 7000.0,
+        "Software & SaaS": 3900.0,
+        "Support - Payroll": 36000.0,
+        "Support - Payroll Taxes": 2880.0
+      },
+      "group_subtotals": {
+        "Support Payroll": 38880.0
+      }
+    }
+  },
+  "has_balance_sheet": false
+}

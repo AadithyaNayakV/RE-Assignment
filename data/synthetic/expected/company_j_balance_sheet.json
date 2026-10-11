@@ -1,0 +1,493 @@
+{
+  "note": "SYNTHETIC test data. Expected values computed by scripts/generate_synthetic.py without using finance_engine. Never evidence about a real client.",
+  "client_id": "company_j_balance_sheet",
+  "company_name": "Company J (SYNTHETIC)",
+  "scenario": "income statement plus a balance sheet that balances",
+  "periods": [
+    "2025-01",
+    "2025-02",
+    "2025-03",
+    "2025-04",
+    "2025-05",
+    "2025-06",
+    "2025-07",
+    "2025-08",
+    "2025-09",
+    "2025-10",
+    "2025-11",
+    "2025-12",
+    "2026-01",
+    "2026-02",
+    "2026-03",
+    "2026-04",
+    "2026-05",
+    "2026-06"
+  ],
+  "period_count": 18,
+  "reporting_period": "2026-06",
+  "prior_period": "2026-05",
+  "layout": {
+    "sheet_name": "Income Statement",
+    "header_row": 5,
+    "section_label_column": "A",
+    "item_label_column": "B",
+    "first_data_column": "C",
+    "date_order": "newest_first"
+  },
+  "ttm": {
+    "window": [
+      "2025-07",
+      "2025-08",
+      "2025-09",
+      "2025-10",
+      "2025-11",
+      "2025-12",
+      "2026-01",
+      "2026-02",
+      "2026-03",
+      "2026-04",
+      "2026-05",
+      "2026-06"
+    ],
+    "complete": true,
+    "totals": {
+      "total_revenue": 2593080,
+      "total_cogs": 511320.0,
+      "total_opex": 1447950.0
+    }
+  },
+  "month_over_month": {
+    "total_revenue": {
+      "abs": 1660,
+      "pct": 0.74253,
+      "reason": null
+    },
+    "total_opex": {
+      "abs": 635.0,
+      "pct": 0.514087,
+      "reason": null
+    },
+    "gross_profit": {
+      "abs": 1520.0,
+      "pct": 0.842946,
+      "reason": null
+    }
+  },
+  "per_period": {
+    "2025-01": {
+      "total_revenue": 197000,
+      "total_cogs": 41000.0,
+      "gross_profit": 156000.0,
+      "total_opex": 113360.0,
+      "operating_income": 42640.0,
+      "gross_margin_pct": 79.187817,
+      "revenue_by_stream": {
+        "Subscription Revenue": 165000,
+        "Services Revenue": 32000
+      },
+      "opex_by_line": {
+        "Rent": 10500.0,
+        "Software & SaaS": 7100,
+        "Accounting & Tax": 4300.0,
+        "Insurance": 2900.0,
+        "Engineering - Payroll": 82000,
+        "Engineering - Payroll Taxes": 6560
+      },
+      "group_subtotals": {
+        "Engineering Payroll": 88560
+      }
+    },
+    "2025-02": {
+      "total_revenue": 198660,
+      "total_cogs": 41140.0,
+      "gross_profit": 157520.0,
+      "total_opex": 113995.0,
+      "operating_income": 43525.0,
+      "gross_margin_pct": 79.291251,
+      "revenue_by_stream": {
+        "Subscription Revenue": 166400,
+        "Services Revenue": 32260
+      },
+      "opex_by_line": {
+        "Rent": 10500.0,
+        "Software & SaaS": 7195,
+        "Accounting & Tax": 4300.0,
+        "Insurance": 2900.0,
+        "Engineering - Payroll": 82500,
+        "Engineering - Payroll Taxes": 6600
+      },
+      "group_subtotals": {
+        "Engineering Payroll": 89100
+      }
+    },
+    "2025-03": {
+      "total_revenue": 200320,
+      "total_cogs": 41280.0,
+      "gross_profit": 159040.0,
+      "total_opex": 114630.0,
+      "operating_income": 44410.0,
+      "gross_margin_pct": 79.392971,
+      "revenue_by_stream": {
+        "Subscription Revenue": 167800,
+        "Services Revenue": 32520
+      },
+      "opex_by_line": {
+        "Rent": 10500.0,
+        "Software & SaaS": 7290,
+        "Accounting & Tax": 4300.0,
+        "Insurance": 2900.0,
+        "Engineering - Payroll": 83000,
+        "Engineering - Payroll Taxes": 6640
+      },
+      "group_subtotals": {
+        "Engineering Payroll": 89640
+      }
+    },
+    "2025-04": {
+      "total_revenue": 201980,
+      "total_cogs": 41420.0,
+      "gross_profit": 160560.0,
+      "total_opex": 115265.0,
+      "operating_income": 45295.0,
+      "gross_margin_pct": 79.493019,
+      "revenue_by_stream": {
+        "Subscription Revenue": 169200,
+        "Services Revenue": 32780
+      },
+      "opex_by_line": {
+        "Rent": 10500.0,
+        "Software & SaaS": 7385,
+        "Accounting & Tax": 4300.0,
+        "Insurance": 2900.0,
+        "Engineering - Payroll": 83500,
+        "Engineering - Payroll Taxes": 6680
+      },
+      "group_subtotals": {
+        "Engineering Payroll": 90180
+      }
+    },
+    "2025-05": {
+      "total_revenue": 203640,
+      "total_cogs": 41560.0,
+      "gross_profit": 162080.0,
+      "total_opex": 115900.0,
+      "operating_income": 46180.0,
+      "gross_margin_pct": 79.591436,
+      "revenue_by_stream": {
+        "Subscription Revenue": 170600,
+        "Services Revenue": 33040
+      },
+      "opex_by_line": {
+        "Rent": 10500.0,
+        "Software & SaaS": 7480,
+        "Accounting & Tax": 4300.0,
+        "Insurance": 2900.0,
+        "Engineering - Payroll": 84000,
+        "Engineering - Payroll Taxes": 6720
+      },
+      "group_subtotals": {
+        "Engineering Payroll": 90720
+      }
+    },
+    "2025-06": {
+      "total_revenue": 205300,
+      "total_cogs": 41700.0,
+      "gross_profit": 163600.0,
+      "total_opex": 116535.0,
+      "operating_income": 47065.0,
+      "gross_margin_pct": 79.688261,
+      "revenue_by_stream": {
+        "Subscription Revenue": 172000,
+        "Services Revenue": 33300
+      },
+      "opex_by_line": {
+        "Rent": 10500.0,
+        "Software & SaaS": 7575,
+        "Accounting & Tax": 4300.0,
+        "Insurance": 2900.0,
+        "Engineering - Payroll": 84500,
+        "Engineering - Payroll Taxes": 6760
+      },
+      "group_subtotals": {
+        "Engineering Payroll": 91260
+      }
+    },
+    "2025-07": {
+      "total_revenue": 206960,
+      "total_cogs": 41840.0,
+      "gross_profit": 165120.0,
+      "total_opex": 117170.0,
+      "operating_income": 47950.0,
+      "gross_margin_pct": 79.783533,
+      "revenue_by_stream": {
+        "Subscription Revenue": 173400,
+        "Services Revenue": 33560
+      },
+      "opex_by_line": {
+        "Rent": 10500.0,
+        "Software & SaaS": 7670,
+        "Accounting & Tax": 4300.0,
+        "Insurance": 2900.0,
+        "Engineering - Payroll": 85000,
+        "Engineering - Payroll Taxes": 6800
+      },
+      "group_subtotals": {
+        "Engineering Payroll": 91800
+      }
+    },
+    "2025-08": {
+      "total_revenue": 208620,
+      "total_cogs": 41980.0,
+      "gross_profit": 166640.0,
+      "total_opex": 117805.0,
+      "operating_income": 48835.0,
+      "gross_margin_pct": 79.877289,
+      "revenue_by_stream": {
+        "Subscription Revenue": 174800,
+        "Services Revenue": 33820
+      },
+      "opex_by_line": {
+        "Rent": 10500.0,
+        "Software & SaaS": 7765,
+        "Accounting & Tax": 4300.0,
+        "Insurance": 2900.0,
+        "Engineering - Payroll": 85500,
+        "Engineering - Payroll Taxes": 6840
+      },
+      "group_subtotals": {
+        "Engineering Payroll": 92340
+      }
+    },
+    "2025-09": {
+      "total_revenue": 210280,
+      "total_cogs": 42120.0,
+      "gross_profit": 168160.0,
+      "total_opex": 118440.0,
+      "operating_income": 49720.0,
+      "gross_margin_pct": 79.969564,
+      "revenue_by_stream": {
+        "Subscription Revenue": 176200,
+        "Services Revenue": 34080
+      },
+      "opex_by_line": {
+        "Rent": 10500.0,
+        "Software & SaaS": 7860,
+        "Accounting & Tax": 4300.0,
+        "Insurance": 2900.0,
+        "Engineering - Payroll": 86000,
+        "Engineering - Payroll Taxes": 6880
+      },
+      "group_subtotals": {
+        "Engineering Payroll": 92880
+      }
+    },
+    "2025-10": {
+      "total_revenue": 211940,
+      "total_cogs": 42260.0,
+      "gross_profit": 169680.0,
+      "total_opex": 119075.0,
+      "operating_income": 50605.0,
+      "gross_margin_pct": 80.060394,
+      "revenue_by_stream": {
+        "Subscription Revenue": 177600,
+        "Services Revenue": 34340
+      },
+      "opex_by_line": {
+        "Rent": 10500.0,
+        "Software & SaaS": 7955,
+        "Accounting & Tax": 4300.0,
+        "Insurance": 2900.0,
+        "Engineering - Payroll": 86500,
+        "Engineering - Payroll Taxes": 6920
+      },
+      "group_subtotals": {
+        "Engineering Payroll": 93420
+      }
+    },
+    "2025-11": {
+      "total_revenue": 213600,
+      "total_cogs": 42400.0,
+      "gross_profit": 171200.0,
+      "total_opex": 119710.0,
+      "operating_income": 51490.0,
+      "gross_margin_pct": 80.149813,
+      "revenue_by_stream": {
+        "Subscription Revenue": 179000,
+        "Services Revenue": 34600
+      },
+      "opex_by_line": {
+        "Rent": 10500.0,
+        "Software & SaaS": 8050,
+        "Accounting & Tax": 4300.0,
+        "Insurance": 2900.0,
+        "Engineering - Payroll": 87000,
+        "Engineering - Payroll Taxes": 6960
+      },
+      "group_subtotals": {
+        "Engineering Payroll": 93960
+      }
+    },
+    "2025-12": {
+      "total_revenue": 215260,
+      "total_cogs": 42540.0,
+      "gross_profit": 172720.0,
+      "total_opex": 120345.0,
+      "operating_income": 52375.0,
+      "gross_margin_pct": 80.237852,
+      "revenue_by_stream": {
+        "Subscription Revenue": 180400,
+        "Services Revenue": 34860
+      },
+      "opex_by_line": {
+        "Rent": 10500.0,
+        "Software & SaaS": 8145,
+        "Accounting & Tax": 4300.0,
+        "Insurance": 2900.0,
+        "Engineering - Payroll": 87500,
+        "Engineering - Payroll Taxes": 7000
+      },
+      "group_subtotals": {
+        "Engineering Payroll": 94500
+      }
+    },
+    "2026-01": {
+      "total_revenue": 216920,
+      "total_cogs": 42680.0,
+      "gross_profit": 174240.0,
+      "total_opex": 120980.0,
+      "operating_income": 53260.0,
+      "gross_margin_pct": 80.324544,
+      "revenue_by_stream": {
+        "Subscription Revenue": 181800,
+        "Services Revenue": 35120
+      },
+      "opex_by_line": {
+        "Rent": 10500.0,
+        "Software & SaaS": 8240,
+        "Accounting & Tax": 4300.0,
+        "Insurance": 2900.0,
+        "Engineering - Payroll": 88000,
+        "Engineering - Payroll Taxes": 7040
+      },
+      "group_subtotals": {
+        "Engineering Payroll": 95040
+      }
+    },
+    "2026-02": {
+      "total_revenue": 218580,
+      "total_cogs": 42820.0,
+      "gross_profit": 175760.0,
+      "total_opex": 121615.0,
+      "operating_income": 54145.0,
+      "gross_margin_pct": 80.409919,
+      "revenue_by_stream": {
+        "Subscription Revenue": 183200,
+        "Services Revenue": 35380
+      },
+      "opex_by_line": {
+        "Rent": 10500.0,
+        "Software & SaaS": 8335,
+        "Accounting & Tax": 4300.0,
+        "Insurance": 2900.0,
+        "Engineering - Payroll": 88500,
+        "Engineering - Payroll Taxes": 7080
+      },
+      "group_subtotals": {
+        "Engineering Payroll": 95580
+      }
+    },
+    "2026-03": {
+      "total_revenue": 220240,
+      "total_cogs": 42960.0,
+      "gross_profit": 177280.0,
+      "total_opex": 122250.0,
+      "operating_income": 55030.0,
+      "gross_margin_pct": 80.494007,
+      "revenue_by_stream": {
+        "Subscription Revenue": 184600,
+        "Services Revenue": 35640
+      },
+      "opex_by_line": {
+        "Rent": 10500.0,
+        "Software & SaaS": 8430,
+        "Accounting & Tax": 4300.0,
+        "Insurance": 2900.0,
+        "Engineering - Payroll": 89000,
+        "Engineering - Payroll Taxes": 7120
+      },
+      "group_subtotals": {
+        "Engineering Payroll": 96120
+      }
+    },
+    "2026-04": {
+      "total_revenue": 221900,
+      "total_cogs": 43100.0,
+      "gross_profit": 178800.0,
+      "total_opex": 122885.0,
+      "operating_income": 55915.0,
+      "gross_margin_pct": 80.576836,
+      "revenue_by_stream": {
+        "Subscription Revenue": 186000,
+        "Services Revenue": 35900
+      },
+      "opex_by_line": {
+        "Rent": 10500.0,
+        "Software & SaaS": 8525,
+        "Accounting & Tax": 4300.0,
+        "Insurance": 2900.0,
+        "Engineering - Payroll": 89500,
+        "Engineering - Payroll Taxes": 7160
+      },
+      "group_subtotals": {
+        "Engineering Payroll": 96660
+      }
+    },
+    "2026-05": {
+      "total_revenue": 223560,
+      "total_cogs": 43240.0,
+      "gross_profit": 180320.0,
+      "total_opex": 123520.0,
+      "operating_income": 56800.0,
+      "gross_margin_pct": 80.658436,
+      "revenue_by_stream": {
+        "Subscription Revenue": 187400,
+        "Services Revenue": 36160
+      },
+      "opex_by_line": {
+        "Rent": 10500.0,
+        "Software & SaaS": 8620,
+        "Accounting & Tax": 4300.0,
+        "Insurance": 2900.0,
+        "Engineering - Payroll": 90000,
+        "Engineering - Payroll Taxes": 7200
+      },
+      "group_subtotals": {
+        "Engineering Payroll": 97200
+      }
+    },
+    "2026-06": {
+      "total_revenue": 225220,
+      "total_cogs": 43380.0,
+      "gross_profit": 181840.0,
+      "total_opex": 124155.0,
+      "operating_income": 57685.0,
+      "gross_margin_pct": 80.738833,
+      "revenue_by_stream": {
+        "Subscription Revenue": 188800,
+        "Services Revenue": 36420
+      },
+      "opex_by_line": {
+        "Rent": 10500.0,
+        "Software & SaaS": 8715,
+        "Accounting & Tax": 4300.0,
+        "Insurance": 2900.0,
+        "Engineering - Payroll": 90500,
+        "Engineering - Payroll Taxes": 7240
+      },
+      "group_subtotals": {
+        "Engineering Payroll": 97740
+      }
+    }
+  },
+  "has_balance_sheet": true
+}

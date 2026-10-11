@@ -1,0 +1,493 @@
+{
+  "note": "SYNTHETIC test data. Expected values computed by scripts/generate_synthetic.py without using finance_engine. Never evidence about a real client.",
+  "client_id": "company_c_expense_spike",
+  "company_name": "Company C (SYNTHETIC)",
+  "scenario": "legal costs jump in month 13 and persist",
+  "periods": [
+    "2025-01",
+    "2025-02",
+    "2025-03",
+    "2025-04",
+    "2025-05",
+    "2025-06",
+    "2025-07",
+    "2025-08",
+    "2025-09",
+    "2025-10",
+    "2025-11",
+    "2025-12",
+    "2026-01",
+    "2026-02",
+    "2026-03",
+    "2026-04",
+    "2026-05",
+    "2026-06"
+  ],
+  "period_count": 18,
+  "reporting_period": "2026-06",
+  "prior_period": "2026-05",
+  "layout": {
+    "sheet_name": "Income Statement",
+    "header_row": 5,
+    "section_label_column": "A",
+    "item_label_column": "B",
+    "first_data_column": "C",
+    "date_order": "newest_first"
+  },
+  "ttm": {
+    "window": [
+      "2025-07",
+      "2025-08",
+      "2025-09",
+      "2025-10",
+      "2025-11",
+      "2025-12",
+      "2026-01",
+      "2026-02",
+      "2026-03",
+      "2026-04",
+      "2026-05",
+      "2026-06"
+    ],
+    "complete": true,
+    "totals": {
+      "total_revenue": 2740800,
+      "total_cogs": 244620,
+      "total_opex": 1198200.0
+    }
+  },
+  "month_over_month": {
+    "total_revenue": {
+      "abs": 1600,
+      "pct": 0.679117,
+      "reason": null
+    },
+    "total_opex": {
+      "abs": 0.0,
+      "pct": 0.0,
+      "reason": null
+    },
+    "gross_profit": {
+      "abs": 1410,
+      "pct": 0.657772,
+      "reason": null
+    }
+  },
+  "per_period": {
+    "2025-01": {
+      "total_revenue": 210000,
+      "total_cogs": 18200,
+      "gross_profit": 191800,
+      "total_opex": 82850.0,
+      "operating_income": 108950.0,
+      "gross_margin_pct": 91.333333,
+      "revenue_by_stream": {
+        "Platform Revenue": 150000,
+        "Usage Fees": 60000
+      },
+      "opex_by_line": {
+        "Legal Expenses": 2000.0,
+        "Rent": 8200.0,
+        "Software & SaaS": 7400.0,
+        "Insurance": 2600.0,
+        "Operations - Payroll": 58000.0,
+        "Operations - Payroll Taxes": 4650.0
+      },
+      "group_subtotals": {
+        "Operations Payroll": 62650.0
+      }
+    },
+    "2025-02": {
+      "total_revenue": 211600,
+      "total_cogs": 18390,
+      "gross_profit": 193210,
+      "total_opex": 82850.0,
+      "operating_income": 110360.0,
+      "gross_margin_pct": 91.309074,
+      "revenue_by_stream": {
+        "Platform Revenue": 150900,
+        "Usage Fees": 60700
+      },
+      "opex_by_line": {
+        "Legal Expenses": 2000.0,
+        "Rent": 8200.0,
+        "Software & SaaS": 7400.0,
+        "Insurance": 2600.0,
+        "Operations - Payroll": 58000.0,
+        "Operations - Payroll Taxes": 4650.0
+      },
+      "group_subtotals": {
+        "Operations Payroll": 62650.0
+      }
+    },
+    "2025-03": {
+      "total_revenue": 213200,
+      "total_cogs": 18580,
+      "gross_profit": 194620,
+      "total_opex": 82850.0,
+      "operating_income": 111770.0,
+      "gross_margin_pct": 91.285178,
+      "revenue_by_stream": {
+        "Platform Revenue": 151800,
+        "Usage Fees": 61400
+      },
+      "opex_by_line": {
+        "Legal Expenses": 2000.0,
+        "Rent": 8200.0,
+        "Software & SaaS": 7400.0,
+        "Insurance": 2600.0,
+        "Operations - Payroll": 58000.0,
+        "Operations - Payroll Taxes": 4650.0
+      },
+      "group_subtotals": {
+        "Operations Payroll": 62650.0
+      }
+    },
+    "2025-04": {
+      "total_revenue": 214800,
+      "total_cogs": 18770,
+      "gross_profit": 196030,
+      "total_opex": 82850.0,
+      "operating_income": 113180.0,
+      "gross_margin_pct": 91.261639,
+      "revenue_by_stream": {
+        "Platform Revenue": 152700,
+        "Usage Fees": 62100
+      },
+      "opex_by_line": {
+        "Legal Expenses": 2000.0,
+        "Rent": 8200.0,
+        "Software & SaaS": 7400.0,
+        "Insurance": 2600.0,
+        "Operations - Payroll": 58000.0,
+        "Operations - Payroll Taxes": 4650.0
+      },
+      "group_subtotals": {
+        "Operations Payroll": 62650.0
+      }
+    },
+    "2025-05": {
+      "total_revenue": 216400,
+      "total_cogs": 18960,
+      "gross_profit": 197440,
+      "total_opex": 82850.0,
+      "operating_income": 114590.0,
+      "gross_margin_pct": 91.238447,
+      "revenue_by_stream": {
+        "Platform Revenue": 153600,
+        "Usage Fees": 62800
+      },
+      "opex_by_line": {
+        "Legal Expenses": 2000.0,
+        "Rent": 8200.0,
+        "Software & SaaS": 7400.0,
+        "Insurance": 2600.0,
+        "Operations - Payroll": 58000.0,
+        "Operations - Payroll Taxes": 4650.0
+      },
+      "group_subtotals": {
+        "Operations Payroll": 62650.0
+      }
+    },
+    "2025-06": {
+      "total_revenue": 218000,
+      "total_cogs": 19150,
+      "gross_profit": 198850,
+      "total_opex": 82850.0,
+      "operating_income": 116000.0,
+      "gross_margin_pct": 91.215596,
+      "revenue_by_stream": {
+        "Platform Revenue": 154500,
+        "Usage Fees": 63500
+      },
+      "opex_by_line": {
+        "Legal Expenses": 2000.0,
+        "Rent": 8200.0,
+        "Software & SaaS": 7400.0,
+        "Insurance": 2600.0,
+        "Operations - Payroll": 58000.0,
+        "Operations - Payroll Taxes": 4650.0
+      },
+      "group_subtotals": {
+        "Operations Payroll": 62650.0
+      }
+    },
+    "2025-07": {
+      "total_revenue": 219600,
+      "total_cogs": 19340,
+      "gross_profit": 200260,
+      "total_opex": 82850.0,
+      "operating_income": 117410.0,
+      "gross_margin_pct": 91.193078,
+      "revenue_by_stream": {
+        "Platform Revenue": 155400,
+        "Usage Fees": 64200
+      },
+      "opex_by_line": {
+        "Legal Expenses": 2000.0,
+        "Rent": 8200.0,
+        "Software & SaaS": 7400.0,
+        "Insurance": 2600.0,
+        "Operations - Payroll": 58000.0,
+        "Operations - Payroll Taxes": 4650.0
+      },
+      "group_subtotals": {
+        "Operations Payroll": 62650.0
+      }
+    },
+    "2025-08": {
+      "total_revenue": 221200,
+      "total_cogs": 19530,
+      "gross_profit": 201670,
+      "total_opex": 82850.0,
+      "operating_income": 118820.0,
+      "gross_margin_pct": 91.170886,
+      "revenue_by_stream": {
+        "Platform Revenue": 156300,
+        "Usage Fees": 64900
+      },
+      "opex_by_line": {
+        "Legal Expenses": 2000.0,
+        "Rent": 8200.0,
+        "Software & SaaS": 7400.0,
+        "Insurance": 2600.0,
+        "Operations - Payroll": 58000.0,
+        "Operations - Payroll Taxes": 4650.0
+      },
+      "group_subtotals": {
+        "Operations Payroll": 62650.0
+      }
+    },
+    "2025-09": {
+      "total_revenue": 222800,
+      "total_cogs": 19720,
+      "gross_profit": 203080,
+      "total_opex": 82850.0,
+      "operating_income": 120230.0,
+      "gross_margin_pct": 91.149013,
+      "revenue_by_stream": {
+        "Platform Revenue": 157200,
+        "Usage Fees": 65600
+      },
+      "opex_by_line": {
+        "Legal Expenses": 2000.0,
+        "Rent": 8200.0,
+        "Software & SaaS": 7400.0,
+        "Insurance": 2600.0,
+        "Operations - Payroll": 58000.0,
+        "Operations - Payroll Taxes": 4650.0
+      },
+      "group_subtotals": {
+        "Operations Payroll": 62650.0
+      }
+    },
+    "2025-10": {
+      "total_revenue": 224400,
+      "total_cogs": 19910,
+      "gross_profit": 204490,
+      "total_opex": 82850.0,
+      "operating_income": 121640.0,
+      "gross_margin_pct": 91.127451,
+      "revenue_by_stream": {
+        "Platform Revenue": 158100,
+        "Usage Fees": 66300
+      },
+      "opex_by_line": {
+        "Legal Expenses": 2000.0,
+        "Rent": 8200.0,
+        "Software & SaaS": 7400.0,
+        "Insurance": 2600.0,
+        "Operations - Payroll": 58000.0,
+        "Operations - Payroll Taxes": 4650.0
+      },
+      "group_subtotals": {
+        "Operations Payroll": 62650.0
+      }
+    },
+    "2025-11": {
+      "total_revenue": 226000,
+      "total_cogs": 20100,
+      "gross_profit": 205900,
+      "total_opex": 82850.0,
+      "operating_income": 123050.0,
+      "gross_margin_pct": 91.106195,
+      "revenue_by_stream": {
+        "Platform Revenue": 159000,
+        "Usage Fees": 67000
+      },
+      "opex_by_line": {
+        "Legal Expenses": 2000.0,
+        "Rent": 8200.0,
+        "Software & SaaS": 7400.0,
+        "Insurance": 2600.0,
+        "Operations - Payroll": 58000.0,
+        "Operations - Payroll Taxes": 4650.0
+      },
+      "group_subtotals": {
+        "Operations Payroll": 62650.0
+      }
+    },
+    "2025-12": {
+      "total_revenue": 227600,
+      "total_cogs": 20290,
+      "gross_profit": 207310,
+      "total_opex": 82850.0,
+      "operating_income": 124460.0,
+      "gross_margin_pct": 91.085237,
+      "revenue_by_stream": {
+        "Platform Revenue": 159900,
+        "Usage Fees": 67700
+      },
+      "opex_by_line": {
+        "Legal Expenses": 2000.0,
+        "Rent": 8200.0,
+        "Software & SaaS": 7400.0,
+        "Insurance": 2600.0,
+        "Operations - Payroll": 58000.0,
+        "Operations - Payroll Taxes": 4650.0
+      },
+      "group_subtotals": {
+        "Operations Payroll": 62650.0
+      }
+    },
+    "2026-01": {
+      "total_revenue": 229200,
+      "total_cogs": 20480,
+      "gross_profit": 208720,
+      "total_opex": 116850.0,
+      "operating_income": 91870.0,
+      "gross_margin_pct": 91.064572,
+      "revenue_by_stream": {
+        "Platform Revenue": 160800,
+        "Usage Fees": 68400
+      },
+      "opex_by_line": {
+        "Legal Expenses": 36000.0,
+        "Rent": 8200.0,
+        "Software & SaaS": 7400.0,
+        "Insurance": 2600.0,
+        "Operations - Payroll": 58000.0,
+        "Operations - Payroll Taxes": 4650.0
+      },
+      "group_subtotals": {
+        "Operations Payroll": 62650.0
+      }
+    },
+    "2026-02": {
+      "total_revenue": 230800,
+      "total_cogs": 20670,
+      "gross_profit": 210130,
+      "total_opex": 116850.0,
+      "operating_income": 93280.0,
+      "gross_margin_pct": 91.044194,
+      "revenue_by_stream": {
+        "Platform Revenue": 161700,
+        "Usage Fees": 69100
+      },
+      "opex_by_line": {
+        "Legal Expenses": 36000.0,
+        "Rent": 8200.0,
+        "Software & SaaS": 7400.0,
+        "Insurance": 2600.0,
+        "Operations - Payroll": 58000.0,
+        "Operations - Payroll Taxes": 4650.0
+      },
+      "group_subtotals": {
+        "Operations Payroll": 62650.0
+      }
+    },
+    "2026-03": {
+      "total_revenue": 232400,
+      "total_cogs": 20860,
+      "gross_profit": 211540,
+      "total_opex": 116850.0,
+      "operating_income": 94690.0,
+      "gross_margin_pct": 91.024096,
+      "revenue_by_stream": {
+        "Platform Revenue": 162600,
+        "Usage Fees": 69800
+      },
+      "opex_by_line": {
+        "Legal Expenses": 36000.0,
+        "Rent": 8200.0,
+        "Software & SaaS": 7400.0,
+        "Insurance": 2600.0,
+        "Operations - Payroll": 58000.0,
+        "Operations - Payroll Taxes": 4650.0
+      },
+      "group_subtotals": {
+        "Operations Payroll": 62650.0
+      }
+    },
+    "2026-04": {
+      "total_revenue": 234000,
+      "total_cogs": 21050,
+      "gross_profit": 212950,
+      "total_opex": 116850.0,
+      "operating_income": 96100.0,
+      "gross_margin_pct": 91.004274,
+      "revenue_by_stream": {
+        "Platform Revenue": 163500,
+        "Usage Fees": 70500
+      },
+      "opex_by_line": {
+        "Legal Expenses": 36000.0,
+        "Rent": 8200.0,
+        "Software & SaaS": 7400.0,
+        "Insurance": 2600.0,
+        "Operations - Payroll": 58000.0,
+        "Operations - Payroll Taxes": 4650.0
+      },
+      "group_subtotals": {
+        "Operations Payroll": 62650.0
+      }
+    },
+    "2026-05": {
+      "total_revenue": 235600,
+      "total_cogs": 21240,
+      "gross_profit": 214360,
+      "total_opex": 116850.0,
+      "operating_income": 97510.0,
+      "gross_margin_pct": 90.98472,
+      "revenue_by_stream": {
+        "Platform Revenue": 164400,
+        "Usage Fees": 71200
+      },
+      "opex_by_line": {
+        "Legal Expenses": 36000.0,
+        "Rent": 8200.0,
+        "Software & SaaS": 7400.0,
+        "Insurance": 2600.0,
+        "Operations - Payroll": 58000.0,
+        "Operations - Payroll Taxes": 4650.0
+      },
+      "group_subtotals": {
+        "Operations Payroll": 62650.0
+      }
+    },
+    "2026-06": {
+      "total_revenue": 237200,
+      "total_cogs": 21430,
+      "gross_profit": 215770,
+      "total_opex": 116850.0,
+      "operating_income": 98920.0,
+      "gross_margin_pct": 90.96543,
+      "revenue_by_stream": {
+        "Platform Revenue": 165300,
+        "Usage Fees": 71900
+      },
+      "opex_by_line": {
+        "Legal Expenses": 36000.0,
+        "Rent": 8200.0,
+        "Software & SaaS": 7400.0,
+        "Insurance": 2600.0,
+        "Operations - Payroll": 58000.0,
+        "Operations - Payroll Taxes": 4650.0
+      },
+      "group_subtotals": {
+        "Operations Payroll": 62650.0
+      }
+    }
+  },
+  "has_balance_sheet": false
+}
