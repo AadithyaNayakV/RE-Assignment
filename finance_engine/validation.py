@@ -132,7 +132,7 @@ def validate(dataset: Dataset, config: ClientConfig, period: str) -> ValidationR
     _check_unreadable_formulas(report, sheet, period)
     _check_blank_vs_zero(report, sheet, period)
     _check_duplicate_labels(report, sheet)
-    _check_sign_conventions(report, sheet, period)
+    _check_sign_conventions(report, sheet, period, config.expected_negative_lines)
     _check_fallback_categories(report, sheet, config)
     _check_units(report, dataset, config)
     _check_balance_sheet(report, dataset, period)
@@ -259,19 +259,32 @@ def _check_duplicate_labels(report, sheet: Sheet) -> None:
         )
 
 
-def _check_sign_conventions(report, sheet: Sheet, period: str) -> None:
+def _check_sign_conventions(report, sheet: Sheet, period: str,
+                            expected_negative: set[str] | None = None) -> None:
+    """Warn about negative lines, except those the client config expects to be negative.
+
+    The message never says what a negative line *is*. "Typically a recovery or reversal"
+    was wrong for Interest Income and an Income Tax Benefit, which are negative by
+    nature, and it is a guess for every other line too.
+    """
+    expected_negative = expected_negative or set()
+
+    def unexpected(item) -> bool:
+        return ((item.value(period) or 0) < 0
+                and str(item.label).casefold() not in expected_negative)
+
     neg_revenue = [
         (i.label, i.row, i.value(period))
         for i in sheet.in_section("revenue")
-        if (i.value(period) or 0) < 0
+        if unexpected(i)
     ]
     if neg_revenue:
         report.warn(
             "negative_revenue_line",
             f"{len(neg_revenue)} revenue line(s) are negative in {period}: "
             f"{'; '.join(f'{l} ({v:,.2f})' for l, _, v in neg_revenue)}. "
-            f"Kept with their sign (typically a refund, credit or reversal) and never "
-            f"reclassified as an expense.",
+            f"Kept with their sign and never reclassified as an expense. Each may be a "
+            f"refund, a credit or a reversal; that needs confirmation.",
             ("revenue.",),
             rows=[{"label": l, "row": r, "value": v} for l, r, v in neg_revenue],
         )
@@ -280,7 +293,7 @@ def _check_sign_conventions(report, sheet: Sheet, period: str) -> None:
     # "opex." would tag all ~270 opex metrics, putting a note about Bad Debts onto
     # opex.line.travel — which trains a reader to ignore warnings.
     for section in ("opex", "cogs"):
-        negatives = [i for i in sheet.in_section(section) if (i.value(period) or 0) < 0]
+        negatives = [i for i in sheet.in_section(section) if unexpected(i)]
         if not negatives:
             continue
 
@@ -299,9 +312,11 @@ def _check_sign_conventions(report, sheet: Sheet, period: str) -> None:
         report.warn(
             f"negative_{section}_line",
             f"{len(negatives)} {_SECTION_NAMES[section]} line(s) are negative in "
-            f"{period}: {described}. Kept with their sign (typically a recovery or "
-            f"reversal) and never reclassified as income. This warning is attached only "
-            f"to the figures that include these lines.",
+            f"{period}: {described}. Kept with their sign and never reclassified as "
+            f"income. Each may be a recovery, a reversal or a misposting; that needs "
+            f"confirmation. Lines the client config expects to be negative are not "
+            f"listed. This warning is attached only to the figures that include these "
+            f"lines.",
             tuple(sorted(affects)),
             rows=[{"label": i.label, "row": i.row, "value": i.value(period),
                    "category": i.category, "group": i.group} for i in negatives],

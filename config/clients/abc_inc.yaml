@@ -135,8 +135,15 @@ classification_notes:
      inside Operating Expenses in this workbook. As a result the workbook's Operating
      Income equals its Net Income, and the reported operating margin is not comparable to
      a statement that separates these items below the operating line."
-  - "Bad Debts can be negative (a recovery or reversal). Negative expense lines are kept
-     with their sign and never treated as income."
+  - "Bad Debts can be negative. A negative Bad Debts figure may be a recovery or a
+     reversal; that needs confirmation each time. Negative expense lines are kept with
+     their sign and never treated as income."
+
+# Lines whose negative sign is normal for this client. The negative-line warnings skip
+# them; any other negative line still warns. Matched on the label, case-insensitive.
+expected_negative_lines:
+  - Interest Income
+  - Income Tax Benefit
 
 thresholds:
   # A movement is "significant" if EITHER its absolute change clears significant_mom_abs,

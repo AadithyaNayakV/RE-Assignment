@@ -111,7 +111,7 @@ stored its columns in.
 |---|---|
 | `zero_base` | A percentage change or margin whose denominator was zero. Undefined, so withheld. Displays as `n/a (prior period was zero)`. |
 | `negative_base` | The denominator was negative. The arithmetic would succeed but read backwards — a worsening would look like an improvement — so it is withheld and the absolute change is the meaningful comparison. |
-| `sign_change` | The line crossed zero. Bad Debts moving from +12,935 to -1,806 is a swing from a charge to a credit; reporting that as "-113.96%" invites a reader to treat a reversal as a 114% cost saving. The absolute change and the stated direction carry the information instead. A fall to *exactly* zero stays -100%, which is well defined. |
+| `sign_change` | The line crossed zero. Bad Debts moving from +12,935 to -1,806 is a swing from a charge to a credit; reporting that as "-113.96%" invites a reader to treat a sign change as a 114% cost saving. The absolute change and the stated direction carry the information instead. A fall to *exactly* zero stays -100%, which is well defined. |
 | `missing_input` | An input was blank or absent. Blank is never treated as zero. |
 | `incomplete_window` | A TTM window the source does not fully cover. |
 | `blocked_by_validation` | A validation **error** applies to this metric. |
@@ -318,12 +318,31 @@ that invalidates the whole run.
 once used `"opex."` and so attached a note about Bad Debts to all ~270 `opex.*` metrics,
 including `opex.line.travel`. It now names the metrics that genuinely include the
 offending lines — the lines themselves, their category, their subtotal group, and the
-section total — which is 18 metrics for ABC's June 2026. `finance_engine/naming.py` builds
+section total — which is 15 metrics for ABC's June 2026 (Bad Debts only; see below). `finance_engine/naming.py` builds
 these lists, and is imported by both `validation` and `metrics` so the naming convention
 has exactly one definition.
 
 A warning on a figure it cannot affect is worse than no warning: it teaches the reader to
 skip warnings.
+
+**Expected negative lines.** Some lines are negative by nature: Interest Income or an
+Income Tax Benefit presented inside operating expenses. A client config can list them:
+
+```yaml
+expected_negative_lines:
+  - Interest Income
+  - Income Tax Benefit
+```
+
+The three negative-line checks (`negative_revenue_line`, `negative_opex_line`,
+`negative_cogs_line`) skip listed lines, matched on the label, case-insensitive. Every
+other negative line still warns. A listed line keeps its sign and its value; only the
+warning is suppressed. For ABC's June 2026 the warning therefore names Bad Debts alone,
+where it used to name Interest Income too.
+
+The messages never say what a negative line *is*. They used to say "typically a recovery
+or reversal", which was wrong for Interest Income and a guess for everything else. They
+now say it "may be a recovery, a reversal or a misposting; that needs confirmation".
 
 Codes `negative_opex_line` and `negative_cogs_line` are raised separately, each scoped to
 its own section.
@@ -367,8 +386,17 @@ So the guard is effectively airtight on precisely written currency, and weak on 
 rounded figures — because a hundred-odd legitimate percentages densely cover 0–100. Two
 further limits, both reported in every guard result rather than hidden:
 
-- **Magnitudes are compared, not signs**, because prose writes "fell 6.0%" where the
-  metric is `-5.98`. A reviewer must still confirm the stated direction.
+- **Magnitudes are compared**, because prose writes "fell $12,452.80 (-6.0%)" where the
+  metric is `-12,452.80`. The house style puts the direction in the word and leaves the
+  amount unsigned. **Direction words are checked**: a word directly before a change
+  figure must agree with the sign of the change it matches. "fell / decreased / narrowed
+  / down / lower" need a negative change; "rose / increased / widened / up / higher" a
+  positive one. "The loss narrowed" inverts, because a narrowing loss is a positive
+  change in income. "fell to $X" names a level and is not checked. A parenthetical
+  straight after a checked figure inherits its direction, so "fell $12,452.80 (+6.0%)"
+  is rejected. A figure whose magnitude matches changes of both signs (6.3% is both
+  Usage Fees' -6.3% and Software's +6.3%) gets no verdict. Any sign use outside these
+  rules is still a reviewer's job.
 - **The guard proves a figure is supported, not that it was used in the right sentence.**
   It cannot catch a correct number attached to the wrong concept. That is a semantic
   check, not a numeric one.

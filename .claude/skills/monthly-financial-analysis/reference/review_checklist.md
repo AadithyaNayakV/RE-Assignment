@@ -12,8 +12,9 @@ Put in the real counts and labels from the brief.
 - [ ] Each significant movement checked against what you know about the month. Supply the
       causes, because the engine and the skill cannot.
 - [ ] Each question under "Questions for the reviewer" answered or removed.
-- [ ] Direction words checked against the signs ("fell" means negative). The number
-      guard compares magnitudes, not signs.
+- [ ] Direction words checked against the signs. `check-commentary` checks a word that
+      sits directly before a change figure; it cannot check one further away, or one
+      next to a figure that matches changes of both signs.
 - [ ] Every figure attached to the right line. The guard proves a number exists in
       metrics.json, not that it sits in the right sentence.
 - [ ] Context the workbook cannot hold added: contracts won or lost, headcount, timing

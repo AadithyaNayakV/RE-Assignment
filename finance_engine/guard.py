@@ -19,8 +19,11 @@ How it decides:
 
 Two deliberate limitations, both reported rather than hidden:
 
-* Magnitudes are compared, not signs, because prose says "fell 6.0%" where the metric is
-  -5.98. Direction words remain a reviewer's job.
+* Magnitudes are compared, because prose says "fell $12,452.80" where the metric is
+  -12,452.80. Signs are checked in one place only: a direction word directly before a
+  change figure ("fell", "rose", "narrowed", "widened", "up", "down"...) must agree with
+  the sign of the change it matches. A figure whose magnitude matches changes of both
+  signs gets no verdict, and any other sign use remains a reviewer's job.
 * A number that happens to coincide with an unrelated allowed value passes. The guard
   proves a figure is *supported*, not that it was used in the right sentence.
 """
@@ -135,6 +138,8 @@ class GuardResult:
     supported: list[Finding] = field(default_factory=list)
     allowed_count: int = 0
     notes: list[str] = field(default_factory=list)
+    direction_errors: list[dict] = field(default_factory=list)
+    directions_checked: int = 0
 
     def to_dict(self) -> dict:
         return {
@@ -144,15 +149,28 @@ class GuardResult:
             "numbers_unsupported": len(self.unsupported),
             "allowed_values_available": self.allowed_count,
             "unsupported": [f.to_dict() for f in self.unsupported],
+            "directions_checked": self.directions_checked,
+            "direction_errors": self.direction_errors,
             "notes": self.notes,
         }
 
     def summary(self) -> str:
+        directions = (f" {self.directions_checked} direction word(s) checked against "
+                      f"the sign of their change.")
         if self.passed:
             return (f"PASS — {len(self.supported)}/{self.checked} number(s) traced to "
-                    f"metrics.json.")
-        lines = [f"REJECTED — {len(self.unsupported)} of {self.checked} number(s) are "
-                 f"not supported by metrics.json:"]
+                    f"metrics.json.{directions}")
+        lines = []
+        if self.unsupported:
+            lines.append(f"REJECTED — {len(self.unsupported)} of {self.checked} number(s) "
+                         f"are not supported by metrics.json:")
+        if self.direction_errors:
+            lines.append(f"REJECTED — {len(self.direction_errors)} direction word(s) "
+                         f"contradict the sign of the change they describe:")
+            for e in self.direction_errors:
+                lines.append(f"  line {e['line']}: {e['word']!r} before {e['text']!r}: "
+                             f"{e['problem']}")
+                lines.append(f"      context: ...{e['context']}...")
         for f in self.unsupported:
             closest = (f"closest supported value {f.closest_allowed:,.2f} "
                        f"(off by {f.closest_difference:,.2f})"
@@ -167,6 +185,7 @@ class NumberGuard:
         self.doc = metrics_doc
         self.buckets = collect_allowed_values(metrics_doc)
         self._all = set().union(*self.buckets.values()) if self.buckets else set()
+        self.changes = collect_change_values(metrics_doc)
 
     @classmethod
     def from_path(cls, path: Path) -> "NumberGuard":
@@ -201,8 +220,11 @@ class NumberGuard:
             ))
 
         unsupported = [f for f in findings if not f.supported]
+        direction_errors, directions_checked = self._check_directions(text, masked)
         return GuardResult(
-            passed=not unsupported,
+            passed=not unsupported and not direction_errors,
+            direction_errors=direction_errors,
+            directions_checked=directions_checked,
             checked=len(findings),
             unsupported=unsupported,
             supported=[f for f in findings if f.supported],
@@ -210,13 +232,58 @@ class NumberGuard:
             notes=[
                 "A number written as a percentage is only matched against percentage "
                 "metrics, and a currency amount only against currency metrics.",
-                "Magnitudes are compared, not signs: prose writes \"fell 6.0%\" where the "
-                "metric is -5.98. A reviewer must still confirm the stated direction.",
+                "Magnitudes are compared, so \"fell $12,452.80\" matches a change of "
+                "-12,452.80. A direction word directly before a change figure (fell, rose, "
+                "narrowed, widened, up, down...) must agree with that change's sign. Other "
+                "sign use, and changes whose magnitude is ambiguous, are a reviewer's job.",
                 "The guard proves a figure is supported by metrics.json, not that it was "
                 "used in the right sentence or attached to the right concept. A small "
                 "unlabelled integer is only weakly constrained.",
             ],
         )
+
+    def _check_directions(self, text: str, masked: str) -> tuple[list[dict], int]:
+        """Direction words next to a change figure must match the change's sign.
+
+        "fell $12,452.80" is checked: the figure matches revenue.total.mom_abs, which is
+        negative, so "fell" is right and "rose" would be rejected. "fell to $195,898.16"
+        names a level and is not checked. A parenthetical right after a checked figure
+        ("fell $12,452.80 (-6.0%)") inherits its direction. "The loss narrowed" means
+        the income change was positive, so words about a loss are inverted. A figure
+        whose magnitude matches changes of both signs gives no verdict.
+        """
+        errors: list[dict] = []
+        checked = 0
+        last_end, last = -1, None
+        for match in _NUMBER.finditer(masked):
+            parsed = _parse_match(match)
+            if parsed is None:
+                continue
+            value, tolerance, kind = parsed
+            direction, word = _direction_before(text, match.start())
+            if (direction is None and last is not None and match.group("open")
+                    and not masked[last_end:match.start()].strip(" \t*_")):
+                direction, word = last
+            last_end, last = match.end(), ((direction, word) if direction else None)
+            if direction is None:
+                continue
+            explicit = match.group("presign") or match.group("sign")
+            if explicit and (explicit == "+") != (direction > 0):
+                checked += 1
+                errors.append(_direction_error(
+                    text, match, word,
+                    f"the written sign {explicit!r} contradicts {word!r}"))
+                continue
+            signs = {sign for mag, sign, k in self.changes
+                     if (kind == "any" or k == kind) and abs(mag - abs(value)) <= tolerance}
+            if len(signs) != 1:
+                continue                     # a level, or ambiguous: no verdict
+            checked += 1
+            if signs.pop() != direction:
+                errors.append(_direction_error(
+                    text, match, word, "the matching change is "
+                    + ("positive" if direction < 0 else "negative")))
+        return errors, checked
 
     def _candidates(self, kind: str) -> set[float]:
         if kind == PERCENT_BUCKET:
@@ -224,6 +291,61 @@ class NumberGuard:
         if kind == CURRENCY_BUCKET:
             return self.buckets[CURRENCY_BUCKET]
         return self._all
+
+
+_NEGATIVE_WORDS = {"fell", "fall", "falls", "falling", "decreased", "decrease",
+                   "decreases", "declined", "decline", "declines", "dropped", "drop",
+                   "drops", "narrowed", "narrows", "down", "lower"}
+_POSITIVE_WORDS = {"rose", "rise", "rises", "rising", "increased", "increase",
+                   "increases", "grew", "grow", "grows", "widened", "widens", "up",
+                   "climbed", "higher"}
+_DIRECTION_BEFORE = re.compile(
+    r"\b(?P<word>" + "|".join(sorted(_NEGATIVE_WORDS | _POSITIVE_WORDS, key=len,
+                                      reverse=True))
+    + r")\b(?:\s+(?:by|of))?[\s*_]*$", re.I)
+_LOSS_SUBJECT = re.compile(r"\b(loss|losses|deficit)\b[^.\n]{0,30}$", re.I)
+
+#: Metric suffixes that hold a *change*, whose sign is a direction.
+_CHANGE_SUFFIXES = (".mom_abs", ".mom_pct", ".mom_pts", ".yoy_abs", ".yoy_pct")
+
+
+def collect_change_values(doc: dict) -> list[tuple[float, int, str]]:
+    """(magnitude, sign, quantity kind) for every change in the document."""
+    out: list[tuple[float, int, str]] = []
+
+    def add(v, kind):
+        if isinstance(v, (int, float)) and not isinstance(v, bool) and v != 0:
+            out.append((abs(float(v)), 1 if v > 0 else -1, kind))
+
+    for metric in doc.get("metrics", []):
+        if metric.get("name", "").endswith(_CHANGE_SUFFIXES):
+            kind = (PERCENT_BUCKET if metric.get("unit") in ("percent", "percentage_points")
+                    else CURRENCY_BUCKET)
+            add(metric.get("value"), kind)
+    for key in ("significant", "top_increases", "top_decreases"):
+        for entry in (doc.get("movements") or {}).get(key, []):
+            add(entry.get("change_abs"), CURRENCY_BUCKET)
+            add(entry.get("change_pct"), PERCENT_BUCKET)
+    return out
+
+
+def _direction_before(text: str, start: int) -> tuple[int | None, str | None]:
+    """+1 / -1 if a direction word sits directly before position `start`."""
+    window = text[max(0, start - 60):start]
+    m = _DIRECTION_BEFORE.search(window)
+    if not m:
+        return None, None
+    word = m.group("word").lower()
+    direction = -1 if word in _NEGATIVE_WORDS else 1
+    if _LOSS_SUBJECT.search(window[:m.start()]):
+        direction = -direction           # "the loss narrowed" = income went up
+    return direction, word
+
+
+def _direction_error(text: str, match: re.Match, word: str, problem: str) -> dict:
+    return {"text": match.group(0).strip(), "word": word, "problem": problem,
+            "line": text.count("\n", 0, match.start()) + 1,
+            "context": _context(text, match.start(), match.end())}
 
 
 def _closest(candidates: set[float], value: float) -> tuple[float | None, float | None]:

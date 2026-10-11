@@ -259,3 +259,62 @@ class TestSpansFoundByTheEvalSuite:
     def test_a_wrong_figure_is_still_rejected_whatever_its_sign(self, abc_metrics):
         for text in ("Revenue was $195,998.16.", "Revenue was -$195,998.16."):
             assert not NumberGuard(abc_metrics).check(text).passed
+
+
+class TestDirectionWords:
+    """A direction word next to a change figure must agree with the change's sign.
+
+    Revenue fell -12,452.80 in Jun 2026; gross margin rose +3.1 pts; operating income
+    rose +8,343.52 (the operating loss narrowed).
+    """
+
+    @pytest.mark.parametrize("text", [
+        "Revenue fell $12,452.80 (-6.0%).",          # the house style: unsigned amount
+        "Revenue was down $12,452.80.",
+        "Revenue decreased by $12,452.80.",
+        "Gross margin rose 3.1 pts.",
+        "The operating loss narrowed by $8,343.52.",  # loss narrowing = income up
+        "Operating income rose $8,343.52.",
+        "Revenue fell to $195,898.16.",               # a level, not a change: unchecked
+    ])
+    def test_right_direction_passes(self, abc_metrics, text):
+        result = NumberGuard(abc_metrics).check(text)
+        assert result.passed, result.summary()
+
+    @pytest.mark.parametrize("text", [
+        "Revenue rose $12,452.80.",
+        "Revenue increased by $12,452.80.",
+        "Gross margin fell 3.1 pts.",
+        "Gross margin narrowed 3.1 pts.",
+        "The operating loss widened by $8,343.52.",
+        "Operating income was down $8,343.52.",
+    ])
+    def test_wrong_direction_is_rejected(self, abc_metrics, text):
+        result = NumberGuard(abc_metrics).check(text)
+        assert not result.passed
+        assert result.direction_errors and not result.unsupported
+        assert "contradict" in result.summary()
+
+    def test_a_parenthetical_inherits_the_direction(self, abc_metrics):
+        result = NumberGuard(abc_metrics).check("Revenue fell $12,452.80 (+6.0%).")
+        assert not result.passed
+        assert "written sign '+'" in result.direction_errors[0]["problem"]
+
+    def test_the_unsigned_amount_is_accepted(self, abc_metrics):
+        result = NumberGuard(abc_metrics).check("Usage Fees fell $11,142.74 (-6.3%).")
+        # Only the amount gets a verdict: 6.3% matches Usage Fees (-6.3%) *and*
+        # Software, Hosting & AI (+6.3%), so the percentage is ambiguous and unchecked.
+        assert result.passed and result.directions_checked == 1
+
+    def test_cli_rejects_a_wrong_direction(self, tmp_path, abc_metrics, capsys):
+        import json
+        from finance_engine.cli import EXIT_GUARD, main
+        out = tmp_path / "output" / "clients" / "abc_inc" / "2026-06"
+        out.mkdir(parents=True)
+        (out / "metrics.json").write_text(json.dumps(abc_metrics), encoding="utf-8")
+        note = tmp_path / "note.md"
+        note.write_text("Revenue rose $12,452.80.", encoding="utf-8")
+        code = main(["check-commentary", "--client", "abc_inc", "--period", "2026-06",
+                     "--file", str(note), "--root", str(tmp_path)])
+        assert code == EXIT_GUARD
+        assert "direction word" in capsys.readouterr().out

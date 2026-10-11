@@ -393,7 +393,8 @@ def _movements(doc, fmt) -> str:
                         f"{fmt.money(c['current'])})" for c in crossed)
             + ". No percentage is shown for these: a swing between a charge and a credit "
               "is not a percentage reduction, and reporting one would invite the reader "
-              "to treat a reversal as a cost saving.",
+              "to treat a sign change as a cost saving. What each swing is (a recovery, a "
+              "reversal or a misposting) needs confirmation.",
         ]
     return "\n".join(lines)
 

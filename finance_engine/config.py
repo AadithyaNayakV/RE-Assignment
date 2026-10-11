@@ -197,6 +197,18 @@ class ClientConfig:
         return [" ".join(str(n).split()) for n in notes]
 
     @property
+    def expected_negative_lines(self) -> set[str]:
+        """Labels whose negative sign is normal for this client (casefolded).
+
+        Interest Income or an Income Tax Benefit shown inside operating expenses is
+        negative by nature. Warning about it, with a suggestion that it may be a recovery,
+        is noise at best and wrong at worst. Lines listed here are skipped by the
+        negative-line checks; every other negative line still warns.
+        """
+        return {str(label).casefold() for label in
+                (self.raw.get("expected_negative_lines") or [])}
+
+    @property
     def ttm_months(self) -> int:
         return int((self.raw.get("ttm") or {}).get("months", 12))
 

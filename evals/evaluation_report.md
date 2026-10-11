@@ -152,3 +152,36 @@ is empty after the demo.
   no case was made to pass by deleting a check.
 - **ABC cases skip without the workbook.** It is git-ignored client data. On a fresh clone
   cases 01 and 13 report SKIP, never PASS.
+
+## Update: review of the ABC Jun 2026 report (same day, on top of `fd60402`)
+
+Four review findings were fixed (CHANGELOG #14–#17) and four checks added: Level 2
+`cause_label_hedged`, `direction_amounts_unsigned` and `reviewer_questions_label_figures`,
+plus a guard direction check that also runs in Level 2's `guard`. Level 1 case 01 gained
+`warning_names`, `warning_omits` and `warning_wording`.
+
+| Run | Result | Evidence |
+|---|---|---|
+| pytest | **637 passed, 3 skipped** | `python -m pytest -q` |
+| Level 1 engine, 13 cases | **13 / 13**; case 01 now 61 checks | `evals/baseline/engine_2026-10-11_fd60402-dirty.json` |
+| Level 2 deterministic control | **12 / 12**, 1 skipped | `evals/baseline/skill_deterministic_2026-10-11_fd60402-dirty.json` |
+| The previous ABC report, under the new checks | **36 / 39**: exactly the three new checks fail | before the fixes |
+| ABC skill eval, first attempt | **42 / 46, FAIL** | `evals/runs/skill_2026-10-11T12-36-29Z/` |
+| ABC skill eval, after tightening SKILL.md | **46 / 46, PASS**: 13 turns, 92 s, $0.50 API-equivalent | `evals/runs/skill_2026-10-11T14-50-30Z/` |
+| Regenerated ABC report (`output/clients/abc_inc/2026-06/report.md`) | guard **PASS 313/313**, 23 direction words checked; Level 2 **39/39** | |
+
+**The first skill attempt failed for two separate reasons.**
+
+- **The Pro session limit cut the run off** after it wrote the report and before
+  `check-commentary` ("You've hit your session limit"). That is why `claude_completed` and
+  `ran_check_commentary` failed. It was not a skill fault. The run had also spent three
+  turns on chained commands that default permission mode refuses. SKILL.md now asks for
+  one command per call.
+- **The report itself broke two of the new rules**: "rose +3.1 pts" and six unlabelled
+  figures in the reviewer questions. The new checks caught both. SKILL.md now states both
+  rules with examples, and the re-run passed 46/46.
+
+**The skill baseline was not re-saved.** `skill_2026-10-11_a18e32d-dirty.json` is still the
+newest full Claude run. A one-case run should not replace a thirteen-case baseline, and a
+full re-run would spend about $5 of Pro usage. Re-save it with
+`python evals/run_skill_evals.py --save-baseline` when that is worth it.

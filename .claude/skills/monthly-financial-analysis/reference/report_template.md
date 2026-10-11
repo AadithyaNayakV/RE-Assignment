@@ -66,8 +66,10 @@ Every figure was produced by `finance_engine` and checked by `check-commentary`.
 
 ## Questions for the reviewer
 <!-- The ONLY place for possible explanations. Each one is a question, marked
-     "possible" / "needs confirmation". E.g. "Legal Expenses rose +$34,000.00. Is this
-     a new matter, a timing difference, or a misposting? Needs confirmation." -->
+     "possible" / "needs confirmation". Label EVERY figure as "change" or "level", so a
+     reviewer never mistakes a movement for a balance. E.g. "Legal Expenses: change
+     $34,000.00 (+1,700.0%); level $36,000.00. Is this possibly a new matter, a timing
+     difference, or a misposting? Needs confirmation." -->
 
 ## Reviewer checklist
 <!-- From reference/review_checklist.md, as "- [ ]" items, adapted to this report. -->
@@ -84,9 +86,21 @@ Every figure was produced by `finance_engine` and checked by `check-commentary`.
 - Margin changes are in **points** (`+3.1 pts`), never a percent of a percent.
 - Where the brief says `n/a (reason)`, write `n/a` and the reason. Never write 0 for a
   missing value, and never write an infinite or huge percentage.
-- Direction words must match the sign: "fell" for a negative change, "rose" for a
-  positive one. A line marked `sign change` crossed zero, so describe it as
-  "swung from a charge to a credit", never as a percentage saving.
+- **Direction in the word, amount unsigned:** "fell $12,452.80 (-6.0%)", "rose
+  $8,763.85 (+21.6%)". Never "fell -$12,452.80". The percentage in brackets keeps its
+  sign as the brief prints it.
+- Direction words must match the sign. fell, decreased, narrowed, down and lower need a
+  negative change; rose, increased, widened, up and higher need a positive one.
+  `check-commentary` rejects a mismatch. For a **loss** the words invert: "the operating
+  loss narrowed by $8,343.52" means operating income rose $8,343.52. "fell to $X" names
+  a level, not a change.
+- A line marked `sign change` crossed zero. Describe it by direction only: "swung from
+  a $12,935.29 charge to a $1,806.24 credit". Never call it a reversal, a recovery or a
+  saving; what it is needs confirmation.
+- When two related measures move in opposite directions, give one plain sentence saying
+  why both are true. Only if the reason is arithmetic, for example "operating margin
+  worsened because revenue fell faster than the loss narrowed". Never if it is a business
+  cause.
 - Use labels exactly as the brief prints them. Never invent a category, line, client or
   month.
 
@@ -96,6 +110,9 @@ Every figure was produced by `finance_engine` and checked by `check-commentary`.
   *why a movement matters* (its size, its share of costs, its effect on margin).
 - A possible explanation goes only under **Questions for the reviewer**. It is phrased
   as a question and marked "possible" or "needs confirmation".
+- Never say what a figure *is*: "a reversal", "a recovery", "a refund", "a one-off",
+  "a misposting", "a timing difference". Say it "may be" one, and that it needs
+  confirmation. The eval check `cause_label_hedged` fails a report that does not.
 
 **Trends, one-offs, seasonality**
 - A single-month spike is a **possible one-off**, not a trend. Call something a trend

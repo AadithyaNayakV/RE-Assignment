@@ -250,3 +250,41 @@ class TestFixesFoundOnTheFirstClaudeRun:
         assert "forbidden:eleven_month_ttm" not in _failed(ok, doc, case)
         bad = _insert(text, "The annualised figure is shown for reference.")
         assert "forbidden:eleven_month_ttm" in _failed(bad, doc, case)
+
+
+class TestChecksAddedForTheAbcReview:
+    """CHANGELOG #14-#17: cause labels, signed amounts, unlabelled question figures."""
+
+    def test_a_cause_stated_as_fact_fails(self, spike):
+        case, text, doc = spike
+        bad = _insert(text, "Legal Expenses swung to a credit: a reversal, not a saving.")
+        assert "cause_label_hedged" in _failed(bad, doc, case)
+        bad = _insert(text, "The Legal Expenses rise is a one-off.")
+        assert "cause_label_hedged" in _failed(bad, doc, case)
+
+    def test_a_hedged_cause_label_passes(self, spike):
+        case, text, doc = spike
+        ok = _insert(text, "The Legal Expenses rise may be a one-off; needs confirmation.")
+        assert "cause_label_hedged" not in _failed(ok, doc, case)
+
+    def test_a_signed_amount_after_a_direction_word_fails(self, spike):
+        case, text, doc = spike
+        assert "direction_amounts_unsigned" in _failed(
+            _insert(text, "Legal Expenses rose +$34,000.00."), doc, case)
+        assert "direction_amounts_unsigned" not in _failed(
+            _insert(text, "Legal Expenses rose $34,000.00 (+1,700.0%)."), doc, case)
+
+    def test_reviewer_question_figures_must_be_labelled(self, spike):
+        case, text, doc = spike
+        good = text.replace("## Reviewer checklist", (
+            "## Questions for the reviewer\n\n"
+            "1. Legal Expenses: change +$34,000.00 (+1,700.0%); level $36,000.00. "
+            "Possibly a new matter? Needs confirmation.\n\n## Reviewer checklist"), 1)
+        assert "reviewer_questions_label_figures" not in _failed(good, doc, case)
+        bad = good.replace("level $36,000.00", "now $36,000.00")
+        assert "reviewer_questions_label_figures" in _failed(bad, doc, case)
+
+    def test_the_guard_direction_check_reaches_level_2(self, spike):
+        case, text, doc = spike
+        assert "guard" in _failed(_insert(text, "Legal Expenses fell $34,000.00."),
+                                  doc, case)

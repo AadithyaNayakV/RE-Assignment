@@ -84,3 +84,19 @@ Faults 7–11 and 13 were fixed in the checker, then the saved report was re-gra
 `--recheck`, with no new Claude call. Each fix has a test in `tests/test_eval_checks.py`
 showing the check still fails on the fault it exists for, so a check was never loosened
 until it passed.
+
+## Found in review of the ABC Jun 2026 report (2026-10-11, on top of `fd60402`)
+
+| # | What | Kind | Before | After |
+|---|---|---|---|---|
+| 14 | A cause stated as fact: "swung from a charge to a credit: a reversal, not a cost saving" | gap the evals now catch | no check; engine warnings and `report.py` also said "typically a recovery or reversal" and "treat a reversal as a cost saving" | wording in `validation.py`, `report.py`, `abc_inc.yaml`, `metric_definitions.md` now says "may be … needs confirmation"; SKILL.md rule; Level 2 `cause_label_hedged` fails "is a reversal" / ": a reversal" without a hedge |
+| 15 | `negative_opex_line` said negative lines "typically mean a recovery or reversal", which is wrong for Interest Income and Income Tax Benefit | bug | ABC warning named Bad Debts and Interest Income; reached 18 metrics | config `expected_negative_lines` (ABC: Interest Income, Income Tax Benefit); warning names Bad Debts only, hedged, 15 metrics; tests in `test_validation.py::TestExpectedNegativeLines`; Level 1 case 01 `warning_names` / `warning_omits` / `warning_wording` |
+| 16 | Direction words were never checked; "fell -$12,452.80" double negatives | gap the evals now catch | guard compared magnitudes only | guard rejects a direction word that contradicts the sign of the change it sits next to ("loss narrowed" inverts; "fell to $X" is a level); tests in `test_guard.py::TestDirectionWords`; Level 2 `direction_amounts_unsigned`; template rules |
+| 17 | Reviewer questions mixed changes and levels without labels; no explanation of operating margin worsening while the loss narrowed | gap the evals now catch | — | Level 2 `reviewer_questions_label_figures`; template rule; the ABC report adds one sentence explaining the margin |
+
+Follow-up, same review. The first headless ABC run after #14–#17 scored 42/46. Two of
+its four failures were real skill behaviour, both caught by the new checks: "rose
++3.1 pts" and unlabelled figures in the reviewer questions. SKILL.md now spells out both
+rules with examples. The other two failures came from the Pro session limit ending the
+run before `check-commentary`. That run had also wasted three turns on chained shell
+commands, so SKILL.md now asks for one command per call. Re-run: **46/46**.

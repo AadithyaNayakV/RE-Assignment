@@ -9,6 +9,9 @@ allowed-tools: Bash(python -m finance_engine:*), PowerShell(python -m finance_en
 You write a **draft** for a human reviewer. Python (`finance_engine`) calculates every
 number; you describe those numbers. You never calculate, estimate or invent one.
 
+Run **one `python -m finance_engine` command per tool call**. Do not chain commands with
+`;`, `&&` or `echo`; chained commands need extra approval and waste turns.
+
 Reference files (read when you reach the step that needs them):
 - `reference/metric_definitions.md`: what each metric and flag means.
 - `reference/report_template.md`: sections, order and wording rules for `report.md`.
@@ -44,6 +47,19 @@ Reference files (read when you reach the step that needs them):
 5. **Explain why a movement matters, not why it happened.** The workbook records amounts,
    not reasons. Any cause must be marked "possible" and "needs confirmation", and phrased
    as a question for the reviewer. Never state a cause as fact.
+   **Never say what a figure *is*.** "a reversal", "a recovery", "a refund", "a one-off",
+   "a misposting", "a timing difference" are causes. Write "may be a reversal; needs
+   confirmation", never "is a reversal" or ": a reversal". A sign change is described by
+   its direction only: "swung from a $12,935.29 charge to a $1,806.24 credit".
+   **Write directions in words, amounts unsigned:** in prose, the figure after fell, rose,
+   up, down, narrowed, widened, increased or decreased never carries + or -. Write
+   "fell $12,452.80 (-6.0%)", "rose 3.1 pts" and "up $5,342.51 (+2.8%)", never
+   "fell -$12,452.80" or "up +3.1 pts". Tables keep the brief's signs. `check-commentary`
+   rejects a direction word that contradicts its change ("rose" on a fall), and treats
+   "the loss narrowed" as income rising.
+   **In "Questions for the reviewer", put the word `change` or `level` directly before
+   every figure**, including each figure in a list: "Bad Debts: level $12,935.29 in
+   2026-05; level -$1,806.24 in Jun 2026; change -$14,741.53."
 
 6. **Put data quality first.** Every data-quality issue, by its code, goes near the top.
    So do reconciliation failures, blocked metrics, an incomplete TTM window and the

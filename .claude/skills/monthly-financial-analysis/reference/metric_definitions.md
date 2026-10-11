@@ -76,8 +76,8 @@ mention it); `blocked` (value is n/a and must not be estimated).
 | `formula_value_unreadable` | A formula cell had no cached value; the affected figure is n/a. |
 | `blank_not_zero` | A line is blank this month but has values in others. Treated as missing. |
 | `duplicate_line_labels` | The same label appears on more than one row; each row is kept separate. |
-| `negative_revenue_line` | A revenue line is negative (e.g. refunds). Kept with its sign. |
-| `negative_opex_line`, `negative_cogs_line` | An expense line is negative (e.g. a recovery or reversal). Kept with its sign, never treated as income. |
+| `negative_revenue_line` | A revenue line is negative and not expected to be. Kept with its sign. It *may* be a refund, a credit or a reversal; that needs confirmation. |
+| `negative_opex_line`, `negative_cogs_line` | An expense line is negative and the client config does not expect it to be. Kept with its sign, never treated as income. It *may* be a recovery, a reversal or a misposting; that needs confirmation. Never say which as fact. |
 | `opex_category_unmatched` | An expense line matched no configured category and went to the fallback category. |
 | `possible_unit_scaling` | The workbook headings suggest the figures are in thousands or millions. |
 | `no_balance_sheet` | The source has no balance sheet; balance-sheet metrics are n/a. |

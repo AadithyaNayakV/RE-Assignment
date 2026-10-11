@@ -121,6 +121,19 @@ def evaluate(case: dict, out_dir: Path, root: Path | None) -> CaseResult:
         r.check(f"code_present:{code_}", code_ in codes, f"codes: {codes}")
     for code_ in eng.get("forbidden_codes", []):
         r.check(f"code_absent:{code_}", code_ not in codes, f"codes: {codes}")
+    for code_, want in (eng.get("warning_rows") or {}).items():
+        issue = next((i for i in issues if i["code"] == code_), None)
+        rows = {row.get("label") for row in ((issue or {}).get("details") or {})
+                .get("rows", [])}
+        for label in want.get("includes", []):
+            r.check(f"warning_names:{code_}:{label}", label in rows, f"rows: {sorted(rows)}")
+        for label in want.get("excludes", []):
+            r.check(f"warning_omits:{code_}:{label}", label not in rows,
+                    f"rows: {sorted(rows)}")
+        if want.get("message_excludes") and issue:
+            r.check(f"warning_wording:{code_}",
+                    re.search(want["message_excludes"], issue["message"], re.I) is None,
+                    issue["message"][:200])
 
     mv = doc.get("movements") or {}
     sig = [x["label"] for x in mv.get("significant", [])]

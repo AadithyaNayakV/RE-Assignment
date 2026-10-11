@@ -165,16 +165,17 @@ class TestSignConventions:
         assert "negative_opex_line" in codes(report, WARNING)
         issue = next(i for i in report.issues if i.code == "negative_opex_line")
         labels = {r["label"] for r in issue.details["rows"]}
-        # Bad Debts is -1,806.24 and Interest Income is -1,329.64 in Jun 2026. Both stay
-        # inside operating expenses with their sign.
+        # Bad Debts (-1,806.24) and Interest Income (-1,329.64) are both negative in Jun
+        # 2026 and both stay inside opex with their sign. Only Bad Debts warns: the
+        # config lists Interest Income as expected to be negative.
         assert "Bad Debts" in labels
-        assert "Interest Income" in labels
+        assert "Interest Income" not in labels
 
     def test_the_warning_is_scoped_to_the_section_it_came_from(self, abc_dataset,
                                                                abc_config):
         """A negative operating expense says nothing about cost of goods sold.
 
-        Bad Debts and Interest Income are opex lines. Attaching their warning to every
+        Bad Debts is an opex line. Attaching its warning to every
         `cogs.*` metric would put a misleading note on figures it has no bearing on.
         """
         report = validate(abc_dataset, abc_config, "2026-06")
@@ -191,7 +192,6 @@ class TestSignConventions:
 
         # The lines themselves, their category, their group, and the section total.
         for affected in ("opex.line.bad_debts", "opex.line.bad_debts.mom_abs",
-                         "opex.line.interest_income",
                          "opex.category.finance_tax_non_cash",
                          "opex.category.finance_tax_non_cash.ttm",
                          "opex.group.ungrouped",
@@ -200,6 +200,7 @@ class TestSignConventions:
 
         # Sibling lines, other categories and groups, and other sections must be clean.
         for untouched in ("opex.line.travel", "opex.line.rent",
+                          "opex.line.interest_income",
                           "opex.category.payroll_people_costs",
                           "opex.group.s_and_m_payroll",
                           "cogs.total", "cogs.line.hosting", "revenue.total"):
@@ -216,7 +217,9 @@ class TestSignConventions:
                     if issue["message"] in x["warnings"]]
         opex_metrics = [x for x in doc["metrics"] if x["name"].startswith("opex.")]
         assert len(opex_metrics) > 200          # the pool it could have hit
-        assert len(carrying) == 18, sorted(carrying)
+        # 15: Bad Debts' line, category, group and section metrics. It was 18 while
+        # Interest Income, which is negative by nature, also warned.
+        assert len(carrying) == 15, sorted(carrying)
         assert "opex.line.travel" not in carrying
 
     def test_abc_raises_no_negative_cogs_warning(self, abc_dataset, abc_config):
@@ -292,3 +295,44 @@ class TestAbcValidationState:
         # The source starts at 2025-01, so a 12-month window first closes at 2025-12.
         assert build_metrics(abc_dataset, abc_config, "2025-12")["ttm"]["complete"]
         assert not build_metrics(abc_dataset, abc_config, "2025-11")["ttm"]["complete"]
+
+
+class TestExpectedNegativeLines:
+    """Lines the client config expects to be negative do not warn; others still do."""
+
+    def _without_list(self, abc_config):
+        from finance_engine.config import ClientConfig
+        raw = dict(abc_config.raw)
+        raw.pop("expected_negative_lines", None)
+        return ClientConfig(raw, abc_config.path)
+
+    def test_abc_lists_interest_income_and_income_tax_benefit(self, abc_config):
+        assert abc_config.expected_negative_lines == {"interest income",
+                                                      "income tax benefit"}
+
+    def test_without_the_list_both_negative_lines_warn(self, abc_dataset, abc_config):
+        report = validate(abc_dataset, self._without_list(abc_config), "2026-06")
+        issue = next(i for i in report.issues if i.code == "negative_opex_line")
+        assert {r["label"] for r in issue.details["rows"]} == {"Bad Debts",
+                                                               "Interest Income"}
+
+    def test_a_listed_line_is_still_kept_with_its_sign(self, abc_metric_map):
+        assert abc_metric_map["opex.line.interest_income"]["value"] == pytest.approx(
+            -1329.64)
+
+    def test_the_message_never_states_what_a_negative_line_is(self, abc_dataset,
+                                                              abc_config):
+        report = validate(abc_dataset, self._without_list(abc_config), "2026-06")
+        message = next(i for i in report.issues if i.code == "negative_opex_line").message
+        assert "typically" not in message
+        assert "may be a recovery, a reversal or a misposting" in message
+        assert "needs confirmation" in message
+
+    def test_when_every_negative_line_is_expected_there_is_no_warning(
+            self, abc_dataset, abc_config):
+        from finance_engine.config import ClientConfig
+        raw = dict(abc_config.raw)
+        raw["expected_negative_lines"] = ["Interest Income", "Income Tax Benefit",
+                                          "Bad Debts"]
+        report = validate(abc_dataset, ClientConfig(raw, abc_config.path), "2026-06")
+        assert "negative_opex_line" not in codes(report)

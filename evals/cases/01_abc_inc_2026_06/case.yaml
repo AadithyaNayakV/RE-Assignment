@@ -20,6 +20,13 @@ engine:
   ttm_complete: true
   max_errors: 0
   required_codes: [negative_opex_line, ttm_includes_possible_one_offs]
+  # Interest Income is negative by nature and listed in expected_negative_lines; only
+  # Bad Debts is an unexpected negative. The message must not say what either one is.
+  warning_rows:
+    negative_opex_line:
+      includes: [Bad Debts]
+      excludes: [Interest Income, Income Tax Benefit]
+      message_excludes: 'typically'
   significant_includes: [Events & Conferences, Bad Debts, Usage Fees]
   ttm_window_one_offs_include: [Income Tax Benefit, Stock-Based Compensation Expense]
   seasonality_assessed: false

@@ -46,6 +46,23 @@ CAUSE_WORDS = re.compile(
     r"competitors?|acquisition|merger|restructur\w*|office move|relocation|"
     r"peak season|weather|pandemic|covid)\b", re.I)
 
+# Naming what a figure *is* states its cause: "Bad Debts swung to a credit: a reversal".
+# The workbook cannot know that. Allowed only with a hedge: "may be a reversal".
+_CAUSE_LABELS = (r"(reversal|recovery|refund|write[- ]?back|mis-?posting|"
+                 r"reclassification|timing difference|one[- ]off|one[- ]time item)")
+CAUSE_LABEL = re.compile(
+    rf"\b(is|was|are|were|represents?|reflects?|being|as)\s+(an?\s+|the\s+)?{_CAUSE_LABELS}\b"
+    rf"|[:—–]\s*(an?\s+)?{_CAUSE_LABELS}\b", re.I)
+
+# House style: the direction lives in the word, the amount is unsigned.
+# "fell $12,452.80 (-6.0%)", never "fell -$12,452.80".
+SIGNED_AFTER_DIRECTION = re.compile(
+    r"\b(fell|decreased|declined|dropped|down|narrowed|rose|increased|grew|up|widened|"
+    r"climbed)\s+(by\s+)?[*_]*[+\-−]\s?[$€£₹]?\d", re.I)
+
+FIGURE = re.compile(r"[+\-−]?[$€£₹]\s?\d[\d,]*(\.\d+)?|[+\-−]?\d[\d,]*(\.\d+)?\s?(%|pts\b)")
+FIGURE_LABEL = re.compile(r"\b(change|level)\b[^$€£₹\d]{0,25}$", re.I)
+
 SEASONAL = re.compile(r"\bseason(al|ality|ally)?\b|peak season|holiday", re.I)
 SEASONAL_OK = re.compile(
     r"(not (been )?(assessed|asserted|confirmed|established)|\b(no|not|never|none)\b|"
@@ -204,6 +221,29 @@ def check_report(text: str, doc: dict, case: dict, provider: str,
         add("seasonality_not_asserted", not bad, _show(bad))
     bad = [u for u in all_units if ONE_OFF.search(u) and not ONE_OFF_OK.search(u)]
     add("one_offs_hedged", not bad, _show(bad))
+    bad = [u for u in all_units
+           if CAUSE_LABEL.search(_without(u, labels)) and not HEDGE.search(u)]
+    add("cause_label_hedged", not bad,
+        "say what a line may be, not what it is: " + _show(bad) if bad else "")
+    bad = [u for u in all_units if SIGNED_AFTER_DIRECTION.search(u)]
+    add("direction_amounts_unsigned", not bad,
+        'write "fell $12,452.80", not "fell -$12,452.80": ' + _show(bad) if bad else "")
+    questions = _section(body, r"questions for the reviewer")
+    if questions is not None:
+        unlabelled, last_end = [], -1
+        for m in FIGURE.finditer(questions):
+            before = questions[max(0, m.start() - 40):m.start()]
+            # "(-6.3%)" straight after a labelled "-$11,142.74" shares its label.
+            follows_labelled = (last_end >= 0 and
+                                questions[last_end:m.start()].strip(" *_") == "(")
+            if FIGURE_LABEL.search(before) or follows_labelled:
+                last_end = m.end()
+            else:
+                unlabelled.append(m.group(0))
+                last_end = -1
+        add("reviewer_questions_label_figures", not unlabelled,
+            "every figure in the reviewer questions needs 'change' or 'level' before it: "
+            + ", ".join(unlabelled[:6]) if unlabelled else "")
     if not (doc.get("ttm") or {}).get("complete"):
         bad = [u for u in all_units
                if TTM_TERM.search(u) and CURRENCY_AMOUNT.search(u) and not TTM_NA.search(u)]
@@ -266,6 +306,15 @@ def other_clients(config_dir: Path, client_id: str) -> list[tuple[str, str]]:
         raw = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
         out.append((p.stem, str(raw.get("company_name", ""))))
     return out
+
+
+def _section(text: str, heading: str) -> str | None:
+    """The body of the `##` section whose heading matches, or None if absent."""
+    m = re.search(rf"(?im)^##\s+{heading}\s*$", text)
+    if not m:
+        return None
+    nxt = re.search(r"(?m)^##\s", text[m.end():])
+    return text[m.end(): m.end() + nxt.start()] if nxt else text[m.end():]
 
 
 def _labels(doc: dict) -> list[str]:
