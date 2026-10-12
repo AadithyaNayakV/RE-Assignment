@@ -67,6 +67,9 @@ class Cell:
     is_formula: bool = False
     formula: str | None = None
     unreadable_formula: bool = False
+    #: The cell's text when it holds text that is not a number ("n/a", "TBC"). `value`
+    #: is then None: the cell is read as missing, never as zero. Not part of `trace()`.
+    unreadable_text: str | None = None
 
     def trace(self) -> dict:
         d = {
@@ -117,6 +120,8 @@ class Sheet:
     line_items: list[LineItem] = field(default_factory=list)
     #: Free text found above the header row (statement name, company, "as at" line).
     titles: list[str] = field(default_factory=list)
+    #: Period key -> column letter, so a check can name the address of a blank cell.
+    period_columns: dict[str, str] = field(default_factory=dict)
 
     def by_label(self, label: str) -> LineItem | None:
         target = _norm(label)

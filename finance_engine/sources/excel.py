@@ -15,7 +15,7 @@ import hashlib
 from pathlib import Path
 
 from openpyxl import load_workbook
-from openpyxl.utils import column_index_from_string
+from openpyxl.utils import column_index_from_string, get_column_letter
 
 from finance_engine.config import ClientConfig
 from finance_engine.model import Cell, Dataset, LayoutError, LineItem, Period, Sheet, _norm
@@ -113,7 +113,8 @@ class ExcelSource(DataSource):
                 if isinstance(raw, str) and raw.strip():
                     titles.append(" ".join(raw.split()))
 
-        sheet = Sheet(name=name, periods=periods, titles=titles)
+        sheet = Sheet(name=name, periods=periods, titles=titles,
+                      period_columns={p.key: get_column_letter(c) for p, c in period_cols})
         for row in range(header_row + 1, sf.max_row + 1):
             label = self._row_label(sf, row, label_cols)
             cells: dict[str, Cell] = {}
@@ -137,6 +138,8 @@ class ExcelSource(DataSource):
                     # A formula whose cached value is absent or non-numeric cannot be
                     # evaluated without Excel. Flagged, never guessed at.
                     unreadable_formula=is_formula and (raw_v is None or unreadable),
+                    unreadable_text=(raw_v.strip() if not is_formula and unreadable
+                                     and isinstance(raw_v, str) else None),
                 )
             if not label and not cells:
                 continue

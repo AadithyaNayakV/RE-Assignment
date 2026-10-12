@@ -336,5 +336,25 @@
       "reason": "incomplete_window",
       "derivation": "window 2025-07..2026-06 lacks 2025-09"
     }
-  ]
+  ],
+  "cell_warnings": {
+    "derivation": "generator inputs (None / text / negative values), the client config's data_quality.cell_checks over the documented defaults, and cell addresses read from the workbook with openpyxl",
+    "enabled": {
+      "non_numeric_cell": true,
+      "blank_cell": true,
+      "negative_line_item": false
+    },
+    "expected": {
+      "non_numeric_cell": [],
+      "blank_cell": [
+        {
+          "sheet": "Income Statement",
+          "cell": "J8",
+          "label": "Services Revenue",
+          "period": "2025-10",
+          "raw_value": null
+        }
+      ]
+    }
+  }
 }

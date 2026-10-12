@@ -44,6 +44,9 @@ class Issue:
     #: Metric names (or `name.` prefixes) this issue applies to. Empty = dataset-wide.
     affects: tuple[str, ...] = ()
     details: dict = field(default_factory=dict)
+    #: Cell-level checks only: every cell the issue is about, as
+    #: {sheet, cell, label, period, raw_value}. Omitted from the dict when empty.
+    cells: list[dict] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         d = {
@@ -55,6 +58,8 @@ class Issue:
             d["affects"] = list(self.affects)
         if self.details:
             d["details"] = self.details
+        if self.cells:
+            d["cells"] = self.cells
         return d
 
 
@@ -63,10 +68,11 @@ class ValidationReport:
         self.issues: list[Issue] = []
 
     def add(self, severity: str, code: str, message: str,
-            affects: tuple[str, ...] = (), **details) -> None:
+            affects: tuple[str, ...] = (), cells: list[dict] | None = None,
+            **details) -> None:
         self.issues.append(
             Issue(severity=severity, code=code, message=message,
-                  affects=affects, details=details)
+                  affects=affects, details=details, cells=list(cells or []))
         )
 
     def error(self, code: str, message: str, affects: tuple[str, ...] = (), **d) -> None:
@@ -136,6 +142,7 @@ def validate(dataset: Dataset, config: ClientConfig, period: str) -> ValidationR
     _check_fallback_categories(report, sheet, config)
     _check_units(report, dataset, config)
     _check_balance_sheet(report, dataset, period)
+    _check_cells(report, sheet, config, period)
     return report
 
 
@@ -392,3 +399,167 @@ def _check_balance_sheet(report, dataset: Dataset, period: str) -> None:
             ("balance_sheet.",),
             requested=period,
         )
+
+
+# ---- cell-level checks ---------------------------------------------------
+#
+# A text cell or an internal blank used to surface only indirectly, as a reconciliation
+# failure on the total. These name the cell. They are warnings only: no value changes and
+# nothing is blocked. Each is switchable per client (`data_quality.cell_checks`).
+#
+# Scope: leaf line items inside the revenue, COGS and operating-expense sections, in the
+# months this report reads (the trailing window ending at the reporting month, plus the
+# year-ago month). A problem in a month the report never uses is not raised here.
+
+_CELL_SECTIONS = ("revenue", "cogs", "opex")
+_MAX_LISTED = 5
+
+
+def _check_cells(report, sheet: Sheet, config: ClientConfig, period: str) -> None:
+    enabled = config.cell_checks
+    if not any(enabled.values()) or period not in sheet.period_keys():
+        return
+    ctx = _CellContext(sheet, config, period)
+    items = [i for s in _CELL_SECTIONS for i in sheet.in_section(s)]
+
+    if enabled["non_numeric_cell"]:
+        # Text the reader could parse ("1,234", "(500)", "$75") is a number, and text the
+        # engine reads as missing is flagged. There is no separate accounting-zero rule:
+        # a typed "-" is read as missing, so it is flagged too.
+        found = [(i, p, i.cells[p].unreadable_text) for i in items for p in ctx.periods
+                 if p in i.cells and i.cells[p].unreadable_text is not None]
+        if found:
+            report.warn(
+                "non_numeric_cell",
+                f"{len(found)} line-item cell(s) hold text that is not a number: "
+                f"{ctx.listing(found, show_raw=True)}. Each is treated as missing, not "
+                f"zero, so totals that include it will not reconcile until the cell "
+                f"holds a number.",
+                ctx.affects(found),
+                cells=ctx.cell_dicts(found),
+            )
+
+    if enabled["blank_cell"]:
+        keys = sheet.period_keys()
+        found = []
+        for item in items:
+            for idx in range(1, len(keys) - 1):
+                p = keys[idx]
+                if p not in ctx.periods or not _is_blank(item.cells.get(p)):
+                    continue
+                if (item.value(keys[idx - 1]) is not None
+                        and item.value(keys[idx + 1]) is not None):
+                    found.append((item, p, None))
+        if found:
+            report.warn(
+                "blank_cell",
+                f"{len(found)} line-item cell(s) are blank between two months that have "
+                f"values: {ctx.listing(found)}. Each is treated as missing, not zero. It "
+                f"may be an un-posted month or a deleted entry; that needs confirmation.",
+                ctx.affects(found),
+                cells=ctx.cell_dicts(found),
+            )
+
+    if enabled["negative_line_item"]:
+        expected = config.expected_negative_lines
+        found = [(i, p, i.value(p)) for i in items for p in ctx.periods
+                 if (i.value(p) or 0) < 0 and i.label.casefold() not in expected]
+        if found:
+            report.warn(
+                "negative_line_item",
+                f"{len(found)} revenue, cost of goods sold or operating-expense cell(s) "
+                f"are negative: {ctx.listing(found, show_raw=True)}. Each may be a "
+                f"legitimate credit, refund or reversal, or a misposting; that needs "
+                f"confirmation. Values are kept with their sign. Lines the client config "
+                f"expects to be negative are not listed.",
+                ctx.affects(found),
+                cells=ctx.cell_dicts(found),
+            )
+
+
+def _is_blank(cell) -> bool:
+    """Truly empty. Text and unreadable formulas have their own checks."""
+    if cell is None:
+        return True
+    return (cell.value is None and cell.unreadable_text is None
+            and not cell.unreadable_formula)
+
+
+class _CellContext:
+    """Which months the report reads, and which metrics a cell in each one feeds."""
+
+    def __init__(self, sheet: Sheet, config: ClientConfig, period: str) -> None:
+        self.sheet = sheet
+        self.period = period
+        self.prior = _shift(period, -1)
+        self.year_ago = _shift(period, -12)
+        self.window = set(trailing_window(sheet.period_keys(), period, config.ttm_months))
+        self.periods = [p for p in sheet.period_keys()
+                        if p in self.window or p == self.year_ago]
+
+    def address(self, item, p: str) -> str:
+        column = self.sheet.period_columns.get(p) or (
+            item.cells[p].column if p in item.cells else "?")
+        return f"{column}{item.row}"
+
+    def listing(self, found, show_raw: bool = False) -> str:
+        parts = []
+        for item, p, raw in found[:_MAX_LISTED]:
+            shown = ""
+            if show_raw and isinstance(raw, str):
+                shown = f" = {raw!r}"
+            elif show_raw and raw is not None:
+                shown = f" = {raw:,.2f}"
+            parts.append(f"{self.sheet.name}!{self.address(item, p)} "
+                         f"({item.label}, {p}){shown}")
+        more = len(found) - _MAX_LISTED
+        return "; ".join(parts) + (f"; and {more} more" if more > 0 else "")
+
+    def cell_dicts(self, found) -> list[dict]:
+        return [{"sheet": self.sheet.name, "cell": self.address(item, p),
+                 "label": item.label, "period": p, "raw_value": raw}
+                for item, p, raw in found]
+
+    def affects(self, found) -> tuple[str, ...]:
+        names: set[str] = set()
+        for item, p, _ in found:
+            names |= self._dependent(item, p)
+        return tuple(sorted(names))
+
+    def _dependent(self, item, p: str) -> set[str]:
+        """The metrics in this report whose value includes this cell.
+
+        A cell in the reporting month feeds the line, its section total, category and
+        group, and the profit lines below them; a cell in the prior month feeds their
+        `.prior` and month-over-month figures; any cell in the window feeds the TTM
+        figures; the year-ago month feeds year-on-year. Names that the engine does not
+        emit for a given base (a single line has no TTM) simply never match.
+        """
+        section = item.section
+        bases = {naming.line_for(section, item.label), naming.section_total(section),
+                 naming.OPERATING_INCOME}
+        if section in ("revenue", "cogs"):
+            bases.add(naming.GROSS_PROFIT)
+        if section == "opex":
+            if item.category:
+                bases.add(naming.opex_category(item.category))
+            bases.add(naming.opex_group(item.group_key or naming.UNGROUPED))
+
+        names: set[str] = set()
+        suffixes: list[str] = []
+        if p == self.period:
+            names |= bases
+            suffixes += ["mom_abs", "mom_pct"]
+        if p == self.prior:
+            suffixes += ["prior", "mom_abs", "mom_pct"]
+        if p in self.window:
+            suffixes.append("ttm")
+        if p == self.year_ago:
+            suffixes += ["yoy_abs", "yoy_pct"]
+        names |= {f"{b}.{s}" for b in bases for s in suffixes}
+        return names
+
+
+def _shift(period: str, months: int) -> str:
+    o = Period.from_key(period).ordinal() + months
+    return f"{o // 12:04d}-{o % 12 + 1:02d}"

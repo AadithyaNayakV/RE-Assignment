@@ -1,3 +1,12 @@
+"""Builds the two SYNTHETIC manual-test workbooks (test_clean and test_errors).
+
+    python scripts/make_test_workbooks.py
+
+Run from the repo root: paths are relative to the working directory, so it writes
+data/clients/test_clean/source/test_clean.xlsx and
+data/clients/test_errors/source/test_with_errors.xlsx. Their configs are
+config/clients/test_clean.yaml and config/clients/test_errors.yaml.
+"""
 import calendar, datetime as dt
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment
@@ -85,4 +94,6 @@ def main():
         path=os.path.join(folder,fname)
         build(path,errors,title)
         print('written:',os.path.abspath(path),os.path.getsize(path),'bytes')
-main()
+
+if __name__ == '__main__':
+    main()

@@ -288,3 +288,88 @@ class TestChecksAddedForTheAbcReview:
         case, text, doc = spike
         assert "guard" in _failed(_insert(text, "Legal Expenses fell $34,000.00."),
                                   doc, case)
+
+
+class TestCausalWordsOutsideQuestions:
+    """SKILL.md step 5: causes appear only as questions under "Questions for the
+    reviewer". Elsewhere the five causal phrases fail, hedged or not."""
+
+    PHRASES = ["because", "due to", "caused", "the reason", "driven by"]
+
+    @pytest.mark.parametrize("phrase", PHRASES)
+    def test_fails_outside_the_questions(self, spike, phrase):
+        case, text, doc = spike
+        bad = _insert(text, f"The increase in Legal Expenses is possibly {phrase} a matter "
+                            f"that needs confirmation.")
+        assert "causal_words_outside_questions" in _failed(bad, doc, case)
+
+    @pytest.mark.parametrize("phrase", PHRASES)
+    @pytest.mark.parametrize("level", ["##", "###"])
+    def test_allowed_inside_the_questions(self, spike, phrase, level):
+        case, text, doc = spike
+        ok = text.replace("## Reviewer checklist", (
+            f"{level} Questions for the reviewer\n\n"
+            f"1. Is the Legal Expenses rise possibly {phrase} a new matter? Needs "
+            f"confirmation.\n\n## Reviewer checklist"), 1)
+        assert "causal_words_outside_questions" not in _failed(ok, doc, case)
+
+    def test_the_section_after_the_questions_is_checked_again(self, spike):
+        case, text, doc = spike
+        bad = text.replace("## Reviewer checklist", (
+            "### Questions for the reviewer\n\n1. Possibly a new matter? Needs "
+            "confirmation.\n\n### Next steps\n\nCosts rose because of hiring.\n\n"
+            "## Reviewer checklist"), 1)
+        assert "causal_words_outside_questions" in _failed(bad, doc, case)
+
+    def test_where_not_why_passes(self, spike):
+        case, text, doc = spike
+        ok = _insert(text, "The increase is in Legal Expenses.")
+        assert "causal_words_outside_questions" not in _failed(ok, doc, case)
+
+    @pytest.mark.parametrize("case_id", ["01_abc_inc_2026_06", "07_zero_negative_bases"])
+    def test_deterministic_report_has_none(self, case_id):
+        """These two cases printed "... because the 2026-05 figure was zero or
+        negative" and every report said "n/a with the reason" before the rewording."""
+        case = _case(case_id)
+        text, doc = _report(case)
+        assert "causal_words_outside_questions" not in _failed(text, doc, case)
+        assert "because" not in text and "the reason" not in text
+
+
+class TestReasonIsACausalWord:
+    """"reason"/"reasons" as a whole word, outside the reviewer questions. Only the
+    denial "no reason(s)" is exempt: the template says it in every report."""
+
+    @pytest.mark.parametrize("sentence", [
+        "Services is the whole reason revenue fell.",
+        "One reason costs rose is Legal Expenses.",
+        "There are two reasons for the increase in Legal Expenses.",
+        "Reasons for the increase need confirmation.",
+        "The REASON is unclear.",
+    ])
+    def test_fails_outside_the_questions(self, spike, sentence):
+        case, text, doc = spike
+        assert "causal_words_outside_questions" in _failed(_insert(text, sentence), doc, case)
+
+    @pytest.mark.parametrize("sentence", [
+        "The workbook records no reason for any movement.",
+        "The workbook gives no reasons for these lines.",
+        "Legal Expenses were reasonably steady before May.",     # not the whole word
+        "The increase is in Legal Expenses.",
+    ])
+    def test_passes(self, spike, sentence):
+        case, text, doc = spike
+        assert "causal_words_outside_questions" not in _failed(_insert(text, sentence),
+                                                               doc, case)
+
+    def test_allowed_inside_the_questions(self, spike):
+        case, text, doc = spike
+        ok = text.replace("## Reviewer checklist", (
+            "### Questions for the reviewer\n\n1. Is Services possibly the whole reason "
+            "revenue fell? Needs confirmation.\n\n## Reviewer checklist"), 1)
+        assert "causal_words_outside_questions" not in _failed(ok, doc, case)
+
+    def test_a_reason_sentence_after_a_denial_still_fails(self, spike):
+        case, text, doc = spike
+        bad = _insert(text, "The workbook records no reason, but the reason is Services.")
+        assert "causal_words_outside_questions" in _failed(bad, doc, case)

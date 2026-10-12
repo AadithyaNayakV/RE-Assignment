@@ -155,3 +155,18 @@ class Formatter:
         if unit == "percentage_points":
             return self.points(value, 1 if decimals is None else decimals)
         return self.signed_money(value, 2 if decimals is None else decimals)
+
+    def change_pair(self, abs_metric: dict | None, pct_metric: dict | None,
+                    template: str = "{abs} ({pct})") -> str:
+        """A change and its % change, e.g. "+$5.00 (+2.0%)", with n/a stated once.
+
+        Both come from the same comparison, so when the change has no value the % has
+        none either, for the same reason. Filling the template anyway printed
+        "n/a (no comparable value) (n/a (no comparable value))".
+        """
+        abs_text = self.metric_signed(abs_metric)
+        abs_missing = abs_metric is None or abs_metric.get("value") is None
+        pct_missing = pct_metric is None or pct_metric.get("value") is None
+        if abs_missing and pct_missing:
+            return abs_text
+        return template.format(abs=abs_text, pct=self.metric_signed(pct_metric))

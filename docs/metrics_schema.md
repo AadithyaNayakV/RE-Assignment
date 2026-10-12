@@ -347,12 +347,54 @@ now say it "may be a recovery, a reversal or a misposting; that needs confirmati
 Codes `negative_opex_line` and `negative_cogs_line` are raised separately, each scoped to
 its own section.
 
+**Cell-level checks.** Three warnings name the exact cell instead of leaving the problem to
+surface as a reconciliation failure on a total:
+
+| Code | Raised for |
+|---|---|
+| `non_numeric_cell` | A line-item cell holding text the reader cannot parse as a number (`"n/a"`, `"TBC"`, a typed `"-"`). Text such as `"1,234"`, `"(500)"` or `"$75"` is a number and is not flagged. There is no accounting-zero rule: a typed `"-"` is read as missing, so it is flagged. A numeric 0 merely *formatted* to show "-" is stored as 0 and is not text. |
+| `blank_cell` | A line-item cell that is empty while the months either side of it have values. Edge months are not "internal". Text and unreadable formulas are not double-reported here. |
+| `negative_line_item` | A negative revenue, COGS or operating-expense cell. Lines in `expected_negative_lines` are skipped. |
+
+Scope: leaf line items in the revenue, COGS and opex sections, in the months the report
+reads (the trailing window ending at the reporting month, plus the year-ago month).
+`affects` is period-aware: a cell in the reporting month names the line, its section
+total, category, group and the profit lines; a prior-month cell names their `.prior` and
+month-over-month metrics; any cell in the window names the `.ttm` metrics; the year-ago
+cell names `.yoy_*`. These are warnings only. No value changes and nothing is blocked
+(`tests/test_cell_checks.py` asserts both).
+
+Each such issue carries an additive `cells` list:
+
+```json
+{"severity": "warning", "code": "non_numeric_cell", "message": "...",
+ "affects": ["opex.total", "..."],
+ "cells": [{"sheet": "Income Statement", "cell": "F20", "label": "Marketing",
+            "period": "2025-10", "raw_value": "n/a"}]}
+```
+
+Switch per client in the YAML, one switch for all three or one per check:
+
+```yaml
+data_quality:
+  cell_checks: false         # all three off; or a mapping, e.g. {negative_line_item: true}
+```
+
+Defaults (`ClientConfig.CELL_CHECKS_DEFAULT`): `non_numeric_cell` and `blank_cell` **on**,
+`negative_line_item` **off**. In a mapping, a check left out keeps its default.
+`test_errors` turns `negative_line_item` on.
+
+Golden case 06 expects its one internal blank (`Income Statement!J8`, Services Revenue,
+2025-10). `evals/tools/build_expected.py` derives it from the generator's inputs, without
+importing the engine, into `expected.json` → `cell_warnings`, and the Level 1 runner checks
+that each enabled code names exactly those cells and each disabled code is absent.
+
 Codes: `period_not_in_source`, `missing_months`, `ttm_window_incomplete`,
 `ttm_includes_possible_one_offs`, `formula_value_unreadable`, `blank_not_zero`,
 `duplicate_line_labels`, `negative_revenue_line`, `negative_opex_line`,
 `negative_cogs_line`, `opex_category_unmatched`,
 `possible_unit_scaling`, `no_balance_sheet`, `statement_period_mismatch`,
-`balance_sheet_period_missing`.
+`balance_sheet_period_missing`, `non_numeric_cell`, `blank_cell`, `negative_line_item`.
 
 ---
 

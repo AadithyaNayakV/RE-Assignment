@@ -68,6 +68,10 @@ reconciliation:
     description: Gross Profit minus Total Operating Expenses equals Operating Income
 classification_notes:
 - SYNTHETIC test company for manual testing. No figure here describes a real business.
+data_quality:
+  # negative_line_item is off by default; on here so all three checks can be seen working.
+  cell_checks:
+    negative_line_item: true
 thresholds:
   significant_mom_pct: 25.0
   significant_mom_abs: 10000.0

@@ -51,6 +51,7 @@ def build_brief(doc: dict, metric_filter: str | None = None) -> str:
     parts = [
         _header(doc),
         _status(doc),
+        _reconciliation_failures(doc, fmt),
         _issues(doc),
         _headline(doc, m, fmt),
         _streams(doc, m, fmt),
@@ -100,9 +101,10 @@ def _status(doc) -> str:
     lines = [
         "## Status",
         "",
+        # Both counts are stored in metrics.json, so a writer can copy this line and pass
+        # the number check. The passed count ("56/60 passed") is derived, not stored.
         f"- Reconciliation: {'PASS' if recon.get('all_passed') else 'FAIL'} — "
-        f"{recon.get('checks_run', 0) - recon.get('checks_failed', 0)}"
-        f"/{recon.get('checks_run', 0)} checks passed",
+        f"{recon.get('checks_failed', 0)} of {recon.get('checks_run', 0)} checks failed",
         f"- Trailing twelve months: "
         f"{'complete' if ttm.get('complete') else 'INCOMPLETE — every TTM figure is n/a'}"
         f" (window {window[0]}..{window[-1]})",
@@ -112,6 +114,30 @@ def _status(doc) -> str:
         + ("assessed" if seasonality.get("assessed")
            else f"NOT assessed. {seasonality.get('reason', '')}".strip()),
     ]
+    return "\n".join(lines)
+
+
+def _reconciliation_failures(doc, fmt) -> str:
+    """Every failed reconciliation check, one row per check and month.
+
+    Without this a writer knows only that some checks failed, and either says it cannot
+    tell which (true, but useless to the reviewer) or reads the raw metrics.json, which
+    the skill forbids. Every figure here is in metrics.json and passes the guard.
+    """
+    failures = (doc.get("reconciliation") or {}).get("failures") or []
+    if not failures:
+        return ""
+    lines = ["## Reconciliation failures", "",
+             "Name every one of these in the report, with its month. Computed is the "
+             "engine's figure for the check; reported is the workbook's own row.", "",
+             "| check | description | period | computed | reported | difference |",
+             "| --- | --- | --- | --: | --: | --: |"]
+    for f in failures:
+        lines.append(
+            f"| `{f.get('key')}` | {f.get('description', '')} | {f.get('period')} | "
+            f"{fmt.money(f.get('computed'))} | {fmt.money(f.get('reported'))} | "
+            f"{fmt.signed_money(f.get('difference'))} |"
+        )
     return "\n".join(lines)
 
 

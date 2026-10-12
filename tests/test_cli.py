@@ -230,3 +230,84 @@ class TestListPeriods:
         assert "18 month(s)" in out
         assert out.count("ttm complete") == 7      # 2025-12 through 2026-06
         assert "INCOMPLETE" in out
+
+
+class TestPeriodLatest:
+    """`--period latest` resolves to the newest month in the source, as list-periods
+    shows it, and says which month it picked. An explicit YYYY-MM is unaffected."""
+
+    @staticmethod
+    def _tiny(tmp_path, config_overrides=None, **workbook_kwargs):
+        (tmp_path / "config" / "clients").mkdir(parents=True)
+        source = tmp_path / "data" / "clients" / "tiny_co" / "source"
+        source.mkdir(parents=True)
+        write_small_config(tmp_path / "config" / "clients", config_overrides)
+        build_small_workbook(source / "tiny.xlsx", **workbook_kwargs)
+        return tmp_path
+
+    def test_analyze_resolves_and_prints(self, abc_workspace, capsys):
+        code = main(["analyze", "--client", "abc_inc", "--period", "latest",
+                     "--root", str(abc_workspace)])
+        assert code == EXIT_OK
+        assert "period: latest -> 2026-06" in capsys.readouterr().err
+        assert (abc_workspace / "output" / "clients" / "abc_inc" / "2026-06"
+                / "metrics.json").exists()
+        assert not (abc_workspace / "output" / "clients" / "abc_inc" / "latest").exists()
+
+    def test_matches_top_line_of_list_periods(self, abc_workspace, capsys):
+        main(["list-periods", "--client", "abc_inc", "--root", str(abc_workspace)])
+        newest = capsys.readouterr().out.splitlines()[2].split()[0]
+        main(["analyze", "--client", "abc_inc", "--period", "latest",
+              "--root", str(abc_workspace)])
+        assert f"period: latest -> {newest}" in capsys.readouterr().err
+
+    def test_report_brief_and_check_commentary(self, abc_workspace, tmp_path, capsys):
+        root = ["--root", str(abc_workspace)]
+        assert main(["report", "--client", "abc_inc", "--period", "latest", *root]) == EXIT_OK
+        assert "period: latest -> 2026-06" in capsys.readouterr().err
+
+        assert main(["brief", "--client", "abc_inc", "--period", "latest", *root]) == EXIT_OK
+        captured = capsys.readouterr()
+        assert "period: latest -> 2026-06" in captured.err
+        assert "period: latest" not in captured.out     # stdout stays the brief alone
+
+        note = tmp_path / "note.md"
+        note.write_text("Revenue was $195,898.16 in Jun 2026.", encoding="utf-8")
+        code = main(["check-commentary", "--client", "abc_inc", "--period", "latest",
+                     "--file", str(note), "--json", *root])
+        captured = capsys.readouterr()
+        assert code == EXIT_OK
+        assert json.loads(captured.out)["passed"] is True     # --json stays parseable
+        assert "period: latest -> 2026-06" in captured.err
+
+    def test_gap_in_the_middle(self, tmp_path, capsys):
+        root = self._tiny(tmp_path, drop_period_index=1)        # 2025-02 missing
+        main(["analyze", "--client", "tiny_co", "--period", "latest", "--root", str(root)])
+        assert "period: latest -> 2025-03" in capsys.readouterr().err
+        assert (root / "output" / "clients" / "tiny_co" / "2025-03" / "metrics.json").exists()
+
+    def test_newest_month_missing(self, tmp_path, capsys):
+        """The newest month the source *has*, not the month after the last one seen."""
+        root = self._tiny(tmp_path, drop_period_index=2)        # 2025-03 missing
+        main(["analyze", "--client", "tiny_co", "--period", "latest", "--root", str(root)])
+        assert "period: latest -> 2025-02" in capsys.readouterr().err
+
+    def test_newest_first_columns(self, tmp_path, capsys):
+        root = self._tiny(
+            tmp_path,
+            {"sheets": {"income_statement": {"date_order": "newest_first"}}},
+            newest_first=True, drop_period_index=1)
+        main(["analyze", "--client", "tiny_co", "--period", "latest", "--root", str(root)])
+        assert "period: latest -> 2025-03" in capsys.readouterr().err
+
+    def test_explicit_period_prints_no_resolution(self, abc_workspace, capsys):
+        code = main(["analyze", "--client", "abc_inc", "--period", "2026-05",
+                     "--root", str(abc_workspace)])
+        assert code == EXIT_OK
+        assert "period: latest" not in capsys.readouterr().err
+
+    def test_latest_for_unknown_client_is_a_usage_error(self, abc_workspace, capsys):
+        code = main(["analyze", "--client", "nobody", "--period", "latest",
+                     "--root", str(abc_workspace)])
+        assert code == EXIT_USAGE
+        assert "Traceback" not in capsys.readouterr().err

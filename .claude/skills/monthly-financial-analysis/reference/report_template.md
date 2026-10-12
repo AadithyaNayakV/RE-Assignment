@@ -84,7 +84,7 @@ Every figure was produced by `finance_engine` and checked by `check-commentary`.
   Do not round further (`$196k`), do not convert units, and do not compute a figure that
   isn't printed, such as a difference, sum, average, ratio or growth rate.
 - Margin changes are in **points** (`+3.1 pts`), never a percent of a percent.
-- Where the brief says `n/a (reason)`, write `n/a` and the reason. Never write 0 for a
+- Where the brief says `n/a (…)`, write `n/a` and its bracketed note. Never write 0 for a
   missing value, and never write an infinite or huge percentage.
 - **Direction in the word, amount unsigned:** "fell $12,452.80 (-6.0%)", "rose
   $8,763.85 (+21.6%)". Never "fell -$12,452.80". The percentage in brackets keeps its
@@ -97,17 +97,20 @@ Every figure was produced by `finance_engine` and checked by `check-commentary`.
 - A line marked `sign change` crossed zero. Describe it by direction only: "swung from
   a $12,935.29 charge to a $1,806.24 credit". Never call it a reversal, a recovery or a
   saving; what it is needs confirmation.
-- When two related measures move in opposite directions, give one plain sentence saying
-  why both are true. Only if the reason is arithmetic, for example "operating margin
-  worsened because revenue fell faster than the loss narrowed". Never if it is a business
-  cause.
+- When two related measures move in opposite directions, give one plain sentence showing
+  how both are true, only when it is arithmetic, for example "the loss narrowed and
+  operating margin still worsened: revenue fell proportionally faster than the loss".
+  Never for a business cause, and without the words listed under **Causes**.
 - Use labels exactly as the brief prints them. Never invent a category, line, client or
   month.
 
 **Causes**
-- The workbook has no information about causes. Do not write "due to", "driven by",
-  "because of", "as a result of" or "caused by" about a business event. You may say
-  *why a movement matters* (its size, its share of costs, its effect on margin).
+- The workbook has no information about causes. Outside **Questions for the
+  reviewer**, never write "because", "due to", "caused", "the reason" or "driven by"
+  (the eval check `causal_words_outside_questions` fails the report), nor "because of",
+  "as a result of" or "caused by" about a business event. Say where a change sits ("the
+  increase is in Subscriptions"), not why. You may say *why a movement matters* (its
+  size, its share of costs, its effect on margin).
 - A possible explanation goes only under **Questions for the reviewer**. It is phrased
   as a question and marked "possible" or "needs confirmation".
 - Never say what a figure *is*: "a reversal", "a recovery", "a refund", "a one-off",

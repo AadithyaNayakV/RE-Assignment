@@ -70,7 +70,8 @@ python -m finance_engine check-commentary --client abc_inc --period 2026-06 --fi
 ```
 
 Choose a client with `--client` (any file name in `config/clients/`, without `.yaml`) and a
-month with `--period YYYY-MM` (`list-periods` shows which months exist). Output goes to
+month with `--period YYYY-MM` (`list-periods` shows which months exist). `--period latest`
+picks the newest month in the source and prints `period: latest -> YYYY-MM`. Output goes to
 `output/clients/<client>/<period>/`. Exit codes: 0 ok, 1 bad usage or config, 2 data-quality
 or reconciliation failure, 3 the guard rejected the text.
 

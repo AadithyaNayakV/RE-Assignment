@@ -184,8 +184,8 @@ def _revenue(doc, m, fmt) -> str:
     )
     lines += ["",
               f"- Trailing twelve months: {fmt.metric(m.get('revenue.total.ttm'))}",
-              f"- Year on year: {fmt.metric_signed(m.get('revenue.total.yoy_abs'))} "
-              f"({fmt.metric_signed(m.get('revenue.total.yoy_pct'))})"]
+              f"- Year on year: "
+              f"{fmt.change_pair(m.get('revenue.total.yoy_abs'), m.get('revenue.total.yoy_pct'))}"]
     if total and total.get("reported_value") is not None:
         lines.append(
             f"- The workbook's own Total Income row reads "
@@ -309,7 +309,7 @@ def _mom_summary(doc, m, fmt) -> str:
             f"{fmt.metric_signed(m.get(f'{key}.mom_pct'))} |"
         )
     lines += ["", "A percentage change is shown only where the prior month was strictly "
-                  "positive. A zero or negative base is reported as n/a with the reason, "
+                  "positive. A zero or negative base is reported as n/a, with a note saying which, "
                   "never as an infinite or sign-flipped percentage."]
     return "\n".join(lines)
 

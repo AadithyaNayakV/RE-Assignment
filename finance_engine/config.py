@@ -208,6 +208,45 @@ class ClientConfig:
         return {str(label).casefold() for label in
                 (self.raw.get("expected_negative_lines") or [])}
 
+    #: Cell-level data-quality checks and whether each runs when the config is silent.
+    #: negative_line_item is off by default: most negatives in a P&L are legitimate
+    #: credits, and listing every one across the window would bury the other warnings.
+    CELL_CHECKS_DEFAULT = {
+        "non_numeric_cell": True,
+        "blank_cell": True,
+        "negative_line_item": False,
+    }
+    CELL_CHECKS = tuple(CELL_CHECKS_DEFAULT)
+
+    @property
+    def cell_checks(self) -> dict[str, bool]:
+        """Which cell-level checks run (defaults: `CELL_CHECKS_DEFAULT`).
+
+        `data_quality.cell_checks` is either one switch for all three or a mapping, where
+        a check left out keeps its default:
+
+            data_quality:
+              cell_checks: false            # all three off
+            data_quality:
+              cell_checks:
+                negative_line_item: true    # the other two keep their defaults
+
+        The checks only ever raise warnings; they never change a value.
+        """
+        setting = (self.raw.get("data_quality") or {}).get("cell_checks")
+        if setting is None:
+            return dict(self.CELL_CHECKS_DEFAULT)
+        if isinstance(setting, dict):
+            unknown = set(setting) - set(self.CELL_CHECKS)
+            if unknown:
+                raise ConfigError(
+                    f"{self.path}: unknown data_quality.cell_checks {sorted(unknown)}; "
+                    f"expected some of {list(self.CELL_CHECKS)}"
+                )
+            return {name: bool(setting.get(name, default))
+                    for name, default in self.CELL_CHECKS_DEFAULT.items()}
+        return {name: bool(setting) for name in self.CELL_CHECKS}
+
     @property
     def ttm_months(self) -> int:
         return int((self.raw.get("ttm") or {}).get("months", 12))

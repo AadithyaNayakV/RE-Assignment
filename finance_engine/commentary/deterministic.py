@@ -47,8 +47,8 @@ class DeterministicProvider(CommentaryProvider):
             "### Summary",
             "",
             f"For {period}, total revenue was **{fmt.metric(rev)}** "
-            f"({fmt.metric_signed(m.get('revenue.total.mom_abs'))}, "
-            f"{fmt.metric_signed(m.get('revenue.total.mom_pct'))} versus {prior}).",
+            f"({fmt.change_pair(m.get('revenue.total.mom_abs'), m.get('revenue.total.mom_pct'), '{abs}, {pct}')} "
+            f"versus {prior}).",
             "",
             f"Gross profit was {fmt.metric(gp)} on a gross margin of {fmt.metric(gm)} "
             f"({fmt.metric(m.get('gross_margin_pct.mom_pts'))} versus {prior}). "
@@ -139,9 +139,9 @@ class DeterministicProvider(CommentaryProvider):
         ]
         if unavailable:
             names = ", ".join(s.get("label", "") for s in unavailable)
-            lines += ["", f"No percentage change is shown for {names} because the "
-                          f"{prior} figure was zero or negative. For those lines the "
-                          f"absolute change is the meaningful comparison."]
+            lines += ["", f"No percentage change is shown for {names}: the {prior} "
+                          f"figure was zero or negative. For those lines the absolute "
+                          f"change is the meaningful comparison."]
         return "\n".join(lines)
 
     def _costs(self, doc, m, fmt, period, prior) -> str:

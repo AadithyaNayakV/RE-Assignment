@@ -6,9 +6,11 @@ is the control: a check the template fails is a broken check, not a bad model.
 
 Generic checks (every report):
   guard, required_sections, issues_shown_early, draft_label, provider_label,
-  reviewer_checklist, causal_language_hedged, cause_vocabulary_hedged,
+  reviewer_checklist, causal_language_hedged, causal_words_outside_questions,
+  cause_vocabulary_hedged,
   seasonality_not_asserted, one_offs_hedged, ttm_incomplete_*, impossible_values,
-  client_isolation, no_credentials, reconciliation_failure_shown
+  client_isolation, no_credentials, reconciliation_failure_shown,
+  reconciliation_failures_named
 Case checks (from case.yaml `skill:`): required_figures, required_flags,
   forbidden_claims, required_sections_extra.
 
@@ -34,6 +36,15 @@ HEDGE = re.compile(
 CAUSAL = re.compile(
     r"\b(due to|driven by|caused by|owing to|attributable to|as a result of|"
     r"resulted from|thanks to|on the back of|because of|led to|reflecting)\b", re.I)
+
+# Causal words that may appear ONLY under "Questions for the reviewer", hedged or not.
+# Elsewhere the report says where a change sits, never why (SKILL.md step 5).
+# "reason"/"reasons" is matched as a whole word, so "the whole reason" and "one reason"
+# fail too. The one exception is "no reason(s)": "the workbook records no reason for any
+# movement" denies a cause rather than stating one, and the deterministic template says
+# it in every report. Without the exception the control fails six cases.
+CAUSAL_WORDS = re.compile(r"\b(because|due to|caused|driven by)\b|(?<!\bno )\breasons?\b",
+                          re.I)
 
 # Business events a writer might reach for. None of them is ever in the workbook.
 CAUSE_WORDS = re.compile(
@@ -212,6 +223,10 @@ def check_report(text: str, doc: dict, case: dict, provider: str,
     # Unsupported claims.
     bad = [u for u in all_units if CAUSAL.search(u) and not HEDGE.search(u)]
     add("causal_language_hedged", not bad, _show(bad))
+    bad = [u for u in units(_outside_section(body, r"questions for the reviewer"))
+           if CAUSAL_WORDS.search(_without(u, labels))]
+    add("causal_words_outside_questions", not bad,
+        'causes belong only in "Questions for the reviewer": ' + _show(bad) if bad else "")
     bad = [u for u in all_units
            if CAUSE_WORDS.search(_without(u, labels)) and not HEDGE.search(u)]
     add("cause_vocabulary_hedged", not bad, _show(bad))
@@ -258,6 +273,14 @@ def check_report(text: str, doc: dict, case: dict, provider: str,
         shown = re.search(r"reconciliation[^\n]{0,200}\b(fail|FAIL)", body, re.I)
         add("reconciliation_failure_shown", shown is not None,
             "a failed reconciliation must be stated")
+        failed_periods = sorted({f["period"] for f in
+                                 (doc.get("reconciliation") or {}).get("failures", [])
+                                 if f.get("period")})
+        if failed_periods:
+            unnamed = [p for p in failed_periods if not _period_named(body, p)]
+            add("reconciliation_failures_named", not unnamed,
+                "every month with a failed reconciliation check must be named; missing: "
+                + ", ".join(unnamed) if unnamed else "")
 
     # Scope and safety.
     leaks = [name for cid, name in (other_clients or [])
@@ -315,6 +338,28 @@ def _section(text: str, heading: str) -> str | None:
         return None
     nxt = re.search(r"(?m)^##\s", text[m.end():])
     return text[m.end(): m.end() + nxt.start()] if nxt else text[m.end():]
+
+
+def _period_named(text: str, key: str) -> bool:
+    """`2025-08`, `Aug 2025` or `August 2025` appears in the text."""
+    import calendar
+    year, month = int(key[:4]), int(key[5:7])
+    forms = [re.escape(key),
+             rf"{calendar.month_abbr[month]}\.? {year}",
+             rf"{calendar.month_name[month]} {year}"]
+    return re.search(rf"\b({'|'.join(forms)})\b", text, re.I) is not None
+
+
+def _outside_section(text: str, heading: str) -> str:
+    """`text` minus the section whose heading (any level) matches, up to the next
+    heading of the same or a higher level. Unchanged if there is no such section."""
+    m = re.search(rf"(?im)^(#{{1,6}})\s+{heading}\s*$", text)
+    if not m:
+        return text
+    level = len(m.group(1))
+    nxt = re.search(rf"(?m)^#{{1,{level}}}\s", text[m.end():])
+    end = m.end() + nxt.start() if nxt else len(text)
+    return text[:m.start()] + text[end:]
 
 
 def _labels(doc: dict) -> list[str]:

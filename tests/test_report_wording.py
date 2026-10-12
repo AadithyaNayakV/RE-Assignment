@@ -332,3 +332,49 @@ class TestStillConsistentOverall:
                     assert entry["label"] in rendered, f"{period}: {entry['label']}"
             else:
                 assert "## Items inside the trailing-twelve-month window" not in rendered
+
+
+# ---- n/a reason stated once ---------------------------------------------
+
+class TestUnavailableChangeStatedOnce:
+    """A missing change and its missing % used to print the reason twice:
+    "Year on year: n/a (no comparable value) (n/a (no comparable value))"."""
+
+    @staticmethod
+    def _without(doc: dict, *names: str) -> dict:
+        import copy
+        doc = copy.deepcopy(doc)
+        for metric in doc["metrics"]:
+            if metric["name"] in names:
+                metric["value"] = None
+                metric["unavailable_reason"] = "missing_input"
+        return doc
+
+    def test_change_pair_formats(self):
+        from finance_engine.formatting import Formatter
+        fmt = Formatter()
+        missing = {"value": None, "unit": "currency", "unavailable_reason": "missing_input"}
+        missing_pct = {"value": None, "unit": "percent", "unavailable_reason": "missing_input"}
+        assert fmt.change_pair(missing, missing_pct) == "n/a (no comparable value)"
+        assert fmt.change_pair(None, None) == "n/a"
+        both = fmt.change_pair({"value": 5.0, "unit": "currency"},
+                               {"value": 2.0, "unit": "percent"})
+        assert both == "+$5.00 (+2.0%)"
+        zero_base = {"value": None, "unit": "percent", "unavailable_reason": "zero_base"}
+        assert (fmt.change_pair({"value": 5.0, "unit": "currency"}, zero_base, "{abs}, {pct}")
+                == "+$5.00, n/a (prior period was zero)")
+
+    def test_year_on_year_line(self, abc_metrics):
+        doc = self._without(abc_metrics, "revenue.total.yoy_abs", "revenue.total.yoy_pct")
+        text = build_report(doc)
+        assert "- Year on year: n/a (no comparable value)\n" in text
+        assert "(n/a (" not in text
+
+    def test_summary_mom_sentence(self, abc_metrics):
+        doc = self._without(abc_metrics, "revenue.total.mom_abs", "revenue.total.mom_pct")
+        text = DeterministicProvider().generate(doc)
+        assert "(n/a (no comparable value) versus" in text
+        assert "n/a (no comparable value), n/a (no comparable value)" not in text
+
+    def test_available_values_unchanged(self, report):
+        assert re.search(r"- Year on year: [+-]\$[\d,]+\.\d\d \([+-][\d.]+%\)", report)

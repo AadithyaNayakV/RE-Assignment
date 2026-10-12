@@ -194,6 +194,8 @@ def synthetic_expected(client_id: str, period: str) -> dict:
             e.na(name, "incomplete_window",
                  f"window {window[0]}..{window[-1]} lacks {', '.join(missing)}")
 
+    cells = cell_warnings_expected(spec, period)
+
     if spec["balance_sheet"]:
         bs, i = spec["balance_sheet"], keys.index(period)
         a = sum(v[i] for lines in bs["assets"].values() for v in lines.values())
@@ -205,13 +207,96 @@ def synthetic_expected(client_id: str, period: str) -> dict:
         e.value("balance_sheet.liabilities_and_equity", a, "liabilities + equity = assets")
         e.value("balance_sheet.cash", cash, "Checking Account + Savings Account")
 
-    return {
+    out = {
         "source": ("scripts/generate_synthetic.py scenarios() inputs and "
                    "compute_expected(); derived values computed in "
                    "evals/tools/build_expected.py"),
         "ttm": {"complete": complete, "window": window},
         "values": e.values,
         "unavailable": e.unavailable,
+    }
+    # Written only when a cell warning is expected, so a case with none keeps the
+    # expected.json it already had.
+    if any(cells["expected"].values()):
+        out["cell_warnings"] = cells
+    return out
+
+
+# ---- cell-level warnings ---------------------------------------------------
+
+#: The documented defaults (docs/metrics_schema.md, "Cell-level checks"), written out
+#: here rather than imported, like every other rule in this file.
+CELL_CHECK_DEFAULTS = {"non_numeric_cell": True, "blank_cell": True,
+                       "negative_line_item": False}
+
+
+def _enabled_cell_checks(client_id: str) -> dict[str, bool]:
+    raw = yaml.safe_load((ROOT / "config" / "clients" / f"{client_id}.yaml")
+                         .read_text(encoding="utf-8"))
+    setting = (raw.get("data_quality") or {}).get("cell_checks")
+    if setting is None:
+        return dict(CELL_CHECK_DEFAULTS)
+    if isinstance(setting, dict):
+        return {k: bool(setting.get(k, d)) for k, d in CELL_CHECK_DEFAULTS.items()}
+    return dict.fromkeys(CELL_CHECK_DEFAULTS, bool(setting))
+
+
+def cell_warnings_expected(spec: dict, period: str) -> dict:
+    """Which line-item cells the cell-level checks should name, from generator inputs.
+
+    Rules, per docs/metrics_schema.md: leaf lines in revenue, COGS and opex; months in
+    the trailing window ending at `period` plus the year-ago month; text that is not a
+    number -> non_numeric_cell; empty with values in the neighbouring *columns* (the
+    months present in the workbook) -> blank_cell; negative and not listed in
+    expected_negative_lines -> negative_line_item. Addresses are read from the generated
+    workbook with openpyxl: the row by its label, the column by its month heading.
+    """
+    enabled = _enabled_cell_checks(spec["client_id"])
+    keys = spec["periods"]
+    scope = [k for k in keys if k in window_of(period) or k == year_before(period)]
+    raw_cfg = yaml.safe_load((ROOT / "config" / "clients" / f"{spec['client_id']}.yaml")
+                             .read_text(encoding="utf-8"))
+    expected_negative = {str(x).casefold()
+                         for x in (raw_cfg.get("expected_negative_lines") or [])}
+
+    lines = {**spec["revenue"], **spec["cogs"], **spec["opex_direct"]}
+    for group in spec["groups"]:
+        lines.update(group["items"])
+
+    grid: list = []          # read on first use: only a case with a hit needs addresses
+
+    def entry(label: str, key: str, raw) -> dict:
+        if not grid:
+            wb = openpyxl.load_workbook(
+                ROOT / "data" / "synthetic" / f"{spec['client_id']}.xlsx",
+                data_only=True, read_only=True)
+            label_cols = openpyxl.utils.column_index_from_string(spec["item_col"])
+            grid.extend(_grid(wb[spec["sheet_name"]], label_cols)[:2])
+        labels, cols = grid
+        address = f"{openpyxl.utils.get_column_letter(cols[key] + 1)}{labels[label] + 1}"
+        return {"sheet": spec["sheet_name"], "cell": address, "label": label,
+                "period": key, "raw_value": raw}
+
+    found: dict[str, list[dict]] = {code: [] for code, on in enabled.items() if on}
+    for label, values in lines.items():
+        for i, key in enumerate(keys):
+            if key not in scope:
+                continue
+            v = values[i]
+            if "non_numeric_cell" in found and isinstance(v, str):
+                found["non_numeric_cell"].append(entry(label, key, v))
+            if ("blank_cell" in found and v is None and 0 < i < len(keys) - 1
+                    and values[i - 1] is not None and values[i + 1] is not None):
+                found["blank_cell"].append(entry(label, key, None))
+            if ("negative_line_item" in found and isinstance(v, (int, float)) and v < 0
+                    and label.casefold() not in expected_negative):
+                found["negative_line_item"].append(entry(label, key, v))
+    return {
+        "derivation": ("generator inputs (None / text / negative values), the client "
+                       "config's data_quality.cell_checks over the documented defaults, "
+                       "and cell addresses read from the workbook with openpyxl"),
+        "enabled": enabled,
+        "expected": found,
     }
 
 

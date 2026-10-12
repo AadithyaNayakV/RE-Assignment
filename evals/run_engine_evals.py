@@ -135,6 +135,25 @@ def evaluate(case: dict, out_dir: Path, root: Path | None) -> CaseResult:
                     re.search(want["message_excludes"], issue["message"], re.I) is None,
                     issue["message"][:200])
 
+    # Cell-level warnings, against cells derived independently by build_expected.py.
+    # Order-free: each enabled code must name exactly the expected cells; each disabled
+    # code must not appear at all.
+    cw = expected.get("cell_warnings")
+    if cw:
+        def key(c):
+            return (c.get("sheet"), c.get("cell"), c.get("label"), c.get("period"),
+                    c.get("raw_value"))
+        for code_, on in cw["enabled"].items():
+            issue = next((i for i in issues if i["code"] == code_), None)
+            got = sorted(map(key, (issue or {}).get("cells", [])), key=str)
+            if not on:
+                r.check(f"cell_warning_off:{code_}", issue is None, f"codes: {codes}")
+                continue
+            want = sorted(map(key, cw["expected"].get(code_, [])), key=str)
+            r.check(f"cell_warning:{code_}", got == want and (issue is None) == (not want)
+                    and (issue is None or issue["severity"] == "warning"),
+                    f"got {got}, expected {want}")
+
     mv = doc.get("movements") or {}
     sig = [x["label"] for x in mv.get("significant", [])]
     one = [x["label"] for x in mv.get("possible_one_offs", [])]

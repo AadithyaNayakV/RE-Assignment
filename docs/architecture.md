@@ -15,6 +15,7 @@ documented, not built. Nothing here is deployed anywhere; everything runs on one
 | `config/clients/<id>.yaml` | One company = one file: sheet layout, section anchors, categories, thresholds, expected-negative lines. | NOW |
 | `evals/` | 13 golden cases; Level 1 (engine) and Level 2 (report) runners; baselines; regression demo. | NOW |
 | `.mcp.json`, `.claude/settings.json` | The QuickBooks MCP connection and its read-only permission rules. | NOW |
+| Per-client reviewer notes (memory) | A file per client (for example `config/clients/<id>.notes.md`) where a reviewer records what they confirmed: known credits, expected one-offs, causes they supplied. The skill would read it so the next month's questions skip what is already answered. Not built: today no reviewer input is kept between runs. | PLANNED |
 
 ## 2. Data flow
 

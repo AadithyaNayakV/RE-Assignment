@@ -7,10 +7,10 @@ Put in the real counts and labels from the brief.
 ## Always
 
 - [ ] Source file and period are the ones intended (file name, sha256 prefix, month).
-- [ ] Reconciliation result read: N/N checks passed. If any failed, stop: figures that
+- [ ] Reconciliation result read: K of M checks failed. If any failed, stop: figures that
       depend on them must not be used.
 - [ ] Each significant movement checked against what you know about the month. Supply the
-      causes, because the engine and the skill cannot.
+      causes: the engine and the skill cannot.
 - [ ] Each question under "Questions for the reviewer" answered or removed.
 - [ ] Direction words checked against the signs. `check-commentary` checks a word that
       sits directly before a change figure; it cannot check one further away, or one

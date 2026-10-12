@@ -6,6 +6,9 @@
     python -m finance_engine brief            --client abc_inc --period 2026-06
     python -m finance_engine list-periods     --client abc_inc
 
+`--period latest` resolves to the newest month in the source (the top line of
+list-periods) and prints `period: latest -> YYYY-MM` to stderr.
+
 Exit codes are meaningful, so the CLI can gate a pipeline:
 
     0  success
@@ -31,6 +34,7 @@ from finance_engine.report import build_report
 from finance_engine.sources.excel import ExcelSource
 
 EXIT_OK, EXIT_USAGE, EXIT_DATA, EXIT_GUARD = 0, 1, 2, 3
+LATEST = "latest"
 
 
 class UsageError(Exception):
@@ -48,7 +52,8 @@ def main(argv: list[str] | None = None) -> int:
     def add_common(p, period_required=True):
         p.add_argument("--client", required=True, help="client_id, e.g. abc_inc")
         p.add_argument("--period", required=period_required,
-                       help="reporting month as YYYY-MM, e.g. 2026-06")
+                       help="reporting month as YYYY-MM, e.g. 2026-06, or 'latest' "
+                            "for the newest month in the source")
         p.add_argument("--root", default=None,
                        help="project root (defaults to the working directory)")
 
@@ -79,6 +84,8 @@ def main(argv: list[str] | None = None) -> int:
 
     args = parser.parse_args(argv)
     try:
+        if args.command != "list-periods" and args.period == LATEST:
+            args.period = _resolve_latest(args)
         if args.command == "analyze":
             return _analyze(args)
         if args.command == "report":
@@ -129,6 +136,21 @@ def _output_dir(settings: Settings, client_id: str, period: str) -> Path:
     out = settings.output_dir / client_id / period
     out.mkdir(parents=True, exist_ok=True)
     return out
+
+
+def _resolve_latest(args) -> str:
+    """`--period latest` -> the newest month in the source, the top row of list-periods.
+
+    Always read from the source, also for brief and check-commentary, so "latest" means
+    the same month for every command. The resolved period goes to stderr: stdout carries
+    the brief and the --json result.
+    """
+    config, _, source, _ = _load(args)
+    keys = source.load(config).period_keys()
+    if not keys:
+        raise UsageError(f"--period latest: no months found in {source.path}.")
+    print(f"period: {LATEST} -> {keys[-1]}", file=sys.stderr)
+    return keys[-1]
 
 
 def _validate_period(period: str) -> None:
