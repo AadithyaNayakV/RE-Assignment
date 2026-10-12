@@ -1,0 +1,67 @@
+{
+  "kind": "skill",
+  "date_utc": "2026-10-11T11:21:19+00:00",
+  "git_commit": "a18e32d",
+  "git_dirty": true,
+  "summary": {
+    "passed": 13,
+    "failed": 0,
+    "skipped": 0,
+    "total": 13
+  },
+  "cases": {
+    "01_abc_inc_2026_06": {
+      "status": "pass",
+      "checks": "43/43"
+    },
+    "02_normal_growth": {
+      "status": "pass",
+      "checks": "37/37"
+    },
+    "03_revenue_decline": {
+      "status": "pass",
+      "checks": "36/36"
+    },
+    "04_expense_spike": {
+      "status": "pass",
+      "checks": "38/38"
+    },
+    "05_margin_decline": {
+      "status": "pass",
+      "checks": "36/36"
+    },
+    "06_missing_months": {
+      "status": "pass",
+      "checks": "37/37"
+    },
+    "07_zero_negative_bases": {
+      "status": "pass",
+      "checks": "38/38"
+    },
+    "08_seasonal_business": {
+      "status": "pass",
+      "checks": "35/35"
+    },
+    "09_one_time_expense": {
+      "status": "pass",
+      "checks": "37/37"
+    },
+    "10_multiple_revenue_streams": {
+      "status": "pass",
+      "checks": "39/39"
+    },
+    "11_balance_sheet": {
+      "status": "pass",
+      "checks": "34/34"
+    },
+    "12_unknown_client_bad_period": {
+      "status": "pass",
+      "checks": "10/10"
+    },
+    "13_deterministic_fallback": {
+      "status": "pass",
+      "checks": "29/29"
+    }
+  },
+  "source_file": "evals/baseline/skill_2026-10-11_a18e32d-dirty.json"
+}

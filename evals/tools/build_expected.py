@@ -1,7 +1,7 @@
 """Writes evals/cases/<case>/expected.json from sources independent of finance_engine.
 
     python evals/tools/build_expected.py            # all cases
-    python evals/tools/build_expected.py 04_expense_spike
+    python evals/tools/build_expected.py 04      # id prefix, like the runners
 
 Where the expected numbers come from:
 
@@ -389,7 +389,7 @@ def build(case_dir: Path) -> dict | None:
 def main(argv: list[str]) -> int:
     dirs = sorted(p for p in CASES.iterdir() if (p / "case.yaml").exists())
     if argv:
-        dirs = [d for d in dirs if d.name in argv]
+        dirs = [d for d in dirs if any(d.name.startswith(a) for a in argv)]
     for d in dirs:
         build(d)
     if "finance_engine" in sys.modules:

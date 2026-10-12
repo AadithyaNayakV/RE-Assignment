@@ -1,0 +1,4 @@
+{
+  "abc_inc_workbook_sha256": "75da8d679a89551f9e46b3563b7cfc724d9aaeabe0444b0214d455a0b335a0ea",
+  "provenance": "SHA-256 of the original ABC Inc workbook as supplied, first recorded in metrics.json source.sha256 during Phase 1 and asserted in tests. Update only if RE supplies a new workbook."
+}

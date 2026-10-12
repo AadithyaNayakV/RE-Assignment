@@ -1,139 +1,74 @@
-# Requirements checklist
+# Requirements checklist (audit)
 
-Derived from `docs/Build Exercise - AI Solutions Builder.pdf` (RE Financial Services,
-"Build Exercise — AI Solutions Builder"). Status reflects **Phase 1 only**; the exercise
-has four parts and Phase 1 deliberately builds the engine that Parts 2–4 sit on.
+Source of truth: `docs/Build Exercise - AI Solutions Builder.pdf`. Audited 2026-10-11.
+Status: **PASS** (done, with evidence) · **PARTIAL** (done with a stated gap) ·
+**BLOCKED** (cannot be done from here) · **NOT STARTED**. Nothing is marked PASS without
+evidence in the right-hand column.
 
-Legend: **done** · **partial** · **not started** (planned for a later phase)
+## Part 1: Connect the QuickBooks sandbox to Claude
 
----
+| Requirement | Status | Where | Evidence |
+|---|---|---|---|
+| Connection works against the sandbox | PASS | `.mcp.json`, `quickbooks-online-mcp-server/` | `claude mcp list`: quickbooks Connected. Live `get_company_info` returned "Sandbox Company US 209f" in `scripts/preflight_check.py` and in `QBO_INTEGRATION=1 QBO_LIVE=1 pytest tests/integration` (6 passed). Local only. |
+| Choice documented: chosen, rejected, why | PASS | `docs/quickbooks_setup.md`, `docs/decisions.md` | Official Intuit server chosen; native connector, community servers and a custom server rejected with reasons. |
+| Where it would run for a whole team | PARTIAL | `docs/quickbooks_setup.md`, `docs/future_hosting.md` | The answer is written (hosted MCP over HTTPS behind SSO, per-client tokens in a secret manager). **Not built or deployed.** The brief says reasoning matters more than having deployed one. |
+| Credentials handled throughout | PARTIAL | `.gitignore`, `.env.example`, `docs/quickbooks_setup.md` | `.env` ignored in both repos; `.mcp.json` has an empty `env`; no secret in tracked files or in git history (scan below); the server rotates its own refresh token. **Gap:** the refresh token sits in plaintext in the server's git-ignored `.env`; a secret manager is planned, not built. |
+| Read-only access enforced | PASS | `.claude/settings.json` | All create/update/delete tools denied in both spellings; `tests/integration/test_quickbooks_mcp.py` checks it (3 config tests always run). 71 of 142 tools visible. |
 
-## Part 1 — Connect the QuickBooks sandbox to Claude
+## Part 2: A skill that produces the monthly trend analysis
 
-> "Connect your QuickBooks sandbox to Claude, securely and reliably. Your choice of method
-> — a native connector, an open-source MCP server you deploy, or a custom MCP built on the
-> QuickBooks API. Demonstrate the connection working against the sandbox. Document what you
-> chose, what you rejected, and why — including where this would run if a whole team (not
-> just your laptop) needed to use it, and how credentials are handled throughout."
+| Requirement | Status | Where | Evidence |
+|---|---|---|---|
+| A Claude skill, discovered by Claude Code | PASS | `.claude/skills/monthly-financial-analysis/` | Headless session init lists `monthly-financial-analysis` (preflight: 31 skills visible). Invoked by the `Skill` tool in every eval run. |
+| Revenue, margins, opex by category | PASS | `finance_engine/metrics.py`, `report_template.md` | ABC Jun 2026 report: 9 opex categories, 6 revenue streams, gross and operating margin. |
+| Month-over-month and trailing-twelve-month views | PASS | same | MoM/YoY/TTM metrics; TTM blocked rather than shortened when the window is incomplete (case 06: all TTM `n/a`). |
+| Short commentary flagging movements an owner should know | PASS | the report's Summary and Significant movements | ABC: 11 of 46 lines flagged; causes only as hedged questions. |
+| For a human reviewer to finish | PASS | `reference/review_checklist.md` | Every report is labelled a draft and ends with a checklist (eval check `reviewer_checklist`). |
+| A teammate could read, maintain and extend it | PASS | `SKILL.md` (short), `reference/`, `docs/metrics_schema.md`, `CLAUDE.md` | New-metric and new-company procedures are in `metric_definitions.md`. Both were done for real in the rehearsals (`docs/live_demo_runbook.md`). |
+| Portable to a different company without a rewrite | PASS | `config/clients/*.yaml` | 10 synthetic clients, 3 layouts, no code change; rehearsal C added an 11th with one YAML. |
+| **Stretch:** load the workbook into the sandbox and run end to end | NOT STARTED | n/a | Deliberately not attempted. |
 
-| Item | Status | Where |
+## Part 3: Eval suite
+
+| Requirement | Status | Where | Evidence |
+|---|---|---|---|
+| At least 5 golden cases (data state + expected output) | PASS (13) | `evals/cases/` | 13 cases, each with `case.yaml` (flags, forbidden claims, pass criteria) and `expected.json` (a derivation per value). |
+| Expected values independent of the engine | PASS | `evals/tools/build_expected.py` | Built from the generator's inputs and the workbook's own cached totals; refuses to finish if `finance_engine` is imported; a test enforces it. |
+| Concrete grading approach | PASS | `evals/grading.md` | Three levels, thresholds, rubric. |
+| Regression detection | PASS | `evals/baseline/`, `evals/regression_demo.py` | A wrong subtotal in a test copy was caught by reconciliation; a temporary TTM off-by-one made 12 of 13 cases newly fail; reverted byte-identical. |
+| Evals actually caught things | PASS | `evals/CHANGELOG.md` | 17 numbered items: 10 product defects or gaps (#1 to #6, #14 to #17) and 7 faults in the eval suite itself (#7 to #13). |
+| Results | PARTIAL | `evals/evaluation_report.md` | Level 1 13/13; Level 2 Claude run 12/13 as first graded, 13/13 after fixing a checker false positive. **Gaps:** one Claude run per case (variance unmeasured); Level 3 rubric not run; the full-run skill baseline predates the review fixes (re-saving needs about $5 of Pro usage). |
+
+## Part 4: One-page architecture note
+
+| Requirement | Status | Where | Evidence |
+|---|---|---|---|
+| Structure: files, skills, memory | PASS | `docs/architecture.md` §1 | `CLAUDE.md` is the project memory. |
+| Hosting choices | PASS | §4, `docs/future_hosting.md` | Local now; hosting plan marked PLANNED. |
+| What changes at ten clients; keeping data separate | PARTIAL | §5, §6 | Separation by `client_id` paths, per-client token store, an eval isolation check. **No access control, audit or tenant isolation exists**; the note says so. |
+| Implemented vs planned marked | PASS | `docs/architecture.md` | Every row tagged NOW or PLANNED. |
+
+## Ground rules and live readout
+
+| Requirement | Status | Evidence |
 |---|---|---|
-| Intuit developer account + sandbox company | not started | Phase 2 |
-| Working connection demonstrated against the sandbox | not started | Phase 2 |
-| Decision record: chosen vs rejected methods | not started | Phase 2 |
-| Team-hosting answer (not just a laptop) | not started | Phase 4 architecture note |
-| Credential handling documented end to end | partial | `.env.example` placeholders only, `.gitignore` covers `.env`/tokens/keys; `CredentialStore` named as an interface in `CLAUDE.md` but not yet implemented |
-| `quickbooks-online-mcp-server` clone left untouched | done | Present in the project root, unmodified; no engine code imports it |
+| Stay inside the sandbox and the supplied workbook | PASS | No live account connected; QuickBooks is an Intuit sandbox; every other client is labelled SYNTHETIC. |
+| Be ready to explain every choice | PASS | `docs/decisions.md`. |
+| Live demo of the real system | PASS | `docs/demo_checklist.md`, `docs/live_demo_runbook.md`, `scripts/preflight_check.py` (13/13 on 2026-10-11, 83 s). I did not open the interactive `/mcp` screen; rehearse it once. |
+| One modification on the spot | PASS | Three rehearsals done and reverted (threshold, new metric, new company). |
 
-**Phase 1 note.** `finance_engine` contains no QuickBooks code by design. The source
-boundary is `DataSource` (`finance_engine/sources/base.py`); a QuickBooks source
-implements that interface and needs no change to validation, metrics, reconciliation,
-commentary or reporting.
+## Audit checks run 2026-10-11
 
----
-
-## Part 2 — A Claude skill producing a monthly trend analysis
-
-> "Build a Claude skill that produces a monthly trend analysis from the provided Excel
-> workbook, for a human reviewer to finish: revenue, margins, and operating expenses by
-> category, with month-over-month and trailing-twelve-month views, and short written
-> commentary flagging the movements a business owner should know about. Structure it so a
-> teammate could read, maintain, and extend it — and point it at a different company's data
-> without a rewrite."
-
-| Item | Status | Where |
-|---|---|---|
-| Reads the provided Excel workbook | done | `finance_engine/sources/excel.py`; formulas + cached values, read-only |
-| Revenue | done | `revenue.total`, `revenue.stream.*`, shares, MoM, YoY, TTM |
-| Margins | done | `gross_margin_pct`, `operating_margin_pct`, point changes, TTM margin |
-| Operating expenses **by category** | done | `opex.category.*`, config-assigned, partitioning every line once |
-| Operating expenses by subtotal group | done | `opex.group.*`, mirroring the workbook's own presentation |
-| Month-over-month view | done | `*.mom_abs`, `*.mom_pct`, `## Month over month` in the report |
-| Trailing-twelve-month view | done | `*.ttm`; blocked, never shortened, when the window is incomplete |
-| Short written commentary flagging movements | done | `commentary/deterministic.py` + `## Significant movements` |
-| Output is **for a human reviewer to finish** | done | Report states it is a draft; `## Reviewer checklist` |
-| A teammate could read and maintain it | done | `CLAUDE.md`, `docs/metrics_schema.md`, interfaces at every boundary, 431 tests |
-| **Point it at a different company without a rewrite** | done | A new company is one YAML file. Demonstrated by 10 synthetic companies across 3 sheet layouts, zero code changes |
-| Packaged as a Claude skill (`SKILL.md`) | not started | Phase 3 |
-| Stretch: load the workbook into the sandbox and run end to end | not started | Phase 2/3 |
-
----
-
-## Part 3 — Eval suite
-
-> "At least five golden cases — a data state paired with the expected analysis output — and
-> a concrete description of how you'd grade the system against them and how you'd detect a
-> regression after a future change."
-
-| Item | Status | Where |
-|---|---|---|
-| At least five golden cases | done (10) | `data/synthetic/*.xlsx` + `data/synthetic/expected/*.json` |
-| Each case pairs a data state with expected output | done | Expected values computed by `scripts/generate_synthetic.py` **without importing the engine**, so agreement means two implementations concur |
-| Grading approach described concretely | partial | Pass/fail assertions in `tests/test_synthetic.py` and reconciliation across every period; a written grading rubric is Phase 3 |
-| Regression detection after a future change | done | 431 tests, plus a mutation suite (`pytest -m mutation`) that injects deliberate faults and asserts they are caught |
-| Formal eval runner and report | not started | Phase 3 |
-
-The ten cases, each exercising one behaviour:
-
-| Case | Behaviour under test |
+| Check | Result |
 |---|---|
-| `company_a_normal_growth` | steady growth, stable costs |
-| `company_b_revenue_decline` | sustained revenue decline |
-| `company_c_expense_spike` | one category jumps and persists |
-| `company_d_margin_decline` | COGS outgrowing revenue |
-| `company_e_seasonal_business` | seasonal pattern — and that seasonality is still *not asserted* on 18 months |
-| `company_f_one_time_expense` | a one-off on a normally zero line (no meaningful multiple) |
-| `company_g_missing_data` | two absent months, one blank cell, blocked TTM |
-| `company_h_zero_negative_values` | zero and negative bases, negative lines, shifted layout |
-| `company_i_multiple_revenue_streams` | six streams, two subtotal groups |
-| `company_j_balance_sheet` | income statement plus a balancing balance sheet |
-
----
-
-## Part 4 — One-page architecture note
-
-> "How you structured the project (files, skills, memory), your hosting choices, and what
-> changes when this runs for ten different clients — including how you'd keep each client's
-> data separate."
-
-| Item | Status | Where |
-|---|---|---|
-| Project structure | partial | `CLAUDE.md` has the folder map and boundaries; the one-page note is Phase 4 |
-| Skills and memory | not started | Phase 3/4 |
-| Hosting choices | not started | Phase 4 |
-| What changes at ten clients | partial | Demonstrated in practice (10 synthetic clients already run through one engine); the written analysis is Phase 4 |
-| Keeping each client's data separate | done | Everything is keyed by `client_id`: `config/clients/<id>.yaml`, `data/clients/<id>/source/`, `output/clients/<id>/<period>/`. No shared mutable state between clients |
-
----
-
-## Ground rules
-
-| Rule | Status | Note |
-|---|---|---|
-| Use any tools, models, documentation, open-source components | done | Built with Claude Code; openpyxl + PyYAML + pytest only |
-| Keep everything within the sandbox and the provided workbook | done | No live accounts, no network calls anywhere in `finance_engine` |
-| Don't connect live accounts or real data | done | The only real data is the supplied ABC workbook; everything else is clearly labelled SYNTHETIC |
-| Be ready to explain every choice | done | Rationale is documented inline where the decision lives, not in a separate essay |
-
-## What "we're looking for" maps to
-
-> "Five things, weighted equally: a connection choice you can defend; careful credential and
-> data handling throughout; a skill a teammate could maintain and extend; evals that can
-> tell better from worse; and clear, honest communication about what works and what
-> doesn't."
-
-| Criterion | Phase 1 position |
-|---|---|
-| A connection choice you can defend | Not addressed yet (Phase 2). The `DataSource` boundary is in place so the choice is additive, not a rewrite |
-| Careful credential and data handling | `.env` git-ignored and never read by the engine; `.env.example` holds placeholders; client data git-ignored; no secret is ever printed; source workbooks opened read-only and verified by SHA-256 |
-| A skill a teammate could maintain and extend | One documented contract (`metrics.json`), interfaces at every boundary, a new client is a YAML file, 431 tests including a mutation suite |
-| Evals that can tell better from worse | 10 golden cases with independently computed expectations; reconciliation on every period; mutation tests proving the suite fails when the code is wrong |
-| Clear, honest communication | Blocked metrics shown as `n/a` with a reason rather than estimated; the guard's false-pass rates measured and published in `docs/metrics_schema.md` rather than claimed to be zero; every report carries its limitations and a reviewer checklist |
-
----
-
-## Explicitly out of scope in Phase 1
-
-Per the Phase 1 brief: the QuickBooks connection, the Claude skill, the architecture note,
-and any deployment. No paid cloud resources were created. No AI provider is configured —
-`LLM_PROVIDER=deterministic`, and no API key is assumed to exist.
+| Tests | `python -m pytest -q`: **650 passed, 3 skipped** (the skips are opt-in QuickBooks tiers). Mutation subset: 18 passed. |
+| Engine evals | 13/13; compare with baseline: no change. |
+| Skill eval, ABC | 46/46 after the review fixes (13 turns, 92 s). |
+| Preflight | 13 passed, 0 failed, 0 skipped. |
+| Original ABC workbook | SHA-256 `75da8d679a89551f…` equals the reference in `scripts/reference_hashes.json` and the `source.sha256` in `metrics.json`; unchanged after the engine ran. |
+| `.env` and tokens in git | None tracked: `git ls-files` shows only `.env.example`. The root `.env` is ignored (`.gitignore:2`); the server's `.env` is ignored inside its own repo. |
+| Git history, all commits | No `.env`, token, key or credential file was ever added. Searching for assignments such as `refresh_token=<16+ characters>` finds one hit: a fake placeholder in `tests/test_eval_checks.py` that exists to prove the credential check fires. No real value. |
+| Keys in tracked files | None. `ANTHROPIC_API_KEY` and `OLLAMA_BASE_URL` are blank placeholders. |
+| `.gitignore` | Covers `.env*` (except the example), `*.pem`, `*.key`, token and credential JSON, `data/clients/`, `*.xlsx` (except synthetic), `output/`, `evals/runs/`, `demo_backup/abc_*`. |
+| `node_modules` | Not tracked. |
+| **Repo issue found** | `quickbooks-online-mcp-server` is recorded as a gitlink (commit `31a1dd5`) with no `.gitmodules`, so a fresh clone gets an empty folder. Fixed by adding `.gitmodules` (Intuit's URL, same commit, which equals upstream `HEAD` today); the README documents clone and build. Uncommitted until you commit it. |

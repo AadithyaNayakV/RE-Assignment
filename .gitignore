@@ -36,3 +36,6 @@ Thumbs.db
 .claude/settings.local.json
 # Eval run artefacts (baselines in evals/baseline/ ARE committed)
 evals/runs/
+
+# Demo backups: ABC figures come from the supplied workbook
+demo_backup/abc_*

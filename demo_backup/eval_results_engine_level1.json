@@ -1,0 +1,67 @@
+{
+  "kind": "engine",
+  "date_utc": "2026-10-11T14:52:30+00:00",
+  "git_commit": "fd60402",
+  "git_dirty": true,
+  "summary": {
+    "passed": 13,
+    "failed": 0,
+    "skipped": 0,
+    "total": 13
+  },
+  "cases": {
+    "01_abc_inc_2026_06": {
+      "status": "pass",
+      "checks": "61/61"
+    },
+    "02_normal_growth": {
+      "status": "pass",
+      "checks": "64/64"
+    },
+    "03_revenue_decline": {
+      "status": "pass",
+      "checks": "59/59"
+    },
+    "04_expense_spike": {
+      "status": "pass",
+      "checks": "64/64"
+    },
+    "05_margin_decline": {
+      "status": "pass",
+      "checks": "54/54"
+    },
+    "06_missing_months": {
+      "status": "pass",
+      "checks": "56/56"
+    },
+    "07_zero_negative_bases": {
+      "status": "pass",
+      "checks": "71/71"
+    },
+    "08_seasonal_business": {
+      "status": "pass",
+      "checks": "59/59"
+    },
+    "09_one_time_expense": {
+      "status": "pass",
+      "checks": "61/61"
+    },
+    "10_multiple_revenue_streams": {
+      "status": "pass",
+      "checks": "106/106"
+    },
+    "11_balance_sheet": {
+      "status": "pass",
+      "checks": "68/68"
+    },
+    "12_unknown_client_bad_period": {
+      "status": "pass",
+      "checks": "18/18"
+    },
+    "13_deterministic_fallback": {
+      "status": "pass",
+      "checks": "17/17"
+    }
+  },
+  "source_file": "evals/baseline/engine_2026-10-11_fd60402-dirty.json"
+}

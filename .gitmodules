@@ -1,0 +1,3 @@
+[submodule "quickbooks-online-mcp-server"]
+	path = quickbooks-online-mcp-server
+	url = https://github.com/intuit/quickbooks-online-mcp-server.git
