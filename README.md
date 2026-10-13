@@ -13,7 +13,7 @@ The brief (`docs/Build Exercise - AI Solutions Builder.pdf`) asks for four thing
 |---|---|---|---|
 | 1 | **The working connection**: QuickBooks sandbox to Claude | `.mcp.json` (config), `.claude/settings.json` (read-only permission rules), `quickbooks-online-mcp-server/` (Intuit's official server), `docs/quickbooks_setup.md` (choice, rejected options, credentials, team hosting), `tests/integration/test_quickbooks_mcp.py`, `scripts/preflight_check.py` | Working against the sandbox, local only |
 | 2 | **The skill file(s)** | `.claude/skills/monthly-financial-analysis/` (`SKILL.md` and `reference/`), backed by `finance_engine/` and `config/clients/*.yaml` | Working |
-| 3 | **The eval cases and grading approach** | `evals/cases/` (13 cases), `evals/grading.md`, `evals/run_engine_evals.py`, `evals/run_skill_evals.py`, `evals/baseline/`, `evals/CHANGELOG.md`, `evals/evaluation_report.md` | Working |
+| 3 | **The eval cases and grading approach** | `evals/cases/` (18 cases), `evals/grading.md`, `evals/run_engine_evals.py`, `evals/run_skill_evals.py`, `evals/baseline/`, `evals/CHANGELOG.md`, `evals/evaluation_report.md` | Working |
 | 4 | **The one-page architecture note** | `docs/architecture.md` (hosting plan: `docs/future_hosting.md`) | Written |
 
 Also: `docs/requirements_checklist.md` (every requirement with evidence and status),
@@ -76,6 +76,57 @@ picks the newest month in the source and prints `period: latest -> YYYY-MM`. Out
 or reconciliation failure, 3 the guard rejected the text.
 
 Adding a company is adding `config/clients/<id>.yaml` and its workbook. No code changes.
+`init-client` drafts that YAML from the workbook (below).
+
+### Years, the whole file, several workbooks
+
+```bash
+python -m finance_engine report --client test_clean --scope year --year 2025   # year-2025/
+python -m finance_engine report --client test_clean --scope all                # all/
+python -m finance_engine list-periods --client test_multi                      # each workbook
+python -m finance_engine analyze --client test_multi --period 2025-06 --file test_multi_second_half.xlsx
+```
+
+`--scope year --year YYYY` totals a calendar year from its monthly figures, with quarters,
+same-months year on year, a monthly table and the highest and lowest months. A partial
+year is labelled ("year to date, 1 of 12 months") and never annualised; a month missing
+inside the year makes the totals n/a. `--scope all` adds a monthly series for charts, a
+total per calendar year and the first-to-last-month change. When a client's folder holds
+several workbooks, `--file NAME` picks one (outputs go to
+`output/clients/<client>/<file-stem>/...`); without it the engine uses the config's
+`source.filename`, or, if the config names none, the one workbook holding the requested
+period, and stops if more than one does. Files are never combined. Every command takes
+`--json` for one machine-readable result on stdout.
+
+**`--file` or `--workbook`?** Both name the workbook to read. `analyze`, `report`,
+`brief` and `list-periods` accept either. `check-commentary` accepts only `--workbook`,
+because its `--file` was already the commentary being checked, and that meaning is kept:
+
+```bash
+python -m finance_engine analyze --client test_multi --period 2025-06 --file test_multi_second_half.xlsx
+python -m finance_engine check-commentary --client test_multi --period 2025-06 \
+    --workbook test_multi_second_half.xlsx --file report.md
+```
+
+### A new client from a workbook
+
+```bash
+python -m finance_engine init-client --file path/to/book.xlsx --client-id acme_ltd --name "Acme Ltd"
+```
+
+It finds the income-statement sheet, the header row, label and data columns, date order
+and format, the revenue / COGS / operating-expense sections with their subtotal groups,
+and the Gross Profit, Operating Income and Net Income rows; proposes operating-expense
+categories from common words (each marked a guess); copies the workbook to
+`data/clients/acme_ltd/source/` (the original is untouched); then validates the draft
+with the real engine. It writes `config/clients/acme_ltd.yaml` only if the config loads,
+the periods read, the latest month analyses and every reconciliation check passes;
+otherwise `acme_ltd.draft.yaml` with each problem listed. The file starts with what was
+detected, how confident each value is, and what needs your decision. It never overwrites
+a config without `--force`. Automated tests cover test_clean and Companies A and B (the
+generated config gives the same figures as the hand-written one); Company J and ABC were
+also run by hand and validated. It does not configure balance sheets, and it refuses a
+workbook with no row of month headers.
 
 ## The skill
 
@@ -132,6 +183,8 @@ Claude can only call read tools; every create/update/delete tool is denied.
 |---|---|
 | `No config for client 'x'` | The client has no YAML. The error lists the clients that do. |
 | `Period must look like YYYY-MM` / `period_not_in_source` | Use `list-periods` to see the available months. |
+| `... is in 2 workbooks ... choose one with --file NAME` | The client's folder holds several workbooks with that month; pass `--file`. |
+| `init-client` wrote a `.draft.yaml` | Validation failed; the problems are listed at the top of the draft. |
 | ABC cases say SKIP | The workbook is not at `data/clients/abc_inc/source/`. |
 | `check-commentary` says REJECTED | A figure is not in `metrics.json`, or a direction word contradicts its change. The output names the line. |
 | QuickBooks `401` / `invalid_grant` | Token lapsed: `cd quickbooks-online-mcp-server && npm run auth`. |
@@ -147,7 +200,8 @@ Claude can only call read tools; every create/update/delete tool is denied.
 - **One Claude run per eval case.** Output varies between runs; variance is not measured.
 - **Local only.** No authentication, authorization, TLS or tenant isolation. Clients are
   separated by path and convention. Not production-ready (`docs/future_hosting.md`).
-- **The skill needs a Pro session.** A full 13-case run costs about $4 to $5 API-equivalent.
+- **The skill needs a Pro session.** A full 13-case run cost about $4 to $5 API-equivalent;
+  the five Phase 5B cases (14 to 18) have not been run through Claude.
 - **Sandbox only.** The QuickBooks data is Intuit's sample data, not evidence about a client.
 - **Excel only.** `finance_engine` has no QuickBooks reader yet; the `DataSource` interface
   is where it would go.

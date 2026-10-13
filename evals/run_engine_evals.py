@@ -24,8 +24,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from evals.common import (ROOT, CaseResult, compare_results, latest_baseline,  # noqa: E402
-                          load_cases, new_run_dir, print_comparison, print_results,
-                          results_doc, run_engine, save_baseline, save_results, sha256)
+                          load_cases, new_run_dir, output_rel, print_comparison,
+                          print_results, results_doc, run_engine, save_baseline,
+                          save_results, scope_args, sha256, workbook_fingerprint,
+                          ensure_generated_workbooks)
 
 
 def evaluate(case: dict, out_dir: Path, root: Path | None) -> CaseResult:
@@ -43,14 +45,27 @@ def evaluate(case: dict, out_dir: Path, root: Path | None) -> CaseResult:
         r.check("expected_json_present", False, "run evals/tools/build_expected.py")
         return r
 
-    actual_sha = sha256(workbook)
-    r.check("input_unchanged", actual_sha == expected["input_sha256"],
-            f"workbook sha256 {actual_sha[:16]}... vs expected "
-            f"{expected['input_sha256'][:16]}...")
+    # A generated workbook is compared by its cells (its bytes carry a creation time);
+    # a supplied or committed one by its bytes.
+    if "input_content_sha256" in expected:
+        actual = workbook_fingerprint(workbook)
+        r.check("input_unchanged", actual == expected["input_content_sha256"],
+                f"cell fingerprint {actual[:16]}... vs expected "
+                f"{expected['input_content_sha256'][:16]}...")
+    else:
+        actual_sha = sha256(workbook)
+        r.check("input_unchanged", actual_sha == expected["input_sha256"],
+                f"workbook sha256 {actual_sha[:16]}... vs expected "
+                f"{expected['input_sha256'][:16]}...")
+    for rel, want in (expected.get("other_inputs_content_sha256") or {}).items():
+        other = base / rel
+        got = workbook_fingerprint(other) if other.exists() else "<missing>"
+        r.check(f"input_unchanged:{Path(rel).name}", got == want,
+                f"cell fingerprint {got[:16]}... vs expected {want[:16]}...")
 
     command = eng.get("command", "analyze")
     code, stdout, stderr = run_engine(
-        [command, "--client", inp["client_id"], "--period", inp["period"]],
+        [command, "--client", inp["client_id"], *scope_args(inp)],
         out_dir, root, eng.get("env"))
     r.check("exit_code", code == eng.get("exit_code", 0),
             f"exit {code}, expected {eng.get('exit_code', 0)}"
@@ -60,38 +75,17 @@ def evaluate(case: dict, out_dir: Path, root: Path | None) -> CaseResult:
         r.check("stderr_message", re.search(eng["stderr"], stderr) is not None,
                 f"stderr should match {eng['stderr']!r}")
 
-    metrics_path = out_dir / inp["client_id"] / inp["period"] / "metrics.json"
+    metrics_path = out_dir / output_rel(inp) / "metrics.json"
     if not r.check("metrics_written", metrics_path.exists(), str(metrics_path)):
         return r
     doc = json.loads(metrics_path.read_text(encoding="utf-8"))
-    m = {x["name"]: x for x in doc["metrics"]}
-
-    for e in expected["values"]:
-        metric = m.get(e["metric"])
-        value = None if metric is None else metric.get("value")
-        r.values[e["metric"]] = value
-        if metric is None:
-            r.check(f"value:{e['metric']}", False, "metric missing from metrics.json")
-        elif value is None:
-            r.check(f"value:{e['metric']}", False,
-                    f"n/a ({metric.get('unavailable_reason')}), expected {e['expected']}")
-        else:
-            diff = abs(value - e["expected"])
-            r.check(f"value:{e['metric']}", diff <= e["tolerance"],
-                    f"got {value}, expected {e['expected']} (diff {diff:.6g}, "
-                    f"tol {e['tolerance']})")
-    for e in expected.get("unavailable", []):
-        metric = m.get(e["metric"])
-        got = (None if metric is None
-               else (metric.get("value"), metric.get("unavailable_reason")))
-        r.values[e["metric"]] = None if got is None else got[0]
-        r.check(f"n/a:{e['metric']}",
-                got is not None and got[0] is None and got[1] == e["reason"],
-                f"got {got}, expected n/a ({e['reason']})")
+    _check_values(r, doc, expected)
+    _check_span(r, doc, eng, expected)
 
     ttm = doc.get("ttm") or {}
-    r.check("ttm_window", ttm.get("window") == expected["ttm"]["window"],
-            f"{ttm.get('window', ['?'])[0]}..{ttm.get('window', ['?'])[-1]}")
+    if "ttm" in expected:                       # month cases; a year or file has no TTM
+        r.check("ttm_window", ttm.get("window") == expected["ttm"]["window"],
+                f"{ttm.get('window', ['?'])[0]}..{ttm.get('window', ['?'])[-1]}")
     if "ttm_complete" in eng:
         r.check("ttm_complete", ttm.get("complete") is eng["ttm_complete"],
                 f"complete={ttm.get('complete')}, expected {eng['ttm_complete']}")
@@ -177,6 +171,9 @@ def evaluate(case: dict, out_dir: Path, root: Path | None) -> CaseResult:
         r.check("seasonality_assessed", got is eng["seasonality_assessed"],
                 f"assessed={got}")
 
+    for run in eng.get("extra_runs", []):
+        _extra_run(r, run, expected, out_dir, root)
+
     if command == "report":
         report_path = metrics_path.parent / "report.md"
         if r.check("report_written", report_path.exists(), str(report_path)):
@@ -191,6 +188,102 @@ def evaluate(case: dict, out_dir: Path, root: Path | None) -> CaseResult:
                         f"{len(g.supported)}/{g.checked} numbers traced"
                         + ("" if g.passed else f"; {g.summary()[:400]}"))
     return r
+
+
+def _check_values(r: CaseResult, doc: dict, expected: dict, prefix: str = "") -> None:
+    """Expected values and expected n/a results, against one metrics.json."""
+    m = {x["name"]: x for x in doc["metrics"]}
+    for e in expected.get("values", []):
+        metric = m.get(e["metric"])
+        value = None if metric is None else metric.get("value")
+        r.values[prefix + e["metric"]] = value
+        cid = f"{prefix}value:{e['metric']}"
+        if metric is None:
+            r.check(cid, False, "metric missing from metrics.json")
+        elif value is None:
+            r.check(cid, False,
+                    f"n/a ({metric.get('unavailable_reason')}), expected {e['expected']}")
+        else:
+            diff = abs(value - e["expected"])
+            r.check(cid, diff <= e["tolerance"],
+                    f"got {value}, expected {e['expected']} (diff {diff:.6g}, "
+                    f"tol {e['tolerance']})")
+    for e in expected.get("unavailable", []):
+        metric = m.get(e["metric"])
+        got = (None if metric is None
+               else (metric.get("value"), metric.get("unavailable_reason")))
+        r.values[prefix + e["metric"]] = None if got is None else got[0]
+        r.check(f"{prefix}n/a:{e['metric']}",
+                got is not None and got[0] is None and got[1] == e["reason"],
+                f"got {got}, expected n/a ({e['reason']})")
+
+
+def _check_span(r: CaseResult, doc: dict, eng: dict, expected: dict) -> None:
+    """Year and whole-file checks: coverage, blocked totals, series, provenance."""
+    for key, want in (expected.get("coverage") or {}).items():
+        got = (doc.get("coverage") or {}).get(key)
+        r.check(f"coverage:{key}", got == want, f"got {got!r}, expected {want!r}")
+    for field in expected.get("doc_fields", []):
+        got = doc
+        for key in field["path"]:
+            got = got.get(key) if isinstance(got, dict) else None
+        want = field["expected"]
+        same = (abs(got - want) <= 0.01 if isinstance(got, (int, float))
+                and isinstance(want, (int, float)) else got == want)
+        r.check(f"field:{'.'.join(field['path'])}", same, f"got {got!r}, expected {want!r}")
+    if "scope" in eng:
+        r.check("scope", doc.get("scope", "month") == eng["scope"], str(doc.get("scope")))
+    if "source_filename" in eng:
+        got = (doc.get("source") or {}).get("filename")
+        r.check("source_filename", got == eng["source_filename"], str(got))
+    for pattern in eng.get("forbidden_metric_patterns", []):
+        hits = [x["name"] for x in doc["metrics"] if re.search(pattern, x["name"], re.I)]
+        r.check(f"no_metric_matching:{pattern}", not hits, f"found {hits[:5]}")
+    for code_, details in (eng.get("issue_details") or {}).items():
+        issue = next((i for i in doc.get("data_quality_issues", [])
+                      if i["code"] == code_), None)
+        for key, want in details.items():
+            got = ((issue or {}).get("details") or {}).get(key)
+            r.check(f"issue_detail:{code_}:{key}", got == want,
+                    f"got {got!r}, expected {want!r}")
+    m = {x["name"]: x for x in doc["metrics"]}
+    for status, names in (eng.get("validation_status") or {}).items():
+        for name in names:
+            got = (m.get(name) or {}).get("validation_status")
+            r.check(f"status:{name}", got == status, f"got {got}, expected {status}")
+    if "series_points" in eng:
+        measures = (doc.get("series") or {}).get("measures") or []
+        counts = {s["measure"]: len(s["points"]) for s in measures}
+        r.check("series_points",
+                bool(counts) and set(counts.values()) == {eng["series_points"]}
+                and len(counts) == eng.get("series_measures", len(counts)),
+                f"points per measure: {counts}")
+
+
+def _extra_run(r: CaseResult, run: dict, expected: dict, out_dir: Path,
+               root: Path | None) -> None:
+    """A further CLI call for the same case: its exit, message and, if any, its values."""
+    rid = run["id"]
+    code, stdout, stderr = run_engine([str(a) for a in run["args"]], out_dir, root)
+    r.values[f"{rid}.exit_code"] = code
+    r.check(f"{rid}:exit_code", code == run["exit_code"],
+            f"exit {code}, expected {run['exit_code']}; stderr: {stderr.strip()[:200]}")
+    r.check(f"{rid}:no_traceback", "Traceback" not in stderr, stderr.strip()[-200:])
+    if run.get("stderr"):
+        r.check(f"{rid}:message", re.search(run["stderr"], stderr) is not None,
+                f"stderr should match {run['stderr']!r}; got {stderr.strip()[:300]!r}")
+    if run.get("must_not_exist"):
+        path = out_dir / run["must_not_exist"]
+        r.check(f"{rid}:nothing_written", not path.exists(), str(path))
+    if run.get("metrics"):
+        path = out_dir / run["metrics"] / "metrics.json"
+        if r.check(f"{rid}:metrics_written", path.exists(), str(path)):
+            doc = json.loads(path.read_text(encoding="utf-8"))
+            if "source_filename" in run:
+                got = (doc.get("source") or {}).get("filename")
+                r.check(f"{rid}:source_filename", got == run["source_filename"], str(got))
+            _check_values(r, doc, (expected.get("extra_runs") or {}).get(rid, {}),
+                          prefix=f"{rid}:")
 
 
 def _cli_checks(case: dict, r: CaseResult, out_dir: Path, root: Path | None) -> CaseResult:
@@ -236,6 +329,7 @@ def main(argv: list[str] | None = None) -> int:
     run_id, run_dir = new_run_dir("engine")
     out_dir = run_dir / "out"
     print(f"Level 1 engine evals -> {run_dir}")
+    ensure_generated_workbooks(args.root.resolve() if args.root else None)
     results = [evaluate(c, out_dir, args.root.resolve() if args.root else None)
                for c in load_cases(args.cases)]
     doc = results_doc("engine", run_id, results, baseline_label=args.label,

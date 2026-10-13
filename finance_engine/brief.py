@@ -48,6 +48,10 @@ def build_brief(doc: dict, metric_filter: str | None = None) -> str:
     m = {x["name"]: x for x in doc.get("metrics", [])}
     if metric_filter:
         return _filtered(doc, m, fmt, metric_filter)
+    if doc.get("scope") in ("year", "all"):
+        # Month documents have no `scope` key, so the month brief below is unchanged.
+        from finance_engine.span_brief import build_span_brief
+        return build_span_brief(doc)
     parts = [
         _header(doc),
         _status(doc),

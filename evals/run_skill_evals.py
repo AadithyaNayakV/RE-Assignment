@@ -37,8 +37,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from evals.common import (ROOT, CaseResult, compare_results, latest_baseline,  # noqa: E402
-                          load_cases, new_run_dir, print_comparison, print_results,
-                          results_doc, run_engine, save_baseline, save_results)
+                          load_cases, new_run_dir, output_rel, print_comparison,
+                          print_results, results_doc, run_engine, save_baseline,
+                          save_results, scope_args, ensure_generated_workbooks)
 from evals.report_checks import check_report, other_clients  # noqa: E402
 
 SKILL = "monthly-financial-analysis"
@@ -170,15 +171,15 @@ def evaluate(case: dict, provider: str, run_dir: Path, args) -> CaseResult:
     if mode == "deterministic":
         out = run_dir / "out"
         env = (case.get("engine") or {}).get("env") or {}
-        args_ = ["report", "--client", inp["client_id"], "--period", inp["period"]]
+        args_ = ["report", "--client", inp["client_id"], *scope_args(inp)]
         if not env:
             args_ += ["--provider", "deterministic"]
         code, _, stderr = run_engine(args_, out, env_extra=env)
         r.check("report_command", code in (0, 2), f"exit {code}: {stderr.strip()[:200]}")
-        report = out / inp["client_id"] / inp["period"] / "report.md"
+        report = out / output_rel(inp) / "report.md"
         metrics = report.with_name("metrics.json")
     else:
-        report = OUTPUT / inp["client_id"] / inp["period"] / "report.md"
+        report = OUTPUT / output_rel(inp) / "report.md"
         metrics = report.with_name("metrics.json")
         prompt = spec.get("prompt") or (f"Use the {SKILL} skill for client "
                                         f"{inp['client_id']}, period {inp['period']}.")
@@ -325,6 +326,8 @@ def main(argv: list[str] | None = None) -> int:
     label = "skill" if args.provider == "claude" else "skill_deterministic"
     run_id, run_dir = new_run_dir(label)
     print(f"Level 2 report evals ({args.provider}) -> {run_dir}")
+    if not args.recheck:
+        ensure_generated_workbooks()
     results = []
     old_results = {}
     if args.recheck:

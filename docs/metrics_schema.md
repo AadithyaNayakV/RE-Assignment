@@ -57,6 +57,26 @@ The `sha256` is what makes a report auditable: it identifies exactly which file 
 these numbers. `periods_available` is always oldest-first, whatever order the workbook
 stored its columns in.
 
+**`source.selection`** appears only when the run chose between several workbooks in the
+client's own folder (`--file NAME`, or a config without `source.filename` whose folder
+holds several workbooks). A run that never asked about files has no such key, so its
+document is unchanged.
+
+```json
+"selection": {
+  "mode": "explicit",                       // explicit (--file) | auto (chosen by period)
+  "chosen_by": "--file",
+  "output_key": "test_multi_second_half",   // the file stem in the output path
+  "other_workbooks": [{"filename": "test_multi_first_half.xlsx", "first_period": "2025-01",
+                       "last_period": "2025-06", "period_count": 6, "periods": ["..."]}],
+  "rule": "Only the chosen workbook is read. ..."
+}
+```
+
+Only the chosen workbook is read. A comparison month (prior month, year-ago month, a TTM
+month, a prior-year month) that exists only in another workbook is n/a with
+`unavailable_reason: "in_other_file"` and a note naming the file. Files are never merged.
+
 ### `ttm`
 
 ```json
@@ -116,6 +136,10 @@ stored its columns in.
 | `incomplete_window` | A TTM window the source does not fully cover. |
 | `blocked_by_validation` | A validation **error** applies to this metric. |
 | `not_available` | The concept does not exist in this source, e.g. a balance-sheet line in a workbook with no balance sheet. |
+| `in_other_file` | The comparison month exists, but only in another workbook of the same client. Displays as `n/a (prior period is in a different file)`. Never read across files. |
+| `missing_month_in_span` | Year and whole-file scopes: a month is missing *inside* the year's span, so its totals are blocked (error `year_months_missing`). |
+| `incomplete_quarter` | A quarter without all three of its months. |
+| `not_comparable` | Year on year without the same months in both years. |
 
 ### `validation_status`
 
@@ -390,11 +414,102 @@ importing the engine, into `expected.json` → `cell_warnings`, and the Level 1 
 that each enabled code names exactly those cells and each disabled code is absent.
 
 Codes: `period_not_in_source`, `missing_months`, `ttm_window_incomplete`,
+`year_months_missing` (year and whole-file scopes),
 `ttm_includes_possible_one_offs`, `formula_value_unreadable`, `blank_not_zero`,
 `duplicate_line_labels`, `negative_revenue_line`, `negative_opex_line`,
 `negative_cogs_line`, `opex_category_unmatched`,
 `possible_unit_scaling`, `no_balance_sheet`, `statement_period_mismatch`,
 `balance_sheet_period_missing`, `non_numeric_cell`, `blank_cell`, `negative_line_item`.
+
+---
+
+## Year and whole-file documents (`--scope year`, `--scope all`)
+
+Written to `output/clients/<client>/year-YYYY/metrics.json` and `.../all/metrics.json`
+(with `<file-stem>/` after the client when `--file` is used), by
+`finance_engine/spans.py`. The same conventions as a month document: every figure is a
+metric with `name`, `value`, `unit`, `method_id`, `validation_status`, `source_rows`,
+`warnings` and `notes`; full precision; `null` with a reason, never 0. They differ from a
+month document in these top-level fields:
+
+| Field | Year | Whole file |
+|---|---|---|
+| `scope` | `"year"` | `"all"` |
+| `period` / `period_label` | `"2025"` / `"2025 (full year, 12 of 12 months)"` | `"all"` / `"Jan 2025 to Jan 2026, 13 months"` |
+| `year` | `2025` | — |
+| `coverage` | see below | see below |
+| `quarters`, `yoy`, `extremes` | yes | `extremes` only |
+| `years`, `start_to_end`, `series` | — | yes |
+| `ttm`, `prior_period`, `movements` | absent | absent |
+
+`reconciliation` and `data_quality_issues` cover only the months in scope; the cell-level
+checks run over every one of those months.
+
+Every figure is built from **one month's figures at a time** (`finance_engine/monthly.py`),
+computed the way the month report computes them, then summed. A test checks that each
+month's figures equal the month document's for every month of five workbooks.
+
+### Coverage
+
+```json
+"coverage": {"scope": "year", "year": 2026, "months_present": ["2026-01"],
+             "months_present_count": 1, "months_absent": ["2026-02", "..."],
+             "gaps_inside_span": [], "span": ["2026-01", "2026-01"],
+             "status": "partial", "label": "year to date, 1 of 12 months",
+             "totals_available": true}
+```
+
+`status` is `complete` (12 months) or `partial`. `label` is `full year, 12 of 12 months`;
+`year to date, N of 12 months` (the span starts in January); `partial year, N of 12 months
+(first to last)`; or `incomplete year, N of 12 months, with <months> missing inside it`.
+**A partial year is never scaled, annualised or extrapolated.** A month missing *inside*
+the span raises the error `year_months_missing`, which blocks every year total and the
+year-on-year comparison through the normal mechanism (`validation_status: "blocked"`,
+`unavailable_reason: "missing_month_in_span"`). Quarters that have all three months still
+compute.
+
+The whole-file coverage carries `first`, `last`, `months_present`, `months_present_count`,
+`calendar_months_spanned`, `gaps`, `contiguous` and `label`; a gap also raises the warning
+`missing_months`.
+
+### Metric names
+
+| Pattern | Scope | Unit | Notes |
+|---|---|---|---|
+| `revenue.total`, `revenue.stream.<slug>`, `cogs.total`, `gross_profit`, `opex.total`, `opex.category.<slug>`, `operating_income`, `net_income.reported` | year | currency | Year totals: the sum of the monthly values (`span_sum_v1`). |
+| `gross_margin_pct`, `operating_margin_pct` | year | percent | Year total over year revenue. |
+| `<measure>.q1` .. `.q4` | year | currency | The five headline measures, per calendar quarter; `incomplete_quarter` without all three months. |
+| `<measure>.prior_year`, `.yoy_abs`, `.yoy_pct`; margins `.prior_year`, `.yoy_pts` | year | | Only when every month present this year is also in the file a year earlier (Jan-Jun 2026 against Jan-Jun 2025 is allowed). Otherwise `not_comparable`, or `in_other_file`. Strictly positive base for a percentage. |
+| `monthly.<YYYY-MM>.<measure>` | both | | The month's figure for the five headline measures and two margins. |
+| `monthly.<YYYY-MM>.<measure>.mom_abs` / `.mom_pct`; margins `.mom_pts` | both | | Against the immediately preceding calendar month in the same file. |
+| `extremes.<measure>.highest` / `.lowest` | both | currency | Revenue and operating income: the month with the highest / lowest value; ties go to the earliest. The month is in `period` and in the top-level `extremes` object. |
+| `year.<YYYY>.<measure>` | all | | A total per calendar year: the five headline measures, the margins and net income, with the year logic above (blocked over a gap). The `years` list gives each year's coverage and `metric_prefix`. |
+| `<measure>.start_to_end_abs` / `_pct`; margins `.start_to_end_pts` | all | | The last month against the first. Strictly positive base for a percentage. |
+| `coverage.months_present`, `.months_missing`, `.months_in_year` | both | count | The numbers a coverage label quotes. |
+
+### `series` (whole file): the chart contract
+
+A stable, simple shape for the UI. One entry per measure, one point per month in the
+file, oldest first. Each point is the `monthly.<YYYY-MM>.<measure>` metric, restated.
+
+```json
+"series": {
+  "periods": ["2025-01", "...", "2026-01"],
+  "measures": [
+    {"measure": "revenue.total", "label": "Total revenue", "unit": "currency",
+     "metric_pattern": "monthly.<YYYY-MM>.revenue.total",
+     "points": [{"period": "2025-01", "value": 48000.0, "validation_status": "ok"},
+                {"period": "2025-02", "value": null, "validation_status": "blocked",
+                 "unavailable_reason": "blocked_by_validation"}]}
+  ]
+}
+```
+
+`measures` is always the seven measures `revenue.total`, `cogs.total`, `gross_profit`,
+`opex.total`, `operating_income` (currency) and `gross_margin_pct`,
+`operating_margin_pct` (percent), in that order. `unavailable_reason` is present only on a
+point whose `value` is `null`. A month missing from the file has no point; the gap is in
+`coverage.gaps`.
 
 ---
 
@@ -442,6 +557,22 @@ further limits, both reported in every guard result rather than hidden:
 - **The guard proves a figure is supported, not that it was used in the right sentence.**
   It cannot catch a correct number attached to the wrong concept. That is a semantic
   check, not a numeric one.
+
+Three additions for the year and whole-file scopes. None changes a month result:
+
+- `.yoy_pts` and `.start_to_end_abs` / `_pct` / `_pts` count as *changes* for the
+  direction check, so "fell 7.8 pts" is checked against the start-to-end figure. Month
+  documents never carry these names.
+- `Q1`..`Q4` are quarter labels, masked like dates, not figures.
+- A value exactly on a rounding half-step may be written rounded either way, and
+  nothing wider passes. The float comparison `|0.8 - 0.75| <= 0.05` evaluates
+  0.05000000000000004 and rejected a correctly rounded "0.8%". A figure now also passes
+  if it equals the round-half-up or round-half-down of the stored value's exact binary
+  value at the precision written, in exact decimal arithmetic. Those two differ only on
+  an exact half-step; 0.7500000001 accepts "0.8" and not "0.7". There is no general
+  slack, and `tolerance_applied` is unchanged. At two or more decimals the existing
+  one-cent floor (`MIN_TOLERANCE`) is the bar, as before. Tests:
+  `tests/test_guard.py::TestRoundingHalfSteps`.
 
 The honest summary: the guard makes it very hard to state a currency amount that is not
 in the data, and it does not make a model's prose correct. The deterministic provider is

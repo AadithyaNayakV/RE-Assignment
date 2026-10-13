@@ -12,8 +12,9 @@ documented, not built. Nothing here is deployed anywhere; everything runs on one
 | `.claude/skills/monthly-financial-analysis/` | The instructions Claude Code follows: `SKILL.md` (10 steps) plus `reference/` (metric definitions, report template, reviewer checklist). Claude writes the commentary; it never calculates. | NOW |
 | `finance_engine/guard.py` | Rejects any figure in the text that is not in `metrics.json`, and any direction word that contradicts a change's sign. Runs on every provider's output. | NOW |
 | `CLAUDE.md` | Project memory: the one hard rule (Python is the only source of numbers), folder map, boundaries, commands. Loaded into every Claude Code session. | NOW |
-| `config/clients/<id>.yaml` | One company = one file: sheet layout, section anchors, categories, thresholds, expected-negative lines. | NOW |
-| `evals/` | 13 golden cases; Level 1 (engine) and Level 2 (report) runners; baselines; regression demo. | NOW |
+| `config/clients/<id>.yaml` | One company = one file: sheet layout, section anchors, categories, thresholds, expected-negative lines. `init-client` drafts it from a workbook and validates it with the engine before writing it; anything it is unsure of is listed for a person to decide. | NOW |
+| Scopes and files | `--scope month` (default), `year` and `all` (`finance_engine/spans.py`, built from one month's figures at a time); `--file` picks one workbook when a client's folder holds several (`sources/selection.py`). Files are never combined. Every command has `--json` for a UI. | NOW |
+| `evals/` | 18 golden cases; Level 1 (engine) and Level 2 (report) runners; baselines; regression demo. | NOW |
 | `.mcp.json`, `.claude/settings.json` | The QuickBooks MCP connection and its read-only permission rules. | NOW |
 | Per-client reviewer notes (memory) | A file per client (for example `config/clients/<id>.notes.md`) where a reviewer records what they confirmed: known credits, expected one-offs, causes they supplied. The skill would read it so the next month's questions skip what is already answered. Not built: today no reviewer input is kept between runs. | PLANNED |
 

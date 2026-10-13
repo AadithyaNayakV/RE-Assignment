@@ -26,13 +26,15 @@ evidence in the right-hand column.
 | For a human reviewer to finish | PASS | `reference/review_checklist.md` | Every report is labelled a draft and ends with a checklist (eval check `reviewer_checklist`). |
 | A teammate could read, maintain and extend it | PASS | `SKILL.md` (short), `reference/`, `docs/metrics_schema.md`, `CLAUDE.md` | New-metric and new-company procedures are in `metric_definitions.md`. Both were done for real in the rehearsals (`docs/live_demo_runbook.md`). |
 | Portable to a different company without a rewrite | PASS | `config/clients/*.yaml` | 10 synthetic clients, 3 layouts, no code change; rehearsal C added an 11th with one YAML. |
+| (Phase 5B) Draft a new client's config from its workbook | PASS | `finance_engine/init_client.py`, `tests/test_init_client.py` | `init-client` detects sheet, header row, columns, date order and format, sections, subtotal groups and reported lines; validates with the real loader, reader, analysis and reconciliation before writing `<id>.yaml`, else `<id>.draft.yaml` with the problems. For test_clean and Companies A and B the generated config gives the same metric values as the hand-written one. Unhandled layouts (a non-month column between months, no COGS section, a subtotal without a header) become drafts; a non-financial or unreadable file is refused. Balance sheets are not configured. |
+| (Phase 5B) Year, whole-file and multi-workbook analysis | PASS | `finance_engine/spans.py`, `finance_engine/sources/selection.py`, cases 14 to 18 | Year totals, quarters, same-months year on year, monthly table, extremes; a partial year labelled and never annualised; a gap blocks the totals. Whole file: monthly series, per-year totals, start-to-end change. `--file` and period-based workbook choice; never merged. Month output unchanged (byte-for-byte comparison against the previous commit). |
 | **Stretch:** load the workbook into the sandbox and run end to end | NOT STARTED | n/a | Deliberately not attempted. |
 
 ## Part 3: Eval suite
 
 | Requirement | Status | Where | Evidence |
 |---|---|---|---|
-| At least 5 golden cases (data state + expected output) | PASS (13) | `evals/cases/` | 13 cases, each with `case.yaml` (flags, forbidden claims, pass criteria) and `expected.json` (a derivation per value). |
+| At least 5 golden cases (data state + expected output) | PASS (18) | `evals/cases/` | 18 cases, each with `case.yaml` (flags, forbidden claims, pass criteria) and, except case 12, `expected.json` (a derivation per value). Cases 14 to 18 (Phase 5B: year, year to date, gap, whole file, two workbooks) pass Level 1 and the deterministic Level 2; they have not been run through Claude. |
 | Expected values independent of the engine | PASS | `evals/tools/build_expected.py` | Built from the generator's inputs and the workbook's own cached totals; refuses to finish if `finance_engine` is imported; a test enforces it. |
 | Concrete grading approach | PASS | `evals/grading.md` | Three levels, thresholds, rubric. |
 | Regression detection | PASS | `evals/baseline/`, `evals/regression_demo.py` | A wrong subtotal in a test copy was caught by reconciliation; a temporary TTM off-by-one made 12 of 13 cases newly fail; reverted byte-identical. |

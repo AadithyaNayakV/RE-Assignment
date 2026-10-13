@@ -419,7 +419,12 @@ def _check_cells(report, sheet: Sheet, config: ClientConfig, period: str) -> Non
     enabled = config.cell_checks
     if not any(enabled.values()) or period not in sheet.period_keys():
         return
-    ctx = _CellContext(sheet, config, period)
+    _run_cell_checks(report, sheet, config, _CellContext(sheet, config, period))
+
+
+def _run_cell_checks(report, sheet: Sheet, config: ClientConfig, ctx) -> None:
+    """The three cell checks over `ctx.periods`, naming `ctx.affects(...)` metrics."""
+    enabled = config.cell_checks
     items = [i for s in _CELL_SECTIONS for i in sheet.in_section(s)]
 
     if enabled["non_numeric_cell"]:
@@ -563,3 +568,121 @@ class _CellContext:
 def _shift(period: str, months: int) -> str:
     o = Period.from_key(period).ordinal() + months
     return f"{o // 12:04d}-{o % 12 + 1:02d}"
+
+
+# ---- span validation (year and whole-file scopes) -------------------------
+#
+# The month checks above look at one reporting month and its window. A year or a whole
+# file is many months, so the same checks run month by month here and each issue names the
+# months it concerns. The rules do not change: errors block the metrics they affect,
+# warnings travel with them, nothing is repaired, and blank is never zero.
+#
+# `affects_for(period, item)` is supplied by the span builder, which alone knows the names
+# it will emit: every metric whose value includes that month (and, given a line item, that
+# line). It keeps a problem in March off the figures for April.
+
+def validate_span(dataset: Dataset, config: ClientConfig, months: list[str],
+                  affects_for) -> ValidationReport:
+    report = ValidationReport()
+    sheet = dataset.income_statement
+    months = [p for p in sheet.period_keys() if p in set(months)]
+
+    _span_unreadable_formulas(report, sheet, months, affects_for)
+    _span_blank_vs_zero(report, sheet, months, affects_for)
+    _check_duplicate_labels(report, sheet)
+    _span_sign_conventions(report, sheet, months, config.expected_negative_lines,
+                           affects_for)
+    _check_fallback_categories(report, sheet, config)
+    _check_units(report, dataset, config)
+    if any(config.cell_checks.values()) and months:
+        _run_cell_checks(report, sheet, config,
+                         _SpanCellContext(sheet, config, months, affects_for))
+    return report
+
+
+def _span_affects(found, affects_for) -> tuple[str, ...]:
+    names: set[str] = set()
+    for item, period in found:
+        names |= set(affects_for(period, item))
+    return tuple(sorted(names))
+
+
+def _span_unreadable_formulas(report, sheet: Sheet, months, affects_for) -> None:
+    for period in months:
+        bad = [i for i in sheet.line_items
+               if period in i.cells and i.cells[period].unreadable_formula]
+        if not bad:
+            continue
+        report.error(
+            "formula_value_unreadable",
+            f"{len(bad)} formula cell(s) for {period} have no readable cached value, so "
+            f"their result cannot be used: "
+            f"{'; '.join(f'{i.label} (row {i.row})' for i in bad[:5])}"
+            f"{' ...' if len(bad) > 5 else ''}. Every figure that includes {period} is "
+            f"blocked. Open and re-save the workbook in Excel to refresh cached values.",
+            tuple(sorted(set(affects_for(period, None)))),
+            period=period,
+            rows=[{"label": i.label, "row": i.row, "formula": i.cells[period].formula}
+                  for i in bad],
+        )
+
+
+def _span_blank_vs_zero(report, sheet: Sheet, months, affects_for) -> None:
+    found = []
+    for item in sheet.line_items:
+        if item.role not in ("item", "section_total", "group_total", "reported"):
+            continue
+        if not item.present_periods():
+            continue
+        for period in months:
+            cell = item.cells.get(period)
+            if cell is None or cell.value is None:
+                found.append((item, period))
+    if not found:
+        return
+    listed = "; ".join(f"{i.label} (row {i.row}, {p})" for i, p in found[:5])
+    report.warn(
+        "blank_not_zero",
+        f"{len(found)} row-month(s) are blank while the row carries values in other "
+        f"months: {listed}{' ...' if len(found) > 5 else ''}. Blank is treated as "
+        f"missing, not zero.",
+        _span_affects(found, affects_for),
+        rows=[{"label": i.label, "row": i.row, "section": i.section, "period": p}
+              for i, p in found],
+    )
+
+
+def _span_sign_conventions(report, sheet: Sheet, months, expected_negative,
+                           affects_for) -> None:
+    for section in ("revenue", "opex", "cogs"):
+        found = [(i, p) for i in sheet.in_section(section) for p in months
+                 if (i.value(p) or 0) < 0
+                 and str(i.label).casefold() not in expected_negative]
+        if not found:
+            continue
+        described = "; ".join(f"{i.label} {p} ({i.value(p):,.2f})" for i, p in found[:6])
+        more = f"; and {len(found) - 6} more" if len(found) > 6 else ""
+        kind = _SECTION_NAMES[section]
+        report.warn(
+            f"negative_{section}_line",
+            f"{len(found)} {kind} line value(s) are negative in the months covered: "
+            f"{described}{more}. Kept with their sign and never reclassified. Each may be "
+            f"a refund, a recovery, a reversal or a misposting; that needs confirmation. "
+            f"Lines the client config expects to be negative are not listed.",
+            _span_affects(found, affects_for),
+            rows=[{"label": i.label, "row": i.row, "period": p, "value": i.value(p),
+                   "category": i.category} for i, p in found],
+        )
+
+
+class _SpanCellContext(_CellContext):
+    """The cell checks over every month of a span, naming the span's metrics."""
+
+    def __init__(self, sheet: Sheet, config: ClientConfig, months: list[str],
+                 affects_for) -> None:
+        self.sheet = sheet
+        self.periods = list(months)
+        self._affects_for = affects_for
+
+    def _dependent(self, item, p: str) -> set[str]:
+        return set(self._affects_for(p, item))

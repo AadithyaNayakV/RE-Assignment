@@ -1,0 +1,51 @@
+id: 15_year_partial
+title: Partial year, year to date (test_clean, 2026)
+synthetic: true
+builder: test_workbook
+input:
+  client_id: test_clean
+  scope: year
+  year: 2026
+  workbook: data/clients/test_clean/source/test_clean.xlsx
+  config: config/clients/test_clean.yaml
+why: >
+  The file holds January 2026 only. The year is labelled "year to date, 1 of 12 months",
+  its totals are January's figures (revenue 52,000 + 9,000 = 61,000), and nothing is
+  scaled, annualised or extrapolated to twelve months. January 2025 is in the file, so
+  the same-months year-on-year comparison is allowed: 61,000 against 48,000, +13,000
+  (+27.1%). Every quarter is incomplete and n/a. SKIPPED where the workbook is absent.
+
+engine:
+  exit_code: 0
+  scope: year
+  reconciliation_passed: true
+  max_errors: 0
+  forbidden_metric_patterns: ['annuali', 'extrapolat', 'run_rate', 'full_year']
+
+skill:
+  run: true
+  prompt: Use the monthly-financial-analysis skill for client test_clean, calendar year 2026 (scope year).
+  required_figures: [revenue.total, operating_income, revenue.total.yoy_abs]
+  required_flags:
+    - id: year_to_date_label
+      description: Labels the year as year to date, 1 of 12 months.
+      pattern: 'year to date, 1 of 12 months'
+    - id: not_annualised
+      description: Says the totals are not scaled or annualised.
+      pattern: 'not (scaled|annuali[sz]ed)|never (scaled|annuali[sz]ed)'
+    - id: quarters_incomplete
+      description: Says the quarters are incomplete or n/a.
+      pattern: 'quarter[^\n]{0,80}(incomplete|n/a|not complete)|(incomplete|not complete)[^\n]{0,40}quarter'
+  forbidden_claims:
+    - id: annualised_figure
+      description: No annualised, full-year-equivalent or run-rate figure.
+      pattern: '(annuali[sz]ed|full[- ]year equivalent|run[- ]rate|extrapolat)'
+      unless: '\b(not|never|no|nothing)\b'
+    - id: causal_wording
+      description: States no cause for any movement.
+      pattern: '\b(because|due to|driven by|caused by)\b'
+
+pass_criteria: >
+  Level 1: coverage partial with the year-to-date label, totals equal January 2026, the
+  same-months year-on-year figures, every quarter n/a, no annualised metric. Level 2:
+  guard PASS, the label and the not-annualised statement present, no annualised figure.

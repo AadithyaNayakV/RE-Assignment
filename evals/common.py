@@ -46,6 +46,76 @@ def load_cases(selected: list[str] | None = None) -> list[dict]:
     return cases
 
 
+def workbook_fingerprint(path: Path) -> str:
+    """SHA-256 of a workbook's cell contents: every sheet, cell, formula and cached value.
+
+    Used for the generated test workbooks (cases 14 to 18). openpyxl writes the creation
+    time into the file, so regenerating identical cells gives different bytes; the cells
+    are what the engine reads, and this is what the case records. openpyxl only.
+    """
+    import openpyxl
+
+    h = hashlib.sha256()
+    for data_only in (False, True):
+        wb = openpyxl.load_workbook(path, data_only=data_only, read_only=True)
+        try:
+            for ws in wb.worksheets:
+                h.update(f"\x00sheet:{ws.title}".encode())
+                for r, row in enumerate(ws.iter_rows(values_only=True), start=1):
+                    for c, value in enumerate(row, start=1):
+                        if value is None:
+                            continue
+                        text = value.isoformat() if hasattr(value, "isoformat") else repr(value)
+                        h.update(f"\x00{r},{c}:{type(value).__name__}:{text}".encode())
+        finally:
+            wb.close()
+    return h.hexdigest()
+
+
+def ensure_generated_workbooks(root: Path | None = None) -> list[str]:
+    """Write any missing workbook that scripts/make_test_workbooks.py generates.
+
+    data/clients/ is git-ignored, so a fresh clone has none of them. Existing files are
+    left alone. Returns the paths written.
+    """
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import make_test_workbooks
+
+    written = make_test_workbooks.ensure(root or ROOT)
+    for path in written:
+        print(f"generated missing test workbook: {path}")
+    return written
+
+
+def scope_args(inp: dict) -> list[str]:
+    """The CLI flags that select a case's scope and workbook.
+
+    A month case (no `scope`) gives `--period P`, exactly as before. `scope: year` gives
+    `--scope year --year Y`, `scope: all` gives `--scope all`, and `file:` adds
+    `--file NAME` (`--workbook NAME` for check-commentary, via `workbook_flag`).
+    """
+    scope = inp.get("scope", "month")
+    if scope == "year":
+        args = ["--scope", "year", "--year", str(inp["year"])]
+    elif scope == "all":
+        args = ["--scope", "all"]
+    else:
+        args = ["--period", str(inp["period"])]
+    if inp.get("file"):
+        args += ["--file", inp["file"]]
+    return args
+
+
+def output_rel(inp: dict) -> Path:
+    """Where a case's outputs land, relative to the output directory."""
+    scope = inp.get("scope", "month")
+    leaf = {"year": f"year-{inp.get('year')}", "all": "all"}.get(scope, inp.get("period"))
+    base = Path(inp["client_id"])
+    if inp.get("file"):
+        base = base / Path(inp["file"]).stem
+    return base / str(leaf)
+
+
 # ---- processes -----------------------------------------------------------
 
 def run_engine(args: list[str], out_dir: Path, root: Path | None = None,

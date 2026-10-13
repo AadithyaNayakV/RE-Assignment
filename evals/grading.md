@@ -5,7 +5,7 @@ optional opinion and never decides anything on its own.
 
 | Level | What is graded | Runner | Cost | Decides pass/fail |
 |---|---|---|---|---|
-| 1 | The engine's `metrics.json` against independently derived values | `evals/run_engine_evals.py` | free, ~30 s for 13 cases | **yes** |
+| 1 | The engine's `metrics.json` against independently derived values | `evals/run_engine_evals.py` | free, ~40 s for 18 cases | **yes** |
 | 2 | The `report.md` the skill writes (or the deterministic fallback) | `evals/run_skill_evals.py` | Pro usage per case; free with `--provider deterministic` | **yes** |
 | 3 | Clarity and usefulness, scored 1–5 by a read-only Claude judge | `run_skill_evals.py --rubric` | Pro usage | **no**, advisory only |
 
@@ -15,7 +15,13 @@ optional opinion and never decides anything on its own.
   and no weighted score. A financial report with one wrong number is wrong.
 - **A run passes only if every non-skipped case passes.** A skipped case is reported as
   SKIP, never counted as a pass. Cases 01 and 13 skip on a machine without the ABC
-  workbook, which is git-ignored client data.
+  workbook, which is git-ignored client data; they are the only cases that need a file
+  that is neither in git nor generated. Cases 14 to 18 read workbooks under
+  `data/clients/` (also git-ignored) that `scripts/make_test_workbooks.py` generates: both
+  runners and the pytest session write any that are missing (never touching an existing
+  one), so they do not skip on a fresh clone. Their bytes carry a creation time, so
+  `input_unchanged` for these cases compares a fingerprint of the cell contents
+  (`input_content_sha256`, `evals/common.py::workbook_fingerprint`), not the file hash.
 - **Regression:** `--compare` fails the run if any case newly fails, or any check flips
   from pass to fail, against the newest baseline in `evals/baseline/`. Changed values are
   listed even when every check still passes, so a drift inside tolerance is still seen.
@@ -32,7 +38,7 @@ writing to `evals/runs/` and never to `output/`, then checks:
 
 | Check | Tolerance / rule |
 |---|---|
-| `input_unchanged` | Workbook sha256 equals the one the expected values were built from. |
+| `input_unchanged` | Workbook sha256 equals the one the expected values were built from; for a generated workbook (cases 14 to 18), the fingerprint of its cells. |
 | `exit_code`, `no_traceback`, `stderr_message` | Exact exit code. No Python traceback, ever. |
 | `value:<metric>` | Currency within **0.01** (one cent, the reconciliation tolerance); percent and points within **0.0005**. |
 | `n/a:<metric>` | `value` is null **and** `unavailable_reason` is the expected one (`zero_base`, `negative_base`, `sign_change`, `incomplete_window`). |
@@ -43,6 +49,12 @@ writing to `evals/runs/` and never to `output/`, then checks:
 | `seasonality_assessed` | Exact. |
 | Case 12 `cli_checks` | Each bad input: exit code, message, no traceback, no output for an unknown client. |
 | Case 13 `report_*` | Fallback warning, report labelled `deterministic`, the whole report passes the guard. |
+| `coverage:<key>`, `field:<path>` | Year and whole-file cases: the coverage status, label, counts and gaps, and the highest / lowest months, exactly. |
+| `status:<metric>`, `issue_detail:<code>:<key>` | A total blocked over a gap is `blocked`; the error names the missing month. |
+| `no_metric_matching:<pattern>` | No metric named like an annualised, extrapolated or run-rate figure. |
+| `series_points` | Whole file: seven measures, one point per month. |
+| `scope`, `source_filename`, `input_unchanged:<file>` | The document's scope and the workbook it says it read; every input workbook unchanged. |
+| Case 18 `extra_runs` | File selection: a period in both workbooks stops (exit 1, both named, nothing written); a period in neither stops with each file's periods; a period in one is read from it; `--file` forces one, and its month-over-month figures are `n/a (in_other_file)`. |
 
 **Where expected values come from.** `evals/tools/build_expected.py` writes every
 `expected.json`. It imports nothing from `finance_engine` and refuses to finish if
@@ -51,6 +63,12 @@ writing to `evals/runs/` and never to `output/`, then checks:
 - **Synthetic cases:** the generator's own inputs (`scripts/generate_synthetic.py`).
   Margins, % changes, shares and TTM sums are derived by hand-written arithmetic
   following `docs/metrics_schema.md`.
+- **Test workbooks (cases 14 to 18):** the cells of the generated workbook, read with
+  openpyxl. Section membership, line-item sums, categories, year totals, quarters, year on
+  year, extremes and the cell-level warnings are re-derived in `build_expected.py` from
+  the rules in `docs/metrics_schema.md`. Case 14 also states its totals in `case.yaml`
+  (they equal test_clean's 2025-12 TTM figures), and the builder refuses to write values
+  that disagree.
 - **ABC Inc:** the workbook's own cached formula totals (Total Income, Total COGS, Gross
   Profit, Total Operating Expenses, Net Income, the subtotal rows, the balance-sheet
   totals), plus single cells read as spot checks. `manual_spot_check` in
@@ -71,6 +89,12 @@ Each value carries a `derivation` string saying exactly how it was obtained.
 | **Completeness of important findings** | `section:*`: all ten template sections. `flag:*`: case-specific findings, such as the spiking line, missing months, zero-base n/a and the balance check. `issue_shown_early:<code>`: every data-quality code appears before the Revenue section. `reviewer_checklist`: at least 3 open items. `ttm_incomplete_stated`. |
 | **Unsupported claims** | `causal_language_hedged`: "due to", "driven by" and similar need a hedge in the same sentence. `cause_vocabulary_hedged`: lawsuit, churn, new hires and similar need a hedge. `seasonality_not_asserted`: when not assessed. `one_offs_hedged`. `ttm_incomplete_no_figures`. `impossible_values`. `forbidden:*` per case. |
 | **Clarity and usefulness** | Level 3 only. |
+
+Year and whole-file reports use their own section list (`SPAN_SECTIONS` in
+`report_checks.py`: coverage, quarters, year on year, monthly table or series, calendar
+years, first month to last month, seasonality, reconciliation) in place of the month
+sections, and skip the TTM checks. Every other check applies unchanged, including
+`guard` on the whole report and `causal_words_outside_questions`.
 
 Hedges are words like *possible, may, might, could, if, whether, needs confirmation*,
 or a question mark, in the **same sentence**. Hard-wrapped lines are joined before

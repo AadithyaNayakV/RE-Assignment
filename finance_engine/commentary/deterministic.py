@@ -22,6 +22,10 @@ class DeterministicProvider(CommentaryProvider):
 
     def generate(self, metrics_doc: dict) -> str:
         doc = metrics_doc
+        if doc.get("scope") in ("year", "all"):
+            # Same style and rules; month documents have no `scope` key and never get here.
+            from finance_engine.commentary.span_templates import span_commentary
+            return span_commentary(doc)
         fmt = Formatter(doc.get("currency_symbol", "$"), doc.get("currency", "USD"))
         m = {x["name"]: x for x in doc.get("metrics", [])}
         period = doc.get("period_label", doc.get("period", ""))

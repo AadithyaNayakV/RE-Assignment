@@ -1,0 +1,53 @@
+id: 17_whole_file
+title: Whole file (test_clean, scope all)
+synthetic: true
+builder: test_workbook
+input:
+  client_id: test_clean
+  scope: all
+  workbook: data/clients/test_clean/source/test_clean.xlsx
+  config: config/clients/test_clean.yaml
+why: >
+  Thirteen contiguous months, Jan 2025 to Jan 2026. The document carries a monthly series
+  of seven measures for every month (the UI draws charts from it), a total per calendar
+  year (2025 complete, 2026 year to date, 1 of 12 months), and the change from the first
+  month to the last (revenue 48,000 to 61,000: +13,000, +27.1%). Thirteen months is fewer
+  than the 24 seasonality needs, so it is not assessed. SKIPPED where absent.
+
+engine:
+  exit_code: 0
+  scope: all
+  reconciliation_passed: true
+  max_errors: 0
+  seasonality_assessed: false
+  series_points: 13
+  series_measures: 7
+  forbidden_metric_patterns: ['annuali', 'extrapolat', 'run_rate']
+
+skill:
+  run: true
+  prompt: Use the monthly-financial-analysis skill for client test_clean, the whole file (scope all).
+  required_figures: [year.2025.revenue.total, year.2026.revenue.total, revenue.total.start_to_end_abs]
+  required_flags:
+    - id: thirteen_months
+      description: States the file covers 13 months.
+      pattern: '\b13 months\b'
+    - id: partial_year_labelled
+      description: Labels 2026 as year to date.
+      pattern: 'year to date, 1 of 12 months'
+    - id: seasonality_not_assessed
+      description: Says seasonality is not assessed.
+      pattern: 'season[^\n]{0,80}not (assessed|asserted)|not (assessed|asserted)[^\n]{0,80}season|no seasonal pattern'
+  forbidden_claims:
+    - id: seasonal_claim
+      description: Asserts no seasonal pattern.
+      pattern: '\bseasonal (pattern|peak|trough|business)\b'
+      unless: '\b(no|not|never|cannot)\b'
+    - id: causal_wording
+      description: States no cause for any movement.
+      pattern: '\b(because|due to|driven by|caused by)\b'
+
+pass_criteria: >
+  Level 1: coverage 2025-01..2026-01 with no gaps, a 13-point series for each of the 7
+  measures, per-year totals equal to the year cases, start-to-end change, seasonality not
+  assessed. Level 2: guard PASS, the coverage and year-to-date labels, no seasonal claim.

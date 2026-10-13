@@ -1,0 +1,75 @@
+id: 18_file_selection
+title: Two workbooks for one client (test_multi)
+synthetic: true
+builder: test_workbook
+input:
+  client_id: test_multi
+  period: "2025-03"
+  workbook: data/clients/test_multi/source/test_multi_first_half.xlsx
+  other_workbooks: [data/clients/test_multi/source/test_multi_second_half.xlsx]
+  config: config/clients/test_multi.yaml
+why: >
+  test_multi's folder holds two workbooks with one layout: Jan-Jun 2025 and Jun-Dec 2025.
+  Its config names no file. March 2025 is in the first workbook only, so it is chosen and
+  named on stderr; September only in the second. June is in both, so the engine stops and
+  lists them rather than choose or merge. --file forces one: reading the second workbook
+  for June, the month-over-month comparison is n/a ("prior period is in a different
+  file"), because May is only in the first. A month in neither file stops with each
+  file's periods. The workbooks come from `scripts/make_test_workbooks.py test_multi` and
+  are git-ignored: the case is SKIPPED where they are absent.
+
+engine:
+  exit_code: 2                     # six months: the TTM window is short, as it should be
+  stderr: 'source: test_multi_first_half\.xlsx'
+  source_filename: test_multi_first_half.xlsx
+  ttm_complete: false
+  extra_runs:
+    - id: both_files_stop
+      args: [analyze, --client, test_multi, --period, "2025-06"]
+      exit_code: 1
+      stderr: 'test_multi_first_half\.xlsx.*test_multi_second_half\.xlsx.*--file'
+      must_not_exist: test_multi/2025-06
+    - id: no_match
+      args: [analyze, --client, test_multi, --period, "2030-01"]
+      exit_code: 1
+      stderr: 'No workbook .* contains period 2030-01. Periods each file covers'
+      must_not_exist: test_multi/2030-01
+    - id: second_file_chosen
+      args: [analyze, --client, test_multi, --period, "2025-09"]
+      exit_code: 2
+      stderr: 'source: test_multi_second_half\.xlsx'
+      metrics: test_multi/2025-09
+      source_filename: test_multi_second_half.xlsx
+      expect_from: data/clients/test_multi/source/test_multi_second_half.xlsx
+      period: "2025-09"
+    - id: file_forced
+      args: [analyze, --client, test_multi, --period, "2025-06", --file,
+             test_multi_second_half.xlsx]
+      exit_code: 2
+      metrics: test_multi/test_multi_second_half/2025-06
+      source_filename: test_multi_second_half.xlsx
+      expect_from: data/clients/test_multi/source/test_multi_second_half.xlsx
+      period: "2025-06"
+
+skill:
+  run: true
+  mode: deterministic
+  provider_label: deterministic
+  required_figures: [revenue.total, revenue.total.mom_abs]
+  required_flags:
+    - id: file_named
+      description: The report names the workbook it read.
+      pattern: 'test_multi_first_half\.xlsx'
+  forbidden_claims:
+    - id: other_file_figures
+      description: No figure from the second workbook is mentioned.
+      pattern: 'test_multi_second_half'
+    - id: causal_wording
+      description: States no cause for any movement.
+      pattern: '\b(because|due to|driven by|caused by)\b'
+
+pass_criteria: >
+  Level 1: the first workbook is chosen for March and named; June stops with both files
+  listed and nothing written; 2030-01 stops with each file's periods; September reads the
+  second workbook; --file forces the second for June and its month-over-month figures are
+  n/a with in_other_file. Level 2: the deterministic report names its workbook only.

@@ -1,6 +1,6 @@
 ---
 name: monthly-financial-analysis
-description: Draft a monthly financial trend analysis report (revenue, margins, operating expenses by category, month-over-month, trailing twelve months, significant movements) for one client and one month, using only the verified figures finance_engine writes to metrics.json. Use when asked to analyse, review or write commentary on a client's monthly financials, e.g. "analyse abc_inc for June 2026" or "monthly report for company_c_expense_spike 2026-01".
+description: Draft a monthly financial trend analysis report (revenue, margins, operating expenses by category, month-over-month, trailing twelve months, significant movements) for one client and one month, using only the verified figures finance_engine writes to metrics.json. Use when asked to analyse, review or write commentary on a client's monthly financials, e.g. "analyse abc_inc for June 2026" or "monthly report for company_c_expense_spike 2026-01". Also covers a calendar year or the whole file ("the 2025 summary for test_clean"), and drafting a config for a new client's workbook with init-client.
 allowed-tools: Bash(python -m finance_engine:*), PowerShell(python -m finance_engine:*), Read, Write, Edit, Glob
 ---
 
@@ -102,6 +102,53 @@ Reference files (read when you reach the step that needs them):
     QuickBooks data and the `quickbooks` server is configured. QuickBooks figures are not
     in metrics.json, so the guard cannot verify them. Keep them out of `report.md` unless
     the user asks for them, and label them as unreconciled if they go in.
+
+## Year and whole-file scopes
+
+Use these when the user asks for a calendar year ("the 2025 summary") or the whole file.
+Follow steps 1 to 10 above with the substitutions below. Every rule above still applies:
+step 5 (causes only as questions in "Questions for the reviewer"; no "because", "due to",
+"caused", "the reason" or "driven by" anywhere else), step 6 (data quality first), and
+the step 8 stopping rule, two attempts and then the deterministic fallback.
+
+| | Month | Year | Whole file |
+| --- | --- | --- | --- |
+| Scope flags (analyze, brief, check-commentary, report) | `--period YYYY-MM` | `--scope year --year YYYY` | `--scope all` |
+| Report path | `output/clients/<id>/<period>/report.md` | `output/clients/<id>/year-YYYY/report.md` | `output/clients/<id>/all/report.md` |
+
+In step 1, the year must appear in `list-periods`; if it does not, **stop** and say which
+months the source holds. Rules that only arise in these scopes:
+
+- A partial year is the total of the months present only. Use the brief's own label
+  ("year to date, N of 12 months") and never scale, annualise or extrapolate it.
+- If the brief says the year totals are n/a because a month is missing inside the year,
+  say so, name the month, and present no total.
+- Quarters and year on year: only what the brief prints. An incomplete quarter and a year
+  without the same months in both years are n/a; put nothing in their place.
+- The highest and lowest months are facts: give the month and the figure, never a cause.
+
+**Several workbooks.** If an engine command stops because the client's folder holds
+several workbooks covering the request, ask the user which file to use, then pass it as
+`--file NAME` to analyze, brief and report (`--workbook NAME` to check-commentary, whose
+`--file` is the report being checked). Outputs then sit under
+`output/clients/<id>/<file-stem>/...`. Never combine figures from two files.
+
+## A new client (init-client)
+
+If the user hands you a workbook for a client that has no config (step 1 fails with
+"No config for client"), and asks you to set it up, run
+`python -m finance_engine init-client --file <path.xlsx> --client-id <id> --name "<Company>"`.
+It inspects the layout, copies the workbook into `data/clients/<id>/source/`, and
+validates the draft with the real engine. Then:
+
+- Exit 0: `config/clients/<id>.yaml` was written. Tell the user the "needs your decision"
+  items at the top of that file (currency, categories, anything ambiguous); they are
+  guesses until a person confirms them. Then continue from step 1.
+- Exit 2: only `config/clients/<id>.draft.yaml` was written, because validation failed.
+  **Stop**, list the problems it printed, and write no report. Never edit the draft
+  into shape yourself, and never pass `--force` unless the user asks.
+- Exit 1: the file is unreadable, not a monthly income statement, or a config already
+  exists. Report the message and stop.
 
 ## If something is unavailable
 

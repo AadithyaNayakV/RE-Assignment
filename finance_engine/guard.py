@@ -33,10 +33,12 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass, field
+from decimal import ROUND_HALF_DOWN, ROUND_HALF_UP, Decimal
 from pathlib import Path
 
 #: Smallest meaningful currency difference — one cent.
 MIN_TOLERANCE = 0.011
+
 
 _SUFFIX_SCALE = {
     "k": 1_000.0, "thousand": 1_000.0, "thousands": 1_000.0,
@@ -84,6 +86,8 @@ _IGNORE_SPANS = [
     re.compile(r"(?<![a-z])all\s+\d+\s+numbers\s+in\s+this\s+section", re.I),
     re.compile(r"\b(?:row|rows|line|lines)\s+\d+(?:\s*[-,]\s*\d+)*", re.I),
     re.compile(r"\b(?:schema[_ ]version|v)\s*\d+\b", re.I),
+    # Quarter labels in the year reports: "Q3" names a quarter; it is not a figure.
+    re.compile(r"\bQ[1-4]\b"),
     re.compile(r"\bsha256[:=]?\s*[0-9a-f]{8,}\b", re.I),
     re.compile(r"\bSHA-?256\b", re.I),       # the label itself: "-256" is not a figure
     re.compile(
@@ -205,7 +209,10 @@ class NumberGuard:
             # Matching the signed value rejected "(2)" or "-$2,800.00" against a
             # positive metric while accepting "+5.98%" against a negative one.
             closest, diff = _closest(candidates, abs(value))
-            supported = diff is not None and diff <= tolerance
+            supported = diff is not None and (
+                diff <= tolerance
+                or any(_is_neighbour_rounding(c, match) for c in candidates
+                       if abs(c - abs(value)) <= 2 * tolerance))
             findings.append(Finding(
                 text=match.group(0).strip(),
                 value=value,
@@ -275,7 +282,9 @@ class NumberGuard:
                     f"the written sign {explicit!r} contradicts {word!r}"))
                 continue
             signs = {sign for mag, sign, k in self.changes
-                     if (kind == "any" or k == kind) and abs(mag - abs(value)) <= tolerance}
+                     if (kind == "any" or k == kind)
+                     and (abs(mag - abs(value)) <= tolerance
+                          or _is_neighbour_rounding(mag, match))}
             if len(signs) != 1:
                 continue                     # a level, or ambiguous: no verdict
             checked += 1
@@ -305,8 +314,11 @@ _DIRECTION_BEFORE = re.compile(
     + r")\b(?:\s+(?:by|of))?[\s*_]*$", re.I)
 _LOSS_SUBJECT = re.compile(r"\b(loss|losses|deficit)\b[^.\n]{0,30}$", re.I)
 
-#: Metric suffixes that hold a *change*, whose sign is a direction.
-_CHANGE_SUFFIXES = (".mom_abs", ".mom_pct", ".mom_pts", ".yoy_abs", ".yoy_pct")
+#: Metric suffixes that hold a *change*, whose sign is a direction. The last four are
+#: emitted only by the year and whole-file scopes, so month documents are unaffected.
+_CHANGE_SUFFIXES = (".mom_abs", ".mom_pct", ".mom_pts", ".yoy_abs", ".yoy_pct",
+                    ".yoy_pts", ".start_to_end_abs", ".start_to_end_pct",
+                    ".start_to_end_pts")
 
 
 def collect_change_values(doc: dict) -> list[tuple[float, int, str]]:
@@ -503,6 +515,29 @@ def _parse_match(match: re.Match) -> tuple[float, float, str] | None:
     else:
         kind = "any"
     return value, tolerance, kind
+
+
+def _is_neighbour_rounding(stored: float, match: re.Match) -> bool:
+    """True when the written figure is one of the two neighbouring roundings of `stored`.
+
+    At the precision the figure was written to, the stored value's exact binary value is
+    rounded half-up and half-down, in exact decimal arithmetic. The two results differ
+    only when the value sits exactly on a half-step: 0.75 written to one decimal may be
+    "0.7" or "0.8", and nothing else. Off a half-step both give the one nearest rounding.
+    This exists because the float comparison `|0.8 - 0.75| <= 0.05` evaluates
+    0.05000000000000004 and rejected a correctly rounded figure; it never accepts a figure
+    the tolerance would not, apart from that float error.
+    """
+    digits = (match.group("digits") or "").replace(",", "")
+    if not digits:
+        return False
+    decimals = len(digits.split(".")[1]) if "." in digits else 0
+    scale = Decimal(repr(_SUFFIX_SCALE.get((match.group("suffix") or "").lower(), 1.0)))
+    exact = abs(Decimal(stored)) / scale            # Decimal(float) is the exact value
+    step = Decimal(1).scaleb(-decimals)
+    written = Decimal(digits)
+    return written in (exact.quantize(step, ROUND_HALF_UP),
+                       exact.quantize(step, ROUND_HALF_DOWN))
 
 
 def _context(text: str, start: int, end: int, width: int = 45) -> str:

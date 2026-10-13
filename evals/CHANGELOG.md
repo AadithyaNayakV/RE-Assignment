@@ -100,3 +100,18 @@ its four failures were real skill behaviour, both caught by the new checks: "ros
 rules with examples. The other two failures came from the Pro session limit ending the
 run before `check-commentary`. That run had also wasted three turns on chained shell
 commands, so SKILL.md now asks for one command per call. Re-run: **46/46**.
+
+## Phase 5B: file selection, year and whole-file scopes (2026-10-12, on top of `7e34c43`)
+
+Five golden cases added, 14 to 18 (year complete, year to date, gap inside a year, whole
+file, two workbooks for one client). Baselines were **not** re-saved: `--compare` lists
+them as new cases.
+
+| # | What | Kind | Found by | Fix |
+|---|---|---|---|---|
+| 18 | A value exactly on a rounding half-step was rejected by the guard: 0.75% written "+0.8%" is off by 0.05000000000000004 against a 0.05 tolerance | guard bug (month documents too, though no existing case hit it) | the wording sweep over the new year reports (Company D, monthly MoM of exactly 0.75%) | a figure also passes if it is one of the two neighbouring roundings (half-up, half-down) of the stored value's exact binary value at the precision written, in exact decimal arithmetic; no general slack; `tolerance_applied` unchanged; `tests/test_guard.py::TestRoundingHalfSteps` (6 tests) and `test_span_commentary.py` |
+| 19 | "Gross margin fell 7.8 pts" was rejected: the direction check did not know the new start-to-end change, so it judged the words against an unrelated monthly change | gap | ABC whole-file report | `.yoy_pts`, `.start_to_end_*` registered as change suffixes |
+| 20 | `forbidden:annualised_figure` (case 15) fired on the template's "nothing is scaled, annualised or estimated" | fault in a new check | deterministic control | `unless` covers "nothing" |
+| 21 | A derived count ("51/55 checks passed") in the year status table was untraceable | template | wording sweep | the status row quotes the stored counts ("4 of 55 checks failed") |
+| 22 | Cases 14 to 18 skipped on a fresh clone: their workbooks live in git-ignored `data/clients/`, and a regenerated workbook never matched the recorded SHA-256 (openpyxl stamps the creation time) | gap | review | both runners, `build_expected.py` and a pytest session fixture generate missing workbooks with `scripts/make_test_workbooks.py` (existing files untouched); cases 14 to 18 record a fingerprint of the cell contents (`input_content_sha256`) instead of the file bytes; `tests/test_span_eval_checks.py::TestFreshClone`. On a tree with only git-tracked inputs, 16 of 18 pass and 01 and 13 skip (the ABC workbook) |
+

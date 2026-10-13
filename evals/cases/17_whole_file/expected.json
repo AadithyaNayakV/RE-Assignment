@@ -1,0 +1,380 @@
+{
+  "case_id": "17_whole_file",
+  "client_id": "test_clean",
+  "scope": "all",
+  "generated_by": "evals/tools/build_expected.py",
+  "independent_of_engine": true,
+  "input_content_sha256": "a2fa9a0bab7f48623cbbfffd153199603d847eeed49abe8987dbf863e25f491a",
+  "source": "cells of the generated test workbook, read with openpyxl by evals/tools/build_expected.py; rules written out there",
+  "coverage": {
+    "first": "2025-01",
+    "last": "2026-01",
+    "months_present_count": 13,
+    "calendar_months_spanned": 13,
+    "gaps": []
+  },
+  "doc_fields": [
+    {
+      "path": [
+        "extremes",
+        "revenue.total",
+        "highest",
+        "period"
+      ],
+      "expected": "2026-01"
+    },
+    {
+      "path": [
+        "extremes",
+        "revenue.total",
+        "highest",
+        "value"
+      ],
+      "expected": 61000.0
+    },
+    {
+      "path": [
+        "extremes",
+        "revenue.total",
+        "lowest",
+        "period"
+      ],
+      "expected": "2025-01"
+    },
+    {
+      "path": [
+        "extremes",
+        "revenue.total",
+        "lowest",
+        "value"
+      ],
+      "expected": 48000.0
+    },
+    {
+      "path": [
+        "extremes",
+        "operating_income",
+        "highest",
+        "period"
+      ],
+      "expected": "2025-12"
+    },
+    {
+      "path": [
+        "extremes",
+        "operating_income",
+        "highest",
+        "value"
+      ],
+      "expected": 12900.0
+    },
+    {
+      "path": [
+        "extremes",
+        "operating_income",
+        "lowest",
+        "period"
+      ],
+      "expected": "2025-01"
+    },
+    {
+      "path": [
+        "extremes",
+        "operating_income",
+        "lowest",
+        "value"
+      ],
+      "expected": 4000.0
+    }
+  ],
+  "values": [
+    {
+      "metric": "year.2025.revenue.total",
+      "expected": 642000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "sum of 12 monthly value(s) 2025-01..2025-12"
+    },
+    {
+      "metric": "year.2025.cogs.total",
+      "expected": 114600.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "sum of 12 monthly value(s) 2025-01..2025-12"
+    },
+    {
+      "metric": "year.2025.gross_profit",
+      "expected": 527400.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "sum of 12 monthly value(s) 2025-01..2025-12"
+    },
+    {
+      "metric": "year.2025.opex.total",
+      "expected": 426000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "sum of 12 monthly value(s) 2025-01..2025-12"
+    },
+    {
+      "metric": "year.2025.operating_income",
+      "expected": 101400.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "sum of 12 monthly value(s) 2025-01..2025-12"
+    },
+    {
+      "metric": "year.2025.net_income.reported",
+      "expected": 101400.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "sum of 12 monthly value(s) 2025-01..2025-12"
+    },
+    {
+      "metric": "year.2025.gross_margin_pct",
+      "expected": 82.14953271028037,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "year gross_profit / year revenue x 100"
+    },
+    {
+      "metric": "year.2025.operating_margin_pct",
+      "expected": 15.794392523364486,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "year operating_income / year revenue x 100"
+    },
+    {
+      "metric": "year.2026.revenue.total",
+      "expected": 61000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "sum of 1 monthly value(s) 2026-01..2026-01"
+    },
+    {
+      "metric": "year.2026.cogs.total",
+      "expected": 10200.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "sum of 1 monthly value(s) 2026-01..2026-01"
+    },
+    {
+      "metric": "year.2026.gross_profit",
+      "expected": 50800.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "sum of 1 monthly value(s) 2026-01..2026-01"
+    },
+    {
+      "metric": "year.2026.opex.total",
+      "expected": 39000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "sum of 1 monthly value(s) 2026-01..2026-01"
+    },
+    {
+      "metric": "year.2026.operating_income",
+      "expected": 11800.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "sum of 1 monthly value(s) 2026-01..2026-01"
+    },
+    {
+      "metric": "year.2026.net_income.reported",
+      "expected": 11800.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "sum of 1 monthly value(s) 2026-01..2026-01"
+    },
+    {
+      "metric": "year.2026.gross_margin_pct",
+      "expected": 83.27868852459017,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "year gross_profit / year revenue x 100"
+    },
+    {
+      "metric": "year.2026.operating_margin_pct",
+      "expected": 19.34426229508197,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "year operating_income / year revenue x 100"
+    },
+    {
+      "metric": "revenue.total.start_to_end_abs",
+      "expected": 13000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "2026-01 61000.0 - 2025-01 48000.0"
+    },
+    {
+      "metric": "revenue.total.start_to_end_pct",
+      "expected": 27.083333333333332,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "revenue.total: (61000.0 - 48000.0) / 48000.0 x 100"
+    },
+    {
+      "metric": "cogs.total.start_to_end_abs",
+      "expected": 1200.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "2026-01 10200.0 - 2025-01 9000.0"
+    },
+    {
+      "metric": "cogs.total.start_to_end_pct",
+      "expected": 13.333333333333334,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "cogs.total: (10200.0 - 9000.0) / 9000.0 x 100"
+    },
+    {
+      "metric": "gross_profit.start_to_end_abs",
+      "expected": 11800.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "2026-01 50800.0 - 2025-01 39000.0"
+    },
+    {
+      "metric": "gross_profit.start_to_end_pct",
+      "expected": 30.256410256410255,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "gross_profit: (50800.0 - 39000.0) / 39000.0 x 100"
+    },
+    {
+      "metric": "opex.total.start_to_end_abs",
+      "expected": 4000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "2026-01 39000.0 - 2025-01 35000.0"
+    },
+    {
+      "metric": "opex.total.start_to_end_pct",
+      "expected": 11.428571428571429,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "opex.total: (39000.0 - 35000.0) / 35000.0 x 100"
+    },
+    {
+      "metric": "operating_income.start_to_end_abs",
+      "expected": 7800.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "2026-01 11800.0 - 2025-01 4000.0"
+    },
+    {
+      "metric": "operating_income.start_to_end_pct",
+      "expected": 195.0,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "operating_income: (11800.0 - 4000.0) / 4000.0 x 100"
+    },
+    {
+      "metric": "gross_margin_pct.start_to_end_pts",
+      "expected": 2.028688524590166,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "gross_margin_pct 2026-01 - 2025-01, in points"
+    },
+    {
+      "metric": "operating_margin_pct.start_to_end_pts",
+      "expected": 11.010928961748636,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "operating_margin_pct 2026-01 - 2025-01, in points"
+    },
+    {
+      "metric": "monthly.2025-01.revenue.total",
+      "expected": 48000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "revenue 2025-01"
+    },
+    {
+      "metric": "monthly.2025-02.revenue.total",
+      "expected": 49000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "revenue 2025-02"
+    },
+    {
+      "metric": "monthly.2025-03.revenue.total",
+      "expected": 50000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "revenue 2025-03"
+    },
+    {
+      "metric": "monthly.2025-04.revenue.total",
+      "expected": 51000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "revenue 2025-04"
+    },
+    {
+      "metric": "monthly.2025-05.revenue.total",
+      "expected": 52000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "revenue 2025-05"
+    },
+    {
+      "metric": "monthly.2025-06.revenue.total",
+      "expected": 53000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "revenue 2025-06"
+    },
+    {
+      "metric": "monthly.2025-07.revenue.total",
+      "expected": 54000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "revenue 2025-07"
+    },
+    {
+      "metric": "monthly.2025-08.revenue.total",
+      "expected": 55000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "revenue 2025-08"
+    },
+    {
+      "metric": "monthly.2025-09.revenue.total",
+      "expected": 56000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "revenue 2025-09"
+    },
+    {
+      "metric": "monthly.2025-10.revenue.total",
+      "expected": 57000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "revenue 2025-10"
+    },
+    {
+      "metric": "monthly.2025-11.revenue.total",
+      "expected": 58000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "revenue 2025-11"
+    },
+    {
+      "metric": "monthly.2025-12.revenue.total",
+      "expected": 59000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "revenue 2025-12"
+    },
+    {
+      "metric": "monthly.2026-01.revenue.total",
+      "expected": 61000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "revenue 2026-01"
+    }
+  ],
+  "unavailable": []
+}

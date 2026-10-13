@@ -234,7 +234,9 @@ def relative_path(path: str | Path, root: Path | None) -> str:
 class MetricsBuilder:
     def __init__(self, dataset: Dataset, config: ClientConfig, period: str,
                  validation: ValidationReport, reconciliation: ReconciliationReport,
-                 project_root: Path | None = None):
+                 project_root: Path | None = None,
+                 periods_elsewhere: dict[str, list[str]] | None = None,
+                 selection: dict | None = None):
         self.ds = dataset
         self.cfg = config
         self.period = period
@@ -253,6 +255,19 @@ class MetricsBuilder:
             self.sheet.period_keys(), period, config.ttm_months
         )
         self.ttm_complete = all(p in self.available for p in self.ttm_window)
+        #: Period -> other workbooks holding it. Only a file-aware run passes this, and it
+        #: is only ever used to say *why* a comparison is n/a; no value is read from it.
+        self.elsewhere = {p: names for p, names in (periods_elsewhere or {}).items()
+                          if p not in self.available}
+        self.selection = selection
+
+    def _other_file_note(self, period: str) -> str | None:
+        names = self.elsewhere.get(period)
+        if not names:
+            return None
+        return (f"Not available: prior period {period} is in a different file "
+                f"({', '.join(names)}). Only {Path(self.ds.source_path).name} is read; "
+                f"files are never combined.")
 
     # -- metric construction helpers --
 
@@ -288,21 +303,26 @@ class MetricsBuilder:
         rebuild the prior figure as `current - change`, which is arithmetic outside the
         engine and produces a number the guard cannot trace.
         """
+        elsewhere = self._other_file_note(self.prior) if prior_value is None else None
         if emit_prior:
             self._emit(f"{base_name}.prior", prior_value, unit, "prior_period_value_v1",
-                       None, None if prior_value is not None else "missing_input",
+                       None, None if prior_value is not None
+                       else ("in_other_file" if elsewhere else "missing_input"),
                        notes=[f"The {self.prior} value every change in {base_name} "
-                              f"is measured against."])
+                              f"is measured against."] + ([elsewhere] if elsewhere else []))
         if current is None or prior_value is None:
-            abs_change, abs_reason = None, "missing_input"
+            abs_change, abs_reason = None, "in_other_file" if elsewhere else "missing_input"
         else:
             abs_change, abs_reason = current - prior_value, None
         self._emit(f"{base_name}.mom_abs", abs_change, unit, "mom_abs_v1",
                    traces, abs_reason,
-                   notes=[f"Change from {self.prior} to {self.period}."])
+                   notes=[f"Change from {self.prior} to {self.period}."]
+                   + ([elsewhere] if elsewhere else []))
         pct, pct_reason = pct_change(current, prior_value)
+        if elsewhere:
+            pct_reason = "in_other_file"
         self._emit(f"{base_name}.mom_pct", pct, PERCENT, "mom_pct_v1", traces, pct_reason,
-                   notes=[_pct_note(pct_reason, self.prior, prior_value)])
+                   notes=[elsewhere or _pct_note(pct_reason, self.prior, prior_value)])
 
     def _emit_ttm(self, base_name: str, items: list[LineItem], method: str) -> None:
         if not self.ttm_complete:
@@ -925,12 +945,15 @@ class MetricsBuilder:
     def _emit_yoy(self, base_name: str, items: list[LineItem]) -> None:
         ya = year_ago(self.period)
         if ya not in self.available:
+            elsewhere = self._other_file_note(ya)
+            reason = "in_other_file" if elsewhere else "missing_input"
             self._emit(f"{base_name}.yoy_abs", None, CURRENCY, "yoy_abs_v1", [],
-                       "missing_input",
+                       reason,
                        notes=[f"{ya} is not in the source, so no year-on-year "
-                              f"comparison is available."])
+                              f"comparison is available."]
+                       + ([elsewhere] if elsewhere else []))
             self._emit(f"{base_name}.yoy_pct", None, PERCENT, "yoy_pct_v1", [],
-                       "missing_input")
+                       reason, notes=[elsewhere] if elsewhere else None)
             return
         current, traces, _ = sum_present(items, self.period)
         base, _, _ = sum_present(items, ya)
@@ -954,6 +977,14 @@ class MetricsBuilder:
                 f"so every trailing-twelve-month figure is blocked rather than computed "
                 f"over a shorter span."
             )
+            elsewhere = sorted(p for p in self.ttm_window if p in self.elsewhere)
+            if elsewhere:
+                names = sorted({n for p in elsewhere for n in self.elsewhere[p]})
+                self.limitations.append(
+                    f"{len(elsewhere)} month(s) of that window are in a different file "
+                    f"({', '.join(names)}): {', '.join(elsewhere)}. Files are never "
+                    f"combined, so they do not complete the window."
+                )
         if self.rec.failures:
             self.limitations.append(
                 f"{len(self.rec.failures)} reconciliation check(s) failed; metrics that "
@@ -1000,6 +1031,7 @@ class MetricsBuilder:
                 },
                 "periods_available": self.sheet.period_keys(),
                 "period_count": len(self.available),
+                **({"selection": self.selection} if self.selection else {}),
             },
             "ttm": {
                 "months": self.cfg.ttm_months,
@@ -1053,13 +1085,19 @@ def _pct_note(reason: str | None, base_period: str, base_value: float | None) ->
 
 
 def build_metrics(dataset: Dataset, config: ClientConfig, period: str,
-                  project_root: Path | None = None) -> dict:
+                  project_root: Path | None = None,
+                  periods_elsewhere: dict[str, list[str]] | None = None,
+                  selection: dict | None = None) -> dict:
     """Validate, reconcile and calculate. Returns the metrics.json document.
 
     `project_root` is used only to write source paths relative to it. It defaults to the
     working directory, which is the project root for every supported entry point.
+
+    `periods_elsewhere` and `selection` come from a file-aware run (`--file`, or a
+    workbook chosen by period). They only add notes and the `source.selection` block;
+    a run without them is unchanged.
     """
     validation = validate(dataset, config, period)
     reconciliation = reconcile(dataset, config)
     return MetricsBuilder(dataset, config, period, validation, reconciliation,
-                          project_root).build()
+                          project_root, periods_elsewhere, selection).build()

@@ -36,6 +36,9 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 import generate_synthetic as gen  # noqa: E402  (imports xlsx_builder only)
 
+sys.path.insert(0, str(ROOT))
+from evals.common import ensure_generated_workbooks, workbook_fingerprint  # noqa: E402
+
 CURRENCY_TOL = 0.01      # one cent: the engine's reconciliation tolerance
 PERCENT_TOL = 0.0005     # display is 1 dp; this is far tighter than that
 
@@ -440,6 +443,360 @@ def abc_expected(case: dict, subset: bool) -> dict:
     }
 
 
+# ---- test workbooks: year, whole file, file selection ----------------------------
+#
+# scripts/make_test_workbooks.py writes plain values (no formulas), so the cells are read
+# directly. Every rule below is written out from docs/metrics_schema.md, not imported:
+#
+# * Section membership is positional: the rows strictly between the config's header
+#   label and total label. A row with a number in any month is a line item.
+# * A section's month value is the sum of its line items' numeric cells; text or an empty
+#   cell is missing, never zero. No numeric cell at all -> no value.
+# * Gross profit = revenue - COGS; operating income = gross profit - opex; a margin needs
+#   revenue > 0. Categories: the config's match_exact, then match_contains, first match
+#   wins, else the fallback.
+# * A year total sums the months present; a month missing inside the year's span gives no
+#   total. A quarter needs all three months. Year on year needs every month present this
+#   year to be present the year before. Percentages need a strictly positive base.
+
+MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
+               "Nov", "Dec"]
+
+
+def _num(v):
+    return float(v) if isinstance(v, (int, float)) and not isinstance(v, bool) else None
+
+
+class Book:
+    """One income statement read with openpyxl: rows, month columns and sections."""
+
+    def __init__(self, path: Path, cfg: dict):
+        self.cfg = cfg
+        spec = cfg["sheets"]["income_statement"]
+        wb = openpyxl.load_workbook(path, data_only=True, read_only=True)
+        rows = [list(r) for r in wb[spec["name"]].iter_rows(values_only=True)]
+        header = rows[int(spec["header_row"]) - 1]
+        self.cols = {}
+        for c, v in enumerate(header):
+            m = re.fullmatch(r"([A-Z][a-z]{2}) (\d{4})", str(v or "").strip())
+            if m:
+                self.cols[f"{m.group(2)}-{MONTH_NAMES.index(m.group(1)) + 1:02d}"] = c
+        self.months = sorted(self.cols)
+        self.rows = []                       # (row number, label, raw cells by month)
+        for i, r in enumerate(rows[int(spec["header_row"]):], start=int(spec["header_row"]) + 1):
+            label = next((str(x).strip() for x in r[:2] if isinstance(x, str) and x.strip()),
+                         None)
+            if label:
+                self.rows.append((i, label, {k: r[c] if c < len(r) else None
+                                             for k, c in self.cols.items()}))
+        self.number = {lbl: n for n, lbl, _ in self.rows}
+
+    def section_items(self, key: str) -> list[tuple[int, str, dict]]:
+        sec = next(s for s in self.cfg["income_statement"]["sections"] if s["key"] == key)
+        top, bottom = self.number[sec["header_label"]], self.number[sec["total_label"]]
+        return [(n, lbl, cells) for n, lbl, cells in self.rows
+                if top < n < bottom and any(_num(v) is not None for v in cells.values())]
+
+    def category(self, label: str) -> str:
+        text = label.casefold()
+        rules = self.cfg.get("opex_categories") or []
+        for rule in rules:
+            if any(text == str(x).casefold() for x in rule.get("match_exact") or []):
+                return rule["name"]
+        for rule in rules:
+            if any(str(x).casefold() in text for x in rule.get("match_contains") or []):
+                return rule["name"]
+        return self.cfg.get("fallback_opex_category", "Other Operating Expenses")
+
+    def month(self, key: str) -> dict:
+        """Every figure for one month, by metric name. None means no value."""
+        def total(items):
+            vals = [_num(cells.get(key)) for _, _, cells in items]
+            vals = [v for v in vals if v is not None]
+            return sum(vals) if vals else None
+        out = {}
+        rev_items, cogs_items, opex_items = (self.section_items(s)
+                                             for s in ("revenue", "cogs", "opex"))
+        out["revenue.total"] = total(rev_items)
+        for _, lbl, cells in rev_items:
+            out[f"revenue.stream.{slug(lbl)}"] = _num(cells.get(key))
+        out["cogs.total"] = total(cogs_items)
+        out["opex.total"] = total(opex_items)
+        cats: dict[str, list] = {}
+        for item in opex_items:
+            cats.setdefault(self.category(item[1]), []).append(item)
+        for name, items in cats.items():
+            out[f"opex.category.{slug(name)}"] = total(items)
+        r, c, o = out["revenue.total"], out["cogs.total"], out["opex.total"]
+        out["gross_profit"] = None if r is None or c is None else r - c
+        g = out["gross_profit"]
+        out["operating_income"] = None if g is None or o is None else g - o
+        for margin, num in (("gross_margin_pct", "gross_profit"),
+                            ("operating_margin_pct", "operating_income")):
+            out[margin] = (out[num] / r * 100 if r and r > 0 and out[num] is not None
+                           else None)
+        ni = self.cfg["income_statement"].get("reported_lines", {}).get("net_income")
+        if ni in self.number:
+            cells = next(c for n, lbl, c in self.rows if lbl == ni)
+            out["net_income.reported"] = _num(cells.get(key))
+        return out
+
+
+HEADLINE5 = ["revenue.total", "cogs.total", "gross_profit", "opex.total", "operating_income"]
+MARGIN_NUM = {"gross_margin_pct": "gross_profit", "operating_margin_pct": "operating_income"}
+
+
+def _year_cov(year: int, months: list[str]) -> dict:
+    present = [p for p in months if p.startswith(f"{year}-")]
+    inside = [f"{year}-{m:02d}" for m in range(1, 13)
+              if present and present[0] <= f"{year}-{m:02d}" <= present[-1]]
+    gaps = [p for p in inside if p not in present]
+    n = len(present)
+    if n == 12:
+        status, label = "complete", "full year, 12 of 12 months"
+    elif gaps:
+        status, label = "partial", (f"incomplete year, {n} of 12 months, with "
+                                    f"{', '.join(gaps)} missing inside it")
+    elif present[0].endswith("-01"):
+        status, label = "partial", f"year to date, {n} of 12 months"
+    else:
+        status, label = "partial", f"partial year, {n} of 12 months ({present[0]} to {present[-1]})"
+    return {"present": present, "gaps": gaps, "status": status, "label": label}
+
+
+def _year_totals(e: Expect, fig: dict, months: list[str], year: int, prefix: str,
+                 detail: bool) -> None:
+    cov = _year_cov(year, months)
+    names = list(HEADLINE5) + (["net_income.reported"]
+                               if "net_income.reported" in fig[months[0]] else [])
+    if detail:
+        names += sorted({k for p in cov["present"] for k in fig[p]
+                         if k.startswith(("revenue.stream.", "opex.category."))})
+    if cov["gaps"]:
+        for name in names + list(MARGIN_NUM):
+            e.na(prefix + name, "missing_month_in_span",
+                 f"{', '.join(cov['gaps'])} missing inside {year}: no total")
+        return
+    for name in names:
+        vals = [fig[p].get(name) for p in cov["present"]]
+        if any(v is None for v in vals):
+            e.na(prefix + name, "missing_input", "a month has no value")
+            continue
+        e.value(prefix + name, sum(vals),
+                f"sum of {len(vals)} monthly value(s) {cov['present'][0]}..{cov['present'][-1]}")
+    rev = sum(fig[p]["revenue.total"] for p in cov["present"])
+    for margin, num in MARGIN_NUM.items():
+        top = sum(fig[p][num] for p in cov["present"])
+        e.value(prefix + margin, top / rev * 100, f"year {num} / year revenue x 100",
+                "percent")
+
+
+def test_workbook_expected(case: dict) -> dict:
+    inp, eng = case["input"], case.get("engine") or {}
+    cfg = yaml.safe_load((ROOT / "config" / "clients" / f"{inp['client_id']}.yaml")
+                         .read_text(encoding="utf-8"))
+    book = Book(ROOT / inp["workbook"], cfg)
+    months, e = book.months, Expect()
+    fig = {p: book.month(p) for p in months}
+    scope = inp.get("scope", "month")
+    out: dict = {"source": ("cells of the generated test workbook, read with openpyxl by "
+                            "evals/tools/build_expected.py; rules written out there")}
+
+    if scope == "month":
+        _month_values(e, fig, months, inp["period"], others=_other_books(case, cfg))
+        out["ttm"] = {"complete": all(k in months for k in window_of(inp["period"])),
+                      "window": window_of(inp["period"])}
+    elif scope == "year":
+        year = int(inp["year"])
+        cov = _year_cov(year, months)
+        _year_totals(e, fig, months, year, "", detail=True)
+        for q in range(1, 5):
+            qm = [f"{year}-{m:02d}" for m in range(3 * q - 2, 3 * q + 1)]
+            for name in HEADLINE5:
+                if all(p in months for p in qm):
+                    e.value(f"{name}.q{q}", sum(fig[p][name] for p in qm),
+                            f"Q{q}: sum of {qm[0]}..{qm[-1]}")
+                else:
+                    e.na(f"{name}.q{q}", "incomplete_quarter",
+                         f"Q{q} lacks {[p for p in qm if p not in months]}")
+        prior = [f"{year - 1}-{p[5:]}" for p in cov["present"]]
+        comparable = not cov["gaps"] and all(p in months for p in prior)
+        for name in HEADLINE5:
+            if comparable:
+                cur = sum(fig[p][name] for p in cov["present"])
+                base = sum(fig[p][name] for p in prior)
+                e.value(f"{name}.prior_year", base, f"same months of {year - 1}")
+                e.value(f"{name}.yoy_abs", cur - base, f"{cur} - {base}")
+                e.pct(f"{name}.yoy_pct", cur, base, name, f"{year - 1} same months")
+            else:
+                reason = "missing_month_in_span" if cov["gaps"] else "not_comparable"
+                for suffix in ("yoy_abs", "yoy_pct", "prior_year"):
+                    e.na(f"{name}.{suffix}", reason,
+                         "a month missing inside the year" if cov["gaps"]
+                         else f"prior-year months {prior} not all in the file")
+        for p in cov["present"]:
+            for name in ("revenue.total", "opex.total", "operating_income",
+                         "gross_margin_pct"):
+                e.value(f"monthly.{p}.{name}", fig[p][name], f"{name} for {p}",
+                        "percent" if name.endswith("_pct") else "currency")
+        e.value("coverage.months_present", float(len(cov["present"])), "months present")
+        out["coverage"] = {"status": cov["status"], "label": cov["label"],
+                           "months_present_count": len(cov["present"]),
+                           "gaps_inside_span": cov["gaps"]}
+        out["doc_fields"] = _extreme_fields(fig, cov["present"])
+    else:
+        first, last = months[0], months[-1]
+        for year in sorted({int(p[:4]) for p in months}):
+            _year_totals(e, fig, months, year, f"year.{year}.", detail=False)
+        for name in HEADLINE5:
+            a, b = fig[first][name], fig[last][name]
+            e.value(f"{name}.start_to_end_abs", b - a, f"{last} {b} - {first} {a}")
+            e.pct(f"{name}.start_to_end_pct", b, a, name, first)
+        for margin in MARGIN_NUM:
+            e.value(f"{margin}.start_to_end_pts", fig[last][margin] - fig[first][margin],
+                    f"{margin} {last} - {first}, in points", "percent")
+        for p in months:
+            e.value(f"monthly.{p}.revenue.total", fig[p]["revenue.total"], f"revenue {p}")
+        spanned = (int(last[:4]) - int(first[:4])) * 12 + int(last[5:]) - int(first[5:]) + 1
+        out["coverage"] = {"first": first, "last": last, "months_present_count": len(months),
+                           "calendar_months_spanned": spanned, "gaps": [
+                               k for k in _month_range(first, last) if k not in months]}
+        out["doc_fields"] = _extreme_fields(fig, months)
+    if eng.get("cross_check"):
+        _cross_check(e, eng["cross_check"])
+    cells = _span_cell_warnings(book, inp, cfg, scope)
+    if cells and any(cells["expected"].values()):
+        out["cell_warnings"] = cells
+    out.update({"values": e.values, "unavailable": e.unavailable})
+    out.update(_extra_runs_expected(case, cfg))
+    return out
+
+
+def _month_range(first: str, last: str) -> list[str]:
+    out, key = [], first
+    while key <= last:
+        out.append(key)
+        y, m = int(key[:4]), int(key[5:])
+        key = f"{y + (m == 12):04d}-{m % 12 + 1:02d}"
+    return out
+
+
+def _extreme_fields(fig: dict, months: list[str]) -> list[dict]:
+    """The highest and lowest month, ties to the earliest, as doc paths to check."""
+    fields = []
+    for name in ("revenue.total", "operating_income"):
+        have = [(p, fig[p][name]) for p in months if fig[p][name] is not None]
+        hi = sorted(have, key=lambda c: (-c[1], c[0]))[0]
+        lo = sorted(have, key=lambda c: (c[1], c[0]))[0]
+        fields += [{"path": ["extremes", name, "highest", "period"], "expected": hi[0]},
+                   {"path": ["extremes", name, "highest", "value"], "expected": hi[1]},
+                   {"path": ["extremes", name, "lowest", "period"], "expected": lo[0]},
+                   {"path": ["extremes", name, "lowest", "value"], "expected": lo[1]}]
+    return fields
+
+
+def _cross_check(e: Expect, want: dict) -> None:
+    """Refuse to write expected values that disagree with the case's stated figures."""
+    got = {v["metric"]: v["expected"] for v in e.values}
+    for metric, value in want.items():
+        if abs(got.get(metric, float("nan")) - value) > CURRENCY_TOL:
+            raise SystemExit(f"cross-check failed: {metric} = {got.get(metric)}, "
+                             f"case.yaml says {value}")
+
+
+def _other_books(case: dict, cfg: dict) -> dict:
+    """Other workbooks in the case's client folder: name -> months. Only for notes."""
+    out = {}
+    for rel in case["input"].get("other_workbooks") or []:
+        out[Path(rel).name] = Book(ROOT / rel, cfg).months
+    return out
+
+
+def _month_values(e: Expect, fig: dict, months: list[str], period: str,
+                  others: dict) -> None:
+    """One month's headline figures and their month-over-month changes."""
+    cur, prev_key = fig[period], prior_of(period)
+    for name in HEADLINE5 + ["gross_margin_pct", "operating_margin_pct"]:
+        e.value(name, cur[name], f"{name} for {period}",
+                "percent" if name.endswith("_pct") else "currency")
+    for name in [k for k in cur if k.startswith("revenue.stream.")]:
+        e.value(name, cur[name], f"{name} for {period}")
+    if prev_key in months:
+        for name in HEADLINE5:
+            e.change(name, cur[name], fig[prev_key][name], name, prev_key)
+    else:
+        elsewhere = [n for n, ms in others.items() if prev_key in ms]
+        reason = "in_other_file" if elsewhere else "missing_input"
+        for name in HEADLINE5:
+            for suffix in ("mom_abs", "mom_pct", "prior"):
+                e.na(f"{name}.{suffix}", reason,
+                     f"{prev_key} is " + (f"only in {elsewhere}" if elsewhere
+                                          else "not in the source"))
+
+
+def _extra_runs_expected(case: dict, cfg: dict) -> dict:
+    """Expected values for a case's extra CLI runs that read a named workbook."""
+    runs = {}
+    for run in (case.get("engine") or {}).get("extra_runs", []):
+        if not run.get("expect_from"):
+            continue
+        book = Book(ROOT / run["expect_from"], cfg)
+        fig = {p: book.month(p) for p in book.months}
+        e = Expect()
+        others = {Path(rel).name: Book(ROOT / rel, cfg).months
+                  for rel in [case["input"]["workbook"],
+                              *(case["input"].get("other_workbooks") or [])]
+                  if Path(rel).name != Path(run["expect_from"]).name}
+        _month_values(e, fig, book.months, run["period"], others)
+        runs[run["id"]] = {"workbook": run["expect_from"], "values": e.values,
+                           "unavailable": e.unavailable}
+    out = {}
+    if runs:
+        out["extra_runs"] = runs
+    others = case["input"].get("other_workbooks") or []
+    if others:
+        out["other_inputs_content_sha256"] = {rel: workbook_fingerprint(ROOT / rel)
+                                              for rel in others}
+    return out
+
+
+def _span_cell_warnings(book: Book, inp: dict, cfg: dict, scope: str) -> dict | None:
+    """Cell-level warnings over the months a year or whole-file run covers."""
+    if scope == "month":
+        return None
+    enabled = _enabled_cell_checks(inp["client_id"])
+    keys = book.months
+    span = [p for p in keys if scope == "all" or p.startswith(f"{inp['year']}-")]
+    expected_negative = {str(x).casefold() for x in cfg.get("expected_negative_lines") or []}
+    sheet = cfg["sheets"]["income_statement"]["name"]
+    found: dict[str, list[dict]] = {code: [] for code, on in enabled.items() if on}
+
+    def entry(n, lbl, key, raw):
+        return {"sheet": sheet,
+                "cell": f"{openpyxl.utils.get_column_letter(book.cols[key] + 1)}{n}",
+                "label": lbl, "period": key, "raw_value": raw}
+
+    for section in ("revenue", "cogs", "opex"):
+        for n, lbl, cells in book.section_items(section):
+            for i, key in enumerate(keys):
+                if key not in span:
+                    continue
+                v = cells.get(key)
+                if "non_numeric_cell" in found and isinstance(v, str) and v.strip():
+                    found["non_numeric_cell"].append(entry(n, lbl, key, v.strip()))
+                if ("blank_cell" in found and v is None and 0 < i < len(keys) - 1
+                        and _num(cells.get(keys[i - 1])) is not None
+                        and _num(cells.get(keys[i + 1])) is not None):
+                    found["blank_cell"].append(entry(n, lbl, key, None))
+                if ("negative_line_item" in found and _num(v) is not None and _num(v) < 0
+                        and lbl.casefold() not in expected_negative):
+                    found["negative_line_item"].append(entry(n, lbl, key, _num(v)))
+    return {"derivation": ("workbook cells read with openpyxl over the months the scope "
+                           "covers; the config's data_quality.cell_checks over the "
+                           "documented defaults"),
+            "enabled": enabled, "expected": found}
+
+
 # ---- driver -------------------------------------------------------------
 
 def build(case_dir: Path) -> dict | None:
@@ -451,17 +808,24 @@ def build(case_dir: Path) -> dict | None:
     if not path.exists():
         print(f"  {case['id']}: SKIPPED, workbook not present at {path}")
         return None
-    if case.get("synthetic"):
+    generated = case.get("builder") == "test_workbook"
+    if case.get("builder") == "test_workbook":
+        body = test_workbook_expected(case)
+    elif case.get("synthetic"):
         body = synthetic_expected(inp["client_id"], inp["period"])
     else:
         body = abc_expected(case, subset=case["id"].startswith("13_"))
     out = {
         "case_id": case["id"],
         "client_id": inp["client_id"],
-        "period": inp["period"],
+        **({"period": inp["period"]} if "period" in inp else {}),
+        **({"scope": inp["scope"]} if "scope" in inp else {}),
+        **({"year": inp["year"]} if "year" in inp else {}),
         "generated_by": "evals/tools/build_expected.py",
         "independent_of_engine": True,
-        "input_sha256": sha256(path),
+        # A generated workbook's bytes carry a creation time; its cells do not.
+        **({"input_content_sha256": workbook_fingerprint(path)} if generated
+           else {"input_sha256": sha256(path)}),
         **body,
     }
     (case_dir / "expected.json").write_text(json.dumps(out, indent=2) + "\n",
@@ -472,6 +836,7 @@ def build(case_dir: Path) -> dict | None:
 
 
 def main(argv: list[str]) -> int:
+    ensure_generated_workbooks()
     dirs = sorted(p for p in CASES.iterdir() if (p / "case.yaml").exists())
     if argv:
         dirs = [d for d in dirs if any(d.name.startswith(a) for a in argv)]

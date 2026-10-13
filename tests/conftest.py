@@ -1,6 +1,7 @@
 """Shared fixtures. ABC fixtures are session-scoped because reading the workbook twice
 with openpyxl is the slowest thing in the suite."""
 
+import sys
 from pathlib import Path
 
 import pytest
@@ -11,6 +12,19 @@ from finance_engine.sources.excel import ExcelSource
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 ABC_PERIOD = "2026-06"
+
+
+@pytest.fixture(scope="session", autouse=True)
+def generated_test_workbooks():
+    """Write any missing workbook that scripts/make_test_workbooks.py generates.
+
+    data/clients/ is git-ignored, so on a fresh clone the test_clean, test_errors and
+    test_multi workbooks do not exist and the tests and golden cases that read them would
+    skip. Existing files are never touched.
+    """
+    sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
+    import make_test_workbooks
+    return make_test_workbooks.ensure(PROJECT_ROOT)
 
 
 @pytest.fixture(scope="session")

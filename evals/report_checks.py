@@ -4,7 +4,8 @@ The checks know nothing about who wrote the report. The same function grades a r
 Claude wrote through the skill and one the deterministic template wrote, so the template
 is the control: a check the template fails is a broken check, not a bad model.
 
-Generic checks (every report):
+Generic checks (every report; year and whole-file reports use their own section list,
+`SPAN_SECTIONS`, and skip the TTM checks, since they have no trailing window):
   guard, required_sections, issues_shown_early, draft_label, provider_label,
   reviewer_checklist, causal_language_hedged, causal_words_outside_questions,
   cause_vocabulary_hedged,
@@ -116,6 +117,39 @@ SECTIONS = {
 }
 GENERIC_SECTIONS = [k for k in SECTIONS if k != "balance_sheet"]
 
+#: Year and whole-file reports (`--scope year`, `--scope all`). Month reports never use
+#: these: their documents carry no `scope` key.
+SPAN_SECTIONS = {
+    "year": {
+        "data_quality": r"data quality",
+        "coverage": r"^coverage\b",
+        "revenue": r"^revenue\b",
+        "margins": r"^margins?\b",
+        "operating_expenses": r"^operating expenses",
+        "quarters": r"^quarters\b",
+        "year_on_year": r"^year on year\b",
+        "monthly_table": r"^monthly table\b",
+        "extremes": r"^best and worst months",
+        "reconciliation": r"^reconciliation\b",
+        "limitations": r"limitations",
+        "reviewer_checklist": r"^reviewer checklist",
+    },
+    "all": {
+        "data_quality": r"data quality",
+        "coverage": r"^coverage\b",
+        "calendar_years": r"^calendar years",
+        "start_to_end": r"^first month to last month",
+        "monthly_series": r"^monthly series",
+        "seasonality": r"^seasonality",
+        "reconciliation": r"^reconciliation\b",
+        "limitations": r"limitations",
+        "reviewer_checklist": r"^reviewer checklist",
+    },
+}
+#: The first figures section: data-quality codes must appear before it.
+FIRST_FIGURES = {"month": SECTIONS["revenue"], "year": r"^revenue\b",
+                 "all": r"^calendar years"}
+
 PROVIDER_LABEL = {
     "skill": r"Claude Code|monthly-financial-analysis",
     "deterministic": r"`deterministic` commentary provider|deterministic",
@@ -194,13 +228,17 @@ def check_report(text: str, doc: dict, case: dict, provider: str,
 
     # Completeness: sections, in the right order for data quality.
     heads = headings(body)
-    wanted = GENERIC_SECTIONS + list(skill_spec.get("required_sections_extra", []))
+    scope = doc.get("scope", "month")
+    sections = SPAN_SECTIONS.get(scope, SECTIONS)
+    wanted = (list(sections) if scope in SPAN_SECTIONS else GENERIC_SECTIONS) \
+        + list(skill_spec.get("required_sections_extra", []))
     for key in wanted:
-        found = any(re.search(SECTIONS[key], h, re.I) for _, h in heads)
+        found = any(re.search(sections[key], h, re.I) for _, h in heads)
         add(f"section:{key}", found, "present" if found else
-            f"no heading matching {SECTIONS[key]!r}")
+            f"no heading matching {sections[key]!r}")
 
-    revenue_pos = next((pos for pos, h in heads if re.search(SECTIONS["revenue"], h, re.I)),
+    revenue_pos = next((pos for pos, h in heads
+                        if re.search(FIRST_FIGURES.get(scope, SECTIONS["revenue"]), h, re.I)),
                        len(body))
     codes = [i["code"] for i in doc.get("data_quality_issues", [])]
     for code in codes:
@@ -259,7 +297,7 @@ def check_report(text: str, doc: dict, case: dict, provider: str,
         add("reviewer_questions_label_figures", not unlabelled,
             "every figure in the reviewer questions needs 'change' or 'level' before it: "
             + ", ".join(unlabelled[:6]) if unlabelled else "")
-    if not (doc.get("ttm") or {}).get("complete"):
+    if scope not in SPAN_SECTIONS and not (doc.get("ttm") or {}).get("complete"):
         bad = [u for u in all_units
                if TTM_TERM.search(u) and CURRENCY_AMOUNT.search(u) and not TTM_NA.search(u)]
         add("ttm_incomplete_no_figures", not bad, _show(bad))

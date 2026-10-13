@@ -229,6 +229,112 @@ SMALL_CONFIG = {
 }
 
 
+#: Plain-value monthly workbooks (no formulas), for tests that need many months or several
+#: files. Each month's figures depend only on the month, so the same month carries the
+#: same numbers in every file that holds it:
+#:   Sales    = 1000 + 10 x (months since Jan 2025)     Services = 200
+#:   Hosting  = 100                                     Payroll  = 300     Rent = 50
+#: so revenue = 1200 + 10n, COGS = 100, gross profit = 1100 + 10n, opex = 350,
+#: operating income = 750 + 10n, where n is months since Jan 2025.
+MONTHLY_CONFIG = {
+    "client_id": "multi_co",
+    "company_name": "Multi Co",
+    "currency": "USD",
+    "currency_symbol": "$",
+    "units_scale": 1,
+    "source": {"type": "excel"},
+    "sheets": {"income_statement": {
+        "name": "Income Statement", "header_row": 5, "label_columns": ["A", "B"],
+        "first_data_column": "C", "date_order": "newest_first",
+        "date_formats": ["%b %Y"]}},
+    "income_statement": {
+        "sections": [
+            {"key": "revenue", "header_label": "Income", "total_label": "Total Income"},
+            {"key": "cogs", "header_label": "Cost of Goods Sold",
+             "total_label": "Total Cost of Goods Sold"},
+            {"key": "opex", "header_label": "Operating Expenses",
+             "total_label": "Total Operating Expenses", "subtotal_groups": []},
+        ],
+        "reported_lines": {"gross_profit": "Gross Profit",
+                           "operating_income": "Operating Income",
+                           "net_income": "Net Income"},
+    },
+    "opex_categories": [{"name": "People", "match_contains": ["payroll"]},
+                        {"name": "Occupancy", "match_contains": ["rent"]}],
+    "fallback_opex_category": "Other Operating Expenses",
+    "reconciliation": {"tolerance_abs": 0.01},
+    "classification_notes": [],
+    "ttm": {"months": 12},
+}
+
+
+def monthly_values(key: str) -> dict[str, float]:
+    """The figures `build_monthly_workbook` writes for one month, by hand."""
+    year, month = int(key[:4]), int(key[5:])
+    n = (year - 2025) * 12 + (month - 1)
+    sales, services, hosting, payroll, rent = 1000.0 + 10 * n, 200.0, 100.0, 300.0, 50.0
+    revenue = sales + services
+    gross = revenue - hosting
+    opex = payroll + rent
+    return {"Sales": sales, "Services": services, "Total Income": revenue,
+            "Hosting": hosting, "Total Cost of Goods Sold": hosting,
+            "Gross Profit": gross, "Payroll": payroll, "Rent": rent,
+            "Total Operating Expenses": opex, "Operating Income": gross - opex,
+            "Net Income": gross - opex}
+
+
+def build_monthly_workbook(path: Path, months: list[str],
+                           overrides: dict[tuple[str, str], object] | None = None) -> Path:
+    """An income statement holding exactly `months` (YYYY-MM), newest first.
+
+    `overrides` maps (label, month) to a replacement cell value: a number, text, or None
+    for a genuinely empty cell. Totals are not recomputed, as a careless edit would not.
+    """
+    import calendar
+    overrides = overrides or {}
+    ordered = sorted(months, reverse=True)
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Income Statement"
+    ws["A1"] = "Multi Co"
+    ws["A2"] = "Income Statement"
+    for j, key in enumerate(ordered):
+        ws.cell(5, 3 + j, f"{calendar.month_abbr[int(key[5:])]} {key[:4]}")
+    layout = [("A", "Income"), ("B", "Sales"), ("B", "Services"), ("A", "Total Income"),
+              None, ("A", "Cost of Goods Sold"), ("B", "Hosting"),
+              ("A", "Total Cost of Goods Sold"), None, ("A", "Gross Profit"), None,
+              ("A", "Operating Expenses"), ("B", "Payroll"), ("B", "Rent"),
+              ("A", "Total Operating Expenses"), None, ("A", "Operating Income"),
+              ("A", "Net Income")]
+    headers = {"Income", "Cost of Goods Sold", "Operating Expenses"}
+    row = 6
+    for entry in layout:
+        if entry is not None:
+            col, label = entry
+            ws[f"{col}{row}"] = label
+            if label not in headers:
+                for j, key in enumerate(ordered):
+                    value = overrides.get((label, key), monthly_values(key)[label])
+                    ws.cell(row, 3 + j, value)
+        row += 1
+    wb.save(path)
+    return Path(path)
+
+
+def write_monthly_config(dir_path: Path, client_id: str = "multi_co",
+                         overrides: dict | None = None) -> Path:
+    import copy
+
+    cfg = copy.deepcopy(MONTHLY_CONFIG)
+    cfg["client_id"] = client_id
+    if overrides:
+        _deep_update(cfg, overrides)
+    dir_path.mkdir(parents=True, exist_ok=True)
+    path = dir_path / f"{client_id}.yaml"
+    path.write_text(yaml.safe_dump(cfg, sort_keys=False), encoding="utf-8")
+    return path
+
+
 def write_small_config(dir_path: Path, overrides: dict | None = None,
                        client_id: str = "tiny_co") -> Path:
     import copy

@@ -41,6 +41,20 @@ redirect URI. Allow 5 minutes. Do not leave this to the last minute.
 About 25 minutes of demo, leaving time for questions. Run step 6b **after** step 2: it
 overwrites `report.md` with the template version.
 
+If asked about years, the whole file or several workbooks: `python -m finance_engine report
+--client test_clean --scope year --year 2025` (or `--scope all`), and
+`python -m finance_engine list-periods --client test_multi`.
+
+**`--file` or `--workbook`?** Both name the workbook to read. `analyze`, `report`,
+`brief` and `list-periods` accept either. `check-commentary` accepts only `--workbook`,
+because its `--file` was already the commentary being checked, and that meaning is kept:
+
+```bash
+python -m finance_engine analyze --client test_multi --period 2025-06 --file test_multi_second_half.xlsx
+python -m finance_engine check-commentary --client test_multi --period 2025-06 \
+    --workbook test_multi_second_half.xlsx --file report.md
+```
+
 ## If something fails live: backups
 
 Say plainly which is a backup. Files are in `demo_backup/` (see its README).
@@ -96,5 +110,5 @@ Each was done once for real on 2026-10-11, then reverted with Git. Revert with
 - **Run:** `python -m finance_engine list-periods --client company_k_demo`, then
   `python -m finance_engine report --client company_k_demo --period 2026-06`, then
   `python evals/run_engine_evals.py`.
-- **Expect:** 18 months, reconciliation 108/108, guard PASS, and all 13 engine cases still pass.
+- **Expect:** 18 months, reconciliation 108/108, guard PASS, and all 18 engine cases still pass.
 - **Recorded:** done; the file and its output folder were deleted.

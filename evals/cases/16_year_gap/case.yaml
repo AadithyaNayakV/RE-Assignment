@@ -1,0 +1,58 @@
+id: 16_year_gap
+title: A month missing inside the year (test_errors, 2025)
+synthetic: true
+builder: test_workbook
+input:
+  client_id: test_errors
+  scope: year
+  year: 2025
+  workbook: data/clients/test_errors/source/test_with_errors.xlsx
+  config: config/clients/test_errors.yaml
+why: >
+  June 2025 has no column, inside a January-December span. That is a gap, not a short
+  year: every 2025 total and the year-on-year comparison are n/a through the
+  year_months_missing error, never summed over the eleven months that remain. Q1, Q3 and
+  Q4 still compute (Q1 revenue 48,000 + 49,000 + 50,000 = 147,000); Q2 is incomplete. The
+  planted problems that fall in 2025 are reported: Marketing "n/a" in Oct 2025, Rent blank
+  in Nov 2025, the Total Income row off by 5,000 in Aug 2025. Bad Debts -1,500 is Jan 2026,
+  outside the year, so negative_line_item must not appear. SKIPPED where absent.
+
+engine:
+  exit_code: 2
+  scope: year
+  reconciliation_passed: false
+  required_codes: [year_months_missing, non_numeric_cell, blank_cell]
+  forbidden_codes: [negative_line_item]
+  issue_details:
+    year_months_missing: {missing: ["2025-06"], year: 2025}
+  validation_status:
+    blocked: [revenue.total, cogs.total, gross_profit, opex.total, operating_income,
+              gross_margin_pct, operating_margin_pct, revenue.total.yoy_abs]
+    ok: [revenue.total.q1]
+
+skill:
+  run: true
+  prompt: Use the monthly-financial-analysis skill for client test_errors, calendar year 2025 (scope year).
+  required_figures: [revenue.total.q1, revenue.total.q3]
+  required_flags:
+    - id: gap_named
+      description: Names June 2025 as missing inside the year.
+      pattern: '(2025-06|Jun(e)? 2025)[^\n]{0,80}missing|missing[^\n]{0,80}(2025-06|Jun(e)? 2025)'
+    - id: totals_not_available
+      description: Says the year totals are not available.
+      pattern: 'totals?[^\n]{0,60}(not available|n/a)'
+    - id: year_months_missing_code
+      description: Shows the blocking error by its code.
+      pattern: 'year_months_missing'
+  forbidden_claims:
+    - id: stated_year_total
+      description: No 2025 revenue total is stated.
+      pattern: 'total revenue (for 2025 |in 2025 )?(was|of) [$]'
+    - id: causal_wording
+      description: States no cause for any movement.
+      pattern: '\b(because|due to|driven by|caused by)\b'
+
+pass_criteria: >
+  Level 1: totals n/a with missing_month_in_span and blocked, June named in the error,
+  complete quarters computed, the 2025 cell warnings and reconciliation failures present,
+  no 2026 issue. Level 2: guard PASS, the gap named, no total stated.

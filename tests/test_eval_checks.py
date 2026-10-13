@@ -156,9 +156,9 @@ class TestEachCheckCatchesItsFault:
 
 
 class TestCasesAreWellFormed:
-    def test_thirteen_cases_each_with_criteria(self):
+    def test_eighteen_cases_each_with_criteria(self):
         cases = load_cases()
-        assert len(cases) == 13
+        assert len(cases) == 18
         for case in cases:
             assert case["pass_criteria"] and case["why"], case["id"]
             assert case.get("engine") and case.get("skill"), case["id"]

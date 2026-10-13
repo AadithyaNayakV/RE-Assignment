@@ -1,0 +1,720 @@
+{
+  "case_id": "16_year_gap",
+  "client_id": "test_errors",
+  "scope": "year",
+  "year": 2025,
+  "generated_by": "evals/tools/build_expected.py",
+  "independent_of_engine": true,
+  "input_content_sha256": "84303d8ab14ca2150a72229eabc2629cddbdf7e2bd330f3f26c4e8fca9574815",
+  "source": "cells of the generated test workbook, read with openpyxl by evals/tools/build_expected.py; rules written out there",
+  "coverage": {
+    "status": "partial",
+    "label": "incomplete year, 11 of 12 months, with 2025-06 missing inside it",
+    "months_present_count": 11,
+    "gaps_inside_span": [
+      "2025-06"
+    ]
+  },
+  "doc_fields": [
+    {
+      "path": [
+        "extremes",
+        "revenue.total",
+        "highest",
+        "period"
+      ],
+      "expected": "2025-11"
+    },
+    {
+      "path": [
+        "extremes",
+        "revenue.total",
+        "highest",
+        "value"
+      ],
+      "expected": 58000.0
+    },
+    {
+      "path": [
+        "extremes",
+        "revenue.total",
+        "lowest",
+        "period"
+      ],
+      "expected": "2025-01"
+    },
+    {
+      "path": [
+        "extremes",
+        "revenue.total",
+        "lowest",
+        "value"
+      ],
+      "expected": 48000.0
+    },
+    {
+      "path": [
+        "extremes",
+        "operating_income",
+        "highest",
+        "period"
+      ],
+      "expected": "2025-10"
+    },
+    {
+      "path": [
+        "extremes",
+        "operating_income",
+        "highest",
+        "value"
+      ],
+      "expected": 16100.0
+    },
+    {
+      "path": [
+        "extremes",
+        "operating_income",
+        "lowest",
+        "period"
+      ],
+      "expected": "2025-01"
+    },
+    {
+      "path": [
+        "extremes",
+        "operating_income",
+        "lowest",
+        "value"
+      ],
+      "expected": 4000.0
+    }
+  ],
+  "cell_warnings": {
+    "derivation": "workbook cells read with openpyxl over the months the scope covers; the config's data_quality.cell_checks over the documented defaults",
+    "enabled": {
+      "non_numeric_cell": true,
+      "blank_cell": true,
+      "negative_line_item": true
+    },
+    "expected": {
+      "non_numeric_cell": [
+        {
+          "sheet": "Income Statement",
+          "cell": "F20",
+          "label": "Marketing",
+          "period": "2025-10",
+          "raw_value": "n/a"
+        }
+      ],
+      "blank_cell": [
+        {
+          "sheet": "Income Statement",
+          "cell": "E22",
+          "label": "Rent",
+          "period": "2025-11",
+          "raw_value": null
+        }
+      ],
+      "negative_line_item": []
+    }
+  },
+  "values": [
+    {
+      "metric": "revenue.total.q1",
+      "expected": 147000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "Q1: sum of 2025-01..2025-03"
+    },
+    {
+      "metric": "cogs.total.q1",
+      "expected": 27300.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "Q1: sum of 2025-01..2025-03"
+    },
+    {
+      "metric": "gross_profit.q1",
+      "expected": 119700.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "Q1: sum of 2025-01..2025-03"
+    },
+    {
+      "metric": "opex.total.q1",
+      "expected": 105000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "Q1: sum of 2025-01..2025-03"
+    },
+    {
+      "metric": "operating_income.q1",
+      "expected": 14700.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "Q1: sum of 2025-01..2025-03"
+    },
+    {
+      "metric": "revenue.total.q3",
+      "expected": 165000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "Q3: sum of 2025-07..2025-09"
+    },
+    {
+      "metric": "cogs.total.q3",
+      "expected": 29100.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "Q3: sum of 2025-07..2025-09"
+    },
+    {
+      "metric": "gross_profit.q3",
+      "expected": 135900.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "Q3: sum of 2025-07..2025-09"
+    },
+    {
+      "metric": "opex.total.q3",
+      "expected": 108000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "Q3: sum of 2025-07..2025-09"
+    },
+    {
+      "metric": "operating_income.q3",
+      "expected": 27900.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "Q3: sum of 2025-07..2025-09"
+    },
+    {
+      "metric": "revenue.total.q4",
+      "expected": 166000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "Q4: sum of 2025-10..2025-12"
+    },
+    {
+      "metric": "cogs.total.q4",
+      "expected": 30000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "Q4: sum of 2025-10..2025-12"
+    },
+    {
+      "metric": "gross_profit.q4",
+      "expected": 136000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "Q4: sum of 2025-10..2025-12"
+    },
+    {
+      "metric": "opex.total.q4",
+      "expected": 100000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "Q4: sum of 2025-10..2025-12"
+    },
+    {
+      "metric": "operating_income.q4",
+      "expected": 36000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "Q4: sum of 2025-10..2025-12"
+    },
+    {
+      "metric": "monthly.2025-01.revenue.total",
+      "expected": 48000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "revenue.total for 2025-01"
+    },
+    {
+      "metric": "monthly.2025-01.opex.total",
+      "expected": 35000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "opex.total for 2025-01"
+    },
+    {
+      "metric": "monthly.2025-01.operating_income",
+      "expected": 4000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "operating_income for 2025-01"
+    },
+    {
+      "metric": "monthly.2025-01.gross_margin_pct",
+      "expected": 81.25,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "gross_margin_pct for 2025-01"
+    },
+    {
+      "metric": "monthly.2025-02.revenue.total",
+      "expected": 49000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "revenue.total for 2025-02"
+    },
+    {
+      "metric": "monthly.2025-02.opex.total",
+      "expected": 35000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "opex.total for 2025-02"
+    },
+    {
+      "metric": "monthly.2025-02.operating_income",
+      "expected": 4900.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "operating_income for 2025-02"
+    },
+    {
+      "metric": "monthly.2025-02.gross_margin_pct",
+      "expected": 81.42857142857143,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "gross_margin_pct for 2025-02"
+    },
+    {
+      "metric": "monthly.2025-03.revenue.total",
+      "expected": 50000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "revenue.total for 2025-03"
+    },
+    {
+      "metric": "monthly.2025-03.opex.total",
+      "expected": 35000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "opex.total for 2025-03"
+    },
+    {
+      "metric": "monthly.2025-03.operating_income",
+      "expected": 5800.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "operating_income for 2025-03"
+    },
+    {
+      "metric": "monthly.2025-03.gross_margin_pct",
+      "expected": 81.6,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "gross_margin_pct for 2025-03"
+    },
+    {
+      "metric": "monthly.2025-04.revenue.total",
+      "expected": 51000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "revenue.total for 2025-04"
+    },
+    {
+      "metric": "monthly.2025-04.opex.total",
+      "expected": 35000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "opex.total for 2025-04"
+    },
+    {
+      "metric": "monthly.2025-04.operating_income",
+      "expected": 6700.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "operating_income for 2025-04"
+    },
+    {
+      "metric": "monthly.2025-04.gross_margin_pct",
+      "expected": 81.76470588235294,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "gross_margin_pct for 2025-04"
+    },
+    {
+      "metric": "monthly.2025-05.revenue.total",
+      "expected": 52000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "revenue.total for 2025-05"
+    },
+    {
+      "metric": "monthly.2025-05.opex.total",
+      "expected": 35000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "opex.total for 2025-05"
+    },
+    {
+      "metric": "monthly.2025-05.operating_income",
+      "expected": 7600.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "operating_income for 2025-05"
+    },
+    {
+      "metric": "monthly.2025-05.gross_margin_pct",
+      "expected": 81.92307692307692,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "gross_margin_pct for 2025-05"
+    },
+    {
+      "metric": "monthly.2025-07.revenue.total",
+      "expected": 54000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "revenue.total for 2025-07"
+    },
+    {
+      "metric": "monthly.2025-07.opex.total",
+      "expected": 36000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "opex.total for 2025-07"
+    },
+    {
+      "metric": "monthly.2025-07.operating_income",
+      "expected": 8400.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "operating_income for 2025-07"
+    },
+    {
+      "metric": "monthly.2025-07.gross_margin_pct",
+      "expected": 82.22222222222221,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "gross_margin_pct for 2025-07"
+    },
+    {
+      "metric": "monthly.2025-08.revenue.total",
+      "expected": 55000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "revenue.total for 2025-08"
+    },
+    {
+      "metric": "monthly.2025-08.opex.total",
+      "expected": 36000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "opex.total for 2025-08"
+    },
+    {
+      "metric": "monthly.2025-08.operating_income",
+      "expected": 9300.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "operating_income for 2025-08"
+    },
+    {
+      "metric": "monthly.2025-08.gross_margin_pct",
+      "expected": 82.36363636363636,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "gross_margin_pct for 2025-08"
+    },
+    {
+      "metric": "monthly.2025-09.revenue.total",
+      "expected": 56000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "revenue.total for 2025-09"
+    },
+    {
+      "metric": "monthly.2025-09.opex.total",
+      "expected": 36000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "opex.total for 2025-09"
+    },
+    {
+      "metric": "monthly.2025-09.operating_income",
+      "expected": 10200.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "operating_income for 2025-09"
+    },
+    {
+      "metric": "monthly.2025-09.gross_margin_pct",
+      "expected": 82.5,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "gross_margin_pct for 2025-09"
+    },
+    {
+      "metric": "monthly.2025-10.revenue.total",
+      "expected": 57000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "revenue.total for 2025-10"
+    },
+    {
+      "metric": "monthly.2025-10.opex.total",
+      "expected": 31000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "opex.total for 2025-10"
+    },
+    {
+      "metric": "monthly.2025-10.operating_income",
+      "expected": 16100.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "operating_income for 2025-10"
+    },
+    {
+      "metric": "monthly.2025-10.gross_margin_pct",
+      "expected": 82.63157894736842,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "gross_margin_pct for 2025-10"
+    },
+    {
+      "metric": "monthly.2025-11.revenue.total",
+      "expected": 58000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "revenue.total for 2025-11"
+    },
+    {
+      "metric": "monthly.2025-11.opex.total",
+      "expected": 33000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "opex.total for 2025-11"
+    },
+    {
+      "metric": "monthly.2025-11.operating_income",
+      "expected": 15000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "operating_income for 2025-11"
+    },
+    {
+      "metric": "monthly.2025-11.gross_margin_pct",
+      "expected": 82.75862068965517,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "gross_margin_pct for 2025-11"
+    },
+    {
+      "metric": "monthly.2025-12.revenue.total",
+      "expected": 51000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "revenue.total for 2025-12"
+    },
+    {
+      "metric": "monthly.2025-12.opex.total",
+      "expected": 36000.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "opex.total for 2025-12"
+    },
+    {
+      "metric": "monthly.2025-12.operating_income",
+      "expected": 4900.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "operating_income for 2025-12"
+    },
+    {
+      "metric": "monthly.2025-12.gross_margin_pct",
+      "expected": 80.19607843137256,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "gross_margin_pct for 2025-12"
+    },
+    {
+      "metric": "coverage.months_present",
+      "expected": 11.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "months present"
+    }
+  ],
+  "unavailable": [
+    {
+      "metric": "revenue.total",
+      "reason": "missing_month_in_span",
+      "derivation": "2025-06 missing inside 2025: no total"
+    },
+    {
+      "metric": "cogs.total",
+      "reason": "missing_month_in_span",
+      "derivation": "2025-06 missing inside 2025: no total"
+    },
+    {
+      "metric": "gross_profit",
+      "reason": "missing_month_in_span",
+      "derivation": "2025-06 missing inside 2025: no total"
+    },
+    {
+      "metric": "opex.total",
+      "reason": "missing_month_in_span",
+      "derivation": "2025-06 missing inside 2025: no total"
+    },
+    {
+      "metric": "operating_income",
+      "reason": "missing_month_in_span",
+      "derivation": "2025-06 missing inside 2025: no total"
+    },
+    {
+      "metric": "net_income.reported",
+      "reason": "missing_month_in_span",
+      "derivation": "2025-06 missing inside 2025: no total"
+    },
+    {
+      "metric": "opex.category.finance_tax_non_cash",
+      "reason": "missing_month_in_span",
+      "derivation": "2025-06 missing inside 2025: no total"
+    },
+    {
+      "metric": "opex.category.marketing_advertising",
+      "reason": "missing_month_in_span",
+      "derivation": "2025-06 missing inside 2025: no total"
+    },
+    {
+      "metric": "opex.category.occupancy_insurance",
+      "reason": "missing_month_in_span",
+      "derivation": "2025-06 missing inside 2025: no total"
+    },
+    {
+      "metric": "opex.category.payroll_people_costs",
+      "reason": "missing_month_in_span",
+      "derivation": "2025-06 missing inside 2025: no total"
+    },
+    {
+      "metric": "opex.category.software_hosting_ai",
+      "reason": "missing_month_in_span",
+      "derivation": "2025-06 missing inside 2025: no total"
+    },
+    {
+      "metric": "revenue.stream.services",
+      "reason": "missing_month_in_span",
+      "derivation": "2025-06 missing inside 2025: no total"
+    },
+    {
+      "metric": "revenue.stream.subscriptions",
+      "reason": "missing_month_in_span",
+      "derivation": "2025-06 missing inside 2025: no total"
+    },
+    {
+      "metric": "gross_margin_pct",
+      "reason": "missing_month_in_span",
+      "derivation": "2025-06 missing inside 2025: no total"
+    },
+    {
+      "metric": "operating_margin_pct",
+      "reason": "missing_month_in_span",
+      "derivation": "2025-06 missing inside 2025: no total"
+    },
+    {
+      "metric": "revenue.total.q2",
+      "reason": "incomplete_quarter",
+      "derivation": "Q2 lacks ['2025-06']"
+    },
+    {
+      "metric": "cogs.total.q2",
+      "reason": "incomplete_quarter",
+      "derivation": "Q2 lacks ['2025-06']"
+    },
+    {
+      "metric": "gross_profit.q2",
+      "reason": "incomplete_quarter",
+      "derivation": "Q2 lacks ['2025-06']"
+    },
+    {
+      "metric": "opex.total.q2",
+      "reason": "incomplete_quarter",
+      "derivation": "Q2 lacks ['2025-06']"
+    },
+    {
+      "metric": "operating_income.q2",
+      "reason": "incomplete_quarter",
+      "derivation": "Q2 lacks ['2025-06']"
+    },
+    {
+      "metric": "revenue.total.yoy_abs",
+      "reason": "missing_month_in_span",
+      "derivation": "a month missing inside the year"
+    },
+    {
+      "metric": "revenue.total.yoy_pct",
+      "reason": "missing_month_in_span",
+      "derivation": "a month missing inside the year"
+    },
+    {
+      "metric": "revenue.total.prior_year",
+      "reason": "missing_month_in_span",
+      "derivation": "a month missing inside the year"
+    },
+    {
+      "metric": "cogs.total.yoy_abs",
+      "reason": "missing_month_in_span",
+      "derivation": "a month missing inside the year"
+    },
+    {
+      "metric": "cogs.total.yoy_pct",
+      "reason": "missing_month_in_span",
+      "derivation": "a month missing inside the year"
+    },
+    {
+      "metric": "cogs.total.prior_year",
+      "reason": "missing_month_in_span",
+      "derivation": "a month missing inside the year"
+    },
+    {
+      "metric": "gross_profit.yoy_abs",
+      "reason": "missing_month_in_span",
+      "derivation": "a month missing inside the year"
+    },
+    {
+      "metric": "gross_profit.yoy_pct",
+      "reason": "missing_month_in_span",
+      "derivation": "a month missing inside the year"
+    },
+    {
+      "metric": "gross_profit.prior_year",
+      "reason": "missing_month_in_span",
+      "derivation": "a month missing inside the year"
+    },
+    {
+      "metric": "opex.total.yoy_abs",
+      "reason": "missing_month_in_span",
+      "derivation": "a month missing inside the year"
+    },
+    {
+      "metric": "opex.total.yoy_pct",
+      "reason": "missing_month_in_span",
+      "derivation": "a month missing inside the year"
+    },
+    {
+      "metric": "opex.total.prior_year",
+      "reason": "missing_month_in_span",
+      "derivation": "a month missing inside the year"
+    },
+    {
+      "metric": "operating_income.yoy_abs",
+      "reason": "missing_month_in_span",
+      "derivation": "a month missing inside the year"
+    },
+    {
+      "metric": "operating_income.yoy_pct",
+      "reason": "missing_month_in_span",
+      "derivation": "a month missing inside the year"
+    },
+    {
+      "metric": "operating_income.prior_year",
+      "reason": "missing_month_in_span",
+      "derivation": "a month missing inside the year"
+    }
+  ]
+}

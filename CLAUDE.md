@@ -37,8 +37,11 @@ Data source (Excel now, QuickBooks later)
 | `data/synthetic/` | Generated SYNTHETIC test workbooks (never evidence about a real client) |
 | `output/clients/<id>/<period>/` | `metrics.json`, `report.md` |
 | `finance_engine/brief.py` | Python-formatted view of metrics.json for a commentary writer (no arithmetic) |
+| `finance_engine/spans.py`, `monthly.py` | `--scope year` / `--scope all` documents, built from one month's figures at a time |
+| `finance_engine/sources/selection.py` | Which workbook a run reads when a client's folder holds several (`--file`); never merged |
+| `finance_engine/init_client.py` | `init-client`: drafts and validates a new client's YAML from its workbook |
 | `.claude/skills/monthly-financial-analysis/` | The skill: Claude Code writes the commentary from the brief, then runs the guard |
-| `evals/` | 13 golden cases, Level 1 (engine) and Level 2 (report) runners, baselines. See `evals/grading.md` |
+| `evals/` | 18 golden cases, Level 1 (engine) and Level 2 (report) runners, baselines. See `evals/grading.md` |
 
 ## Boundaries
 
@@ -71,6 +74,10 @@ python -m finance_engine analyze --client abc_inc --period 2026-06
 python -m finance_engine report  --client abc_inc --period 2026-06
 python -m finance_engine check-commentary --client abc_inc --period 2026-06 --file notes.md
 python -m finance_engine brief   --client abc_inc --period 2026-06   # figures for a writer
+python -m finance_engine report  --client test_clean --scope year --year 2025   # or --scope all
+python -m finance_engine analyze --client test_multi --period 2025-06 --file test_multi_second_half.xlsx
+python -m finance_engine init-client --file book.xlsx --client-id acme_ltd --name "Acme Ltd"
+# every command above also takes --json (one result on stdout; notes on stderr)
 python -m pytest -q          # full test suite
 python -m pytest -q -m mutation   # mutation check (expects injected faults to be caught)
 python evals/run_engine_evals.py --compare            # Level 1, free; run on every change

@@ -20,6 +20,10 @@ _REASON_TEXT = {
     "incomplete_window": "window incomplete",
     "blocked_by_validation": "blocked by a data-quality error",
     "not_available": "not present in the source",
+    "in_other_file": "prior period is in a different file",
+    "incomplete_quarter": "quarter incomplete",
+    "missing_month_in_span": "a month inside the year is missing",
+    "not_comparable": "the same months are not in both years",
 }
 
 

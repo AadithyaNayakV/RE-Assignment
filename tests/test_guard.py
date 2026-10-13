@@ -318,3 +318,67 @@ class TestDirectionWords:
                      "--file", str(note), "--root", str(tmp_path)])
         assert code == EXIT_GUARD
         assert "direction word" in capsys.readouterr().out
+
+
+class TestRoundingHalfSteps:
+    """A figure on an exact half-step may be rounded either way; nothing wider passes.
+
+    `|0.8 - 0.75| <= 0.05` is False in floating point (0.05000000000000004), so a
+    correctly rounded "0.8%" used to be rejected. The rule now: the written figure must be
+    within the precision tolerance, or be one of the two neighbouring roundings of the
+    stored value's exact binary value, computed in exact decimal arithmetic.
+    """
+
+    @staticmethod
+    def _doc(value, name="x.level_pct", unit="percent"):
+        return {"metrics": [{"name": name, "value": value, "unit": unit}]}
+
+    @pytest.mark.parametrize("stored, written", [
+        (0.75, "0.7%"), (0.75, "0.8%"), (12.75, "12.7%"), (12.75, "12.8%"),
+        (1.125, "1.12%"), (1.125, "1.13%"),
+    ])
+    def test_a_half_step_accepts_both_neighbouring_roundings(self, stored, written):
+        assert NumberGuard(self._doc(stored)).check(f"It was {written}.").passed
+
+    @pytest.mark.parametrize("stored, written", [
+        (0.75, "0.6%"), (0.75, "0.9%"), (12.75, "12.6%"), (12.75, "12.9%"),
+        (12.75, "14%"), (1.125, "1.11%"), (1.125, "1.14%"),
+    ])
+    def test_a_half_step_accepts_nothing_wider(self, stored, written):
+        """At two or more decimals the existing one-cent floor (MIN_TOLERANCE, 0.011) is
+        still the bar, unchanged: 0.74% against 0.75 passed before and still does."""
+        assert not NumberGuard(self._doc(stored)).check(f"It was {written}.").passed
+
+    @pytest.mark.parametrize("stored, ok, rejected", [
+        (0.7500000001, "0.8%", "0.7%"),
+        (0.7499999999, "0.7%", "0.8%"),
+    ])
+    def test_just_off_a_half_step_only_the_nearest_rounding_passes(self, stored, ok,
+                                                                  rejected):
+        """A blanket float slack (1e-9) would have let the second rounding through."""
+        guard = NumberGuard(self._doc(stored))
+        assert guard.check(f"It was {ok}.").passed
+        assert not guard.check(f"It was {rejected}.").passed
+
+    def test_the_stored_binary_value_decides(self):
+        """0.15 is stored as 0.1499999999999999944...: only "0.1" is its rounding."""
+        guard = NumberGuard(self._doc(0.15))
+        assert f"{0.15:.1f}" == "0.1"
+        assert guard.check("It was 0.1%.").passed
+        assert not guard.check("It was 0.2%.").passed
+
+    def test_the_formatters_own_rounding_always_passes(self):
+        from finance_engine.formatting import percent
+        for k in range(0, 2001):
+            stored = k / 40                                # 0.025 steps: many half-steps
+            text = f"It was {percent(stored)}."
+            assert NumberGuard(self._doc(stored)).check(text).passed, (stored, text)
+
+    def test_the_direction_check_uses_the_same_rule(self):
+        guard = NumberGuard(self._doc(-0.75, name="x.mom_pct"))
+        result = guard.check("It fell 0.8%.")
+        assert result.passed and result.directions_checked == 1
+        wrong = guard.check("It rose 0.8%.")
+        assert not wrong.passed and wrong.direction_errors
+        off = NumberGuard(self._doc(-0.7500000001, name="x.mom_pct")).check("It fell 0.7%.")
+        assert not off.passed and off.unsupported

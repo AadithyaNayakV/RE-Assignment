@@ -1,0 +1,55 @@
+id: 14_year_complete
+title: Complete calendar year (test_clean, 2025)
+synthetic: true
+builder: test_workbook
+input:
+  client_id: test_clean
+  scope: year
+  year: 2025
+  workbook: data/clients/test_clean/source/test_clean.xlsx
+  config: config/clients/test_clean.yaml
+why: >
+  Twelve contiguous months, no data problems. The year totals are sums of the monthly
+  figures and must equal test_clean's existing 2025-12 trailing-twelve-month figures:
+  revenue 642,000, COGS 114,600, gross profit 527,400, opex 426,000, operating income
+  101,400 (hand check: Subscriptions 40,000..51,000 sum to 546,000 and Services 12 x 8,000
+  to 96,000). The builder refuses to write expected values that disagree. There is no 2024
+  in the file, so year on year is n/a. The workbook comes from
+  scripts/make_test_workbooks.py and is git-ignored: the case is SKIPPED where it is absent.
+
+engine:
+  exit_code: 0
+  scope: year
+  cross_check: {revenue.total: 642000, cogs.total: 114600, gross_profit: 527400,
+                opex.total: 426000, operating_income: 101400}
+  reconciliation_passed: true
+  max_errors: 0
+  seasonality_assessed: false
+  forbidden_metric_patterns: ['annuali', 'extrapolat', 'run_rate']
+
+skill:
+  run: true
+  prompt: Use the monthly-financial-analysis skill for client test_clean, calendar year 2025 (scope year).
+  required_figures: [revenue.total, gross_profit, opex.total, operating_income, gross_margin_pct]
+  required_flags:
+    - id: full_year
+      description: States that 2025 is a complete year.
+      pattern: 'full year|12 of 12 months'
+    - id: quarters_shown
+      description: Shows the four quarters.
+      pattern: '\bQ1\b[^\n]*\bQ4\b'
+    - id: year_on_year_not_compared
+      description: Says there is no year-on-year comparison.
+      pattern: '(year on year|year-on-year)[^\n]{0,120}(not compared|n/a|not available)|not compared'
+  forbidden_claims:
+    - id: causal_wording
+      description: States no cause for any movement.
+      pattern: '\b(because|due to|driven by|caused by)\b'
+    - id: invented_year_on_year
+      description: No change on 2024 is stated; 2024 is not in the file.
+      pattern: '\b(rose|fell|grew|increased|decreased)\b[^.\n]{0,60}\b(on|against|versus|vs\.?) (2024|the prior year)'
+
+pass_criteria: >
+  Level 1: every total equals the hand-checked figures and the independent build; four
+  quarters; coverage complete; no annualised metric. Level 2: guard PASS on the whole
+  report, the generic checks for a year report, quarters shown, no year-on-year claim.

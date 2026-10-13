@@ -22,6 +22,11 @@ def build_report(metrics_doc: dict, commentary: str = "",
                  provider_id: str = "deterministic",
                  guard_result: dict | None = None) -> str:
     doc = metrics_doc
+    if doc.get("scope") in ("year", "all"):
+        # Year and whole-file documents have their own layout. Month documents carry no
+        # `scope` key, so this branch never touches a month report.
+        from finance_engine.span_report import build_span_report
+        return build_span_report(doc, commentary, provider_id, guard_result)
     fmt = Formatter(doc.get("currency_symbol", "$"), doc.get("currency", "USD"))
     m = {x["name"]: x for x in doc.get("metrics", [])}
 
