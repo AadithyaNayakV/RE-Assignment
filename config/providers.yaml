@@ -1,0 +1,60 @@
+# Commentary providers for `--provider auto | gemini | claude-api`.
+#
+# Committed, and holds NO secret: keys are read from the environment or the git-ignored
+# .env, and only the variable NAMES below are ever read. The existing --provider values
+# (deterministic, template, none, ollama, claude_api, ...) do not use this file at all.
+#
+# `auto` tries `order` from left to right. Each provider's commentary is checked in
+# process (numbers and direction words, causal wording, failed reconciliation months
+# named); a failure is sent back to the same provider up to `max_attempts` times, then
+# the next provider is tried. `deterministic` is always the last step, so a valid report
+# is always produced. A missing package, a missing key, a disabled provider, an invalid
+# model name, an exhausted quota, a timeout or a rejected request skips the provider.
+
+order: [gemini, claude-api, deterministic]
+
+# false: never send anything to a cloud provider, whatever else is set.
+allow_cloud: true
+
+providers:
+  gemini:
+    enabled: true
+    cloud: true
+    # DEFAULT, NOT VERIFIED. Gemini model IDs change over time. Run
+    #   python scripts/provider_smoke.py --list-models
+    # and replace this with a model your key lists for generateContent.
+    model: gemini-3.8-flash
+    timeout_seconds: 60
+    max_attempts: 2
+    # Includes thinking tokens: Gemini counts thinking against this limit, so a draft
+    # was cut off after 328 visible tokens at 8192 with the default (medium) thinking.
+    max_output_tokens: 16384
+    # Thinking control, only one is sent. Gemini 3 models (gemini-3.x): thinking_level,
+    # low | medium | high (some also minimal). Gemini 2.5 models: thinking_budget in
+    # tokens, with thinking_level left empty. A model that rejects the setting is skipped
+    # with "rejected" in the log.
+    thinking_level: low
+    thinking_budget:
+    # Transient failures (HTTP 5xx, 429, timeout) are retried this many times, waiting
+    # these seconds, before the provider is skipped. Not counted as check attempts.
+    transient_retries: 2
+    transient_backoff_seconds: [2, 5]
+    api_key_env: GEMINI_API_KEY
+
+  claude-api:
+    # OFF by default. The Claude API is billed per token from prepaid credits in the
+    # Anthropic Console, separately from a Claude Pro plan. Set true only on purpose.
+    enabled: false
+    cloud: true
+    model: claude-sonnet-5-5
+    timeout_seconds: 120
+    max_attempts: 2
+    max_output_tokens: 16000
+    # Anthropic's server-side refusal fallback ("fallbacks": "default", beta header
+    # server-side-fallback-2026-07-01) would re-run a declined request on another model.
+    # Off: a refusal skips to the next provider, and commentary_log.json records the
+    # model that actually answered each attempt.
+    refusal_fallback: false
+    transient_retries: 2
+    transient_backoff_seconds: [2, 5]
+    api_key_env: ANTHROPIC_API_KEY

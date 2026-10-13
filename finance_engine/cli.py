@@ -6,6 +6,9 @@
     python -m finance_engine brief            --client abc_inc --period 2026-06
     python -m finance_engine list-periods     --client abc_inc
     python -m finance_engine init-client      --file PATH.xlsx --client-id ID --name "Co"
+    python -m finance_engine pull-quickbooks  --client qb_sandbox --start 2025-10 --end 2026-10
+    python -m finance_engine report --client qb_sandbox --period 2026-09 \
+        --source quickbooks --start 2025-10 --end 2026-10      # pull, then analyse
 
 `--period latest` resolves to the newest month in the source (the top line of
 list-periods) and prints `period: latest -> YYYY-MM` to stderr.
@@ -44,7 +47,9 @@ from pathlib import Path
 
 from finance_engine.brief import build_brief
 from finance_engine.commentary.base import ProviderUnavailable, get_provider
+from finance_engine.commentary.providers import ORCHESTRATED
 from finance_engine.config import ClientConfig, ConfigError, Settings
+from finance_engine.formatting import check_count
 from finance_engine.guard import NumberGuard
 from finance_engine.metrics import build_metrics
 from finance_engine.model import LayoutError
@@ -56,6 +61,7 @@ from finance_engine.sources.selection import (SourceChoice, SourceSelectionError
                                               source_folder, workbook_inventory)
 from finance_engine.spans import SpanError, build_all_metrics, build_year_metrics
 from finance_engine.init_client import InitError
+from finance_engine.sources.quickbooks_api import QuickBooksError
 
 EXIT_OK, EXIT_USAGE, EXIT_DATA, EXIT_GUARD = 0, 1, 2, 3
 LATEST = "latest"
@@ -100,9 +106,16 @@ def main(argv: list[str] | None = None) -> int:
 
     p_report = sub.add_parser("report", help="write metrics.json and report.md")
     add_common(p_report)
+    p_report.add_argument("--source", choices=["file", "quickbooks"], default="file",
+                          help="quickbooks: pull a new sandbox snapshot first (with "
+                               "--start and --end), then analyse that snapshot")
+    p_report.add_argument("--start", default=None, help="first month to pull, YYYY-MM")
+    p_report.add_argument("--end", default=None, help="last month to pull, YYYY-MM")
     p_report.add_argument("--provider", default=None,
                           help="commentary provider (default: $LLM_PROVIDER or "
-                               "'deterministic')")
+                               "'deterministic'). auto, gemini and claude-api use "
+                               "config/providers.yaml: checked, retried, and always "
+                               "falling back to the deterministic report")
 
     p_check = sub.add_parser("check-commentary",
                              help="check a text file's numbers against metrics.json")
@@ -118,6 +131,18 @@ def main(argv: list[str] | None = None) -> int:
 
     p_periods = sub.add_parser("list-periods", help="list the months in a client's source")
     add_common(p_periods, period_required=False, scoped=False)
+
+    p_pull = sub.add_parser("pull-quickbooks",
+                            help="save a read-only QuickBooks sandbox Profit and Loss "
+                                 "snapshot (one column per month)")
+    p_pull.add_argument("--client", required=True, help="a client with source.type "
+                                                         "quickbooks, e.g. qb_sandbox")
+    p_pull.add_argument("--start", required=True, help="first month, YYYY-MM")
+    p_pull.add_argument("--end", required=True, help="last month, YYYY-MM")
+    p_pull.add_argument("--root", default=None,
+                        help="project root (defaults to the working directory)")
+    p_pull.add_argument("--json", action="store_true",
+                        help="print one JSON result on stdout; notes go to stderr")
 
     p_init = sub.add_parser("init-client",
                             help="draft config/clients/<ID>.yaml by inspecting a workbook")
@@ -138,6 +163,10 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.command == "init-client":
             return _init_client(args)
+        if args.command == "pull-quickbooks":
+            return _pull_quickbooks(args)
+        if args.command == "report" and args.source == "quickbooks":
+            _pull_for_report(args)
         _check_scope_args(args)
         if args.command != "list-periods" and args.period == LATEST:
             args.period = _resolve_latest(args)
@@ -152,7 +181,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "list-periods":
             return _list_periods(args)
     except (ConfigError, LayoutError, UsageError, SourceSelectionError, SpanError,
-            InitError, FileNotFoundError) as exc:
+            InitError, QuickBooksError, FileNotFoundError) as exc:
         # A layout or config problem is reported, never worked around.
         print(f"error: {exc}", file=sys.stderr)
         if getattr(args, "json", False):
@@ -232,8 +261,7 @@ def _span_lines(doc: dict) -> list[str]:
                                    else "")
     lines = [f"  metrics:        {len(doc['metrics'])}",
              f"  coverage:       {coverage}",
-             f"  reconciliation: {recon['checks_run'] - recon['checks_failed']}"
-             f"/{recon['checks_run']} passed (tolerance {recon['tolerance_abs']})",
+             f"  reconciliation: {check_count(recon)} (tolerance {recon['tolerance_abs']})",
              f"  data quality:   {len(errors)} error(s), {len(warnings)} warning(s)"]
     if blocked:
         lines.append(f"  blocked:        {len(blocked)} metric(s) reported as n/a")
@@ -267,13 +295,15 @@ def _root(args) -> Path:
 
 def _load(args, want: Want | None = None
           ) -> tuple[ClientConfig, Settings, SourceChoice, ExcelSource, Path]:
+    from finance_engine.sources.factory import open_source
+
     root = _root(args)
     settings = Settings.from_env(root)
     config = ClientConfig.load(args.client, settings)
     choice = choose(config, settings, root, getattr(args, "workbook", None), want)
     if choice.note:
         print(choice.note, file=sys.stderr)
-    return config, settings, choice, ExcelSource(choice.path), root
+    return config, settings, choice, open_source(choice.path, config), root
 
 
 def _file_kwargs(choice: SourceChoice) -> dict:
@@ -395,8 +425,8 @@ def _analyze(args) -> int:
     _say(args, f"  periods in src: {doc['source']['period_count']} "
                f"({doc['source']['periods_available'][0]}"
                f"..{doc['source']['periods_available'][-1]})")
-    _say(args, f"  reconciliation: {recon['checks_run'] - recon['checks_failed']}"
-               f"/{recon['checks_run']} passed (tolerance {recon['tolerance_abs']})")
+    _say(args, f"  reconciliation: {check_count(recon)} "
+               f"(tolerance {recon['tolerance_abs']})")
     _say(args, f"  ttm window:     {doc['ttm']['window'][0]}..{doc['ttm']['window'][-1]} "
                f"({'complete' if doc['ttm']['complete'] else 'INCOMPLETE'})")
     _say(args, f"  data quality:   {len(errors)} error(s), {len(warnings)} warning(s)")
@@ -426,32 +456,48 @@ def _report(args) -> int:
                             encoding="utf-8")
 
     provider_name = args.provider or settings.llm_provider
-    try:
-        provider = get_provider(provider_name)
-    except ProviderUnavailable as exc:
-        print(f"warning: {exc} Falling back to the deterministic provider.",
-              file=sys.stderr)
-        provider = get_provider("deterministic")
+    outcome = None
+    if (provider_name or "").strip().lower() in ORCHESTRATED:
+        # auto | gemini | claude-api: generate, validate, retry, fall back. Every other
+        # value keeps the path below, exactly as before.
+        outcome = _orchestrated_commentary(doc, provider_name, root)
+        commentary, provider_id, guard = outcome.text, outcome.provider_id, outcome.guard
+        report_md = build_report(doc, commentary, provider_id, guard.to_dict(),
+                                 footer=outcome.footer,
+                                 commentary_from_brief=provider_id != "deterministic")
+    else:
+        try:
+            provider = get_provider(provider_name)
+        except ProviderUnavailable as exc:
+            print(f"warning: {exc} Falling back to the deterministic provider.",
+                  file=sys.stderr)
+            provider = get_provider("deterministic")
+        provider_id = provider.provider_id
+        commentary = provider.generate(doc)
 
-    commentary = provider.generate(doc)
-
-    # The guard runs on every provider's output, including the deterministic one. A
-    # provider that cannot pass it has no business writing a client report.
-    guard = NumberGuard(doc).check(commentary)
-    report_md = build_report(doc, commentary, provider.provider_id, guard.to_dict())
+        # The guard runs on every provider's output, including the deterministic one. A
+        # provider that cannot pass it has no business writing a client report.
+        guard = NumberGuard(doc).check(commentary)
+        report_md = build_report(doc, commentary, provider_id, guard.to_dict())
     report_path = out / "report.md"
     report_path.write_text(report_md, encoding="utf-8")
+    log_path = None
+    if outcome is not None:
+        log_path = out / "commentary_log.json"
+        log_path.write_text(json.dumps(outcome.log, indent=2, ensure_ascii=False),
+                            encoding="utf-8")
 
     recon = doc["reconciliation"]
     errors = [i for i in doc["data_quality_issues"] if i["severity"] == "error"]
 
     _say(args, f"wrote {metrics_path}")
     _say(args, f"wrote {report_path}")
-    _say(args, f"  provider:       {provider.provider_id}")
+    if log_path is not None:
+        _say(args, f"wrote {log_path}")
+    _say(args, f"  provider:       {provider_id}")
     _say(args, f"  number check:   {'PASS' if guard.passed else 'REJECTED'} "
                f"({len(guard.supported)}/{guard.checked} numbers traced)")
-    _say(args, f"  reconciliation: {recon['checks_run'] - recon['checks_failed']}"
-               f"/{recon['checks_run']} passed")
+    _say(args, f"  reconciliation: {check_count(recon)}")
     if _scope(args) == "month":
         _missing_period_hint(config, settings, root, choice, doc)
     else:
@@ -465,11 +511,26 @@ def _report(args) -> int:
         payload = _summary(doc, code, {"metrics": _rel(metrics_path, root),
                                        "report": _rel(report_path, root)})
         payload["ok"] = code in (EXIT_OK, EXIT_DATA)
-        payload["provider"] = provider.provider_id
+        payload["provider"] = provider_id
+        if outcome is not None:
+            payload["outputs"]["commentary_log"] = _rel(log_path, root)
+            payload["commentary"] = outcome.summary()
         payload["number_check"] = {"passed": guard.passed, "checked": guard.checked,
                                    "supported": len(guard.supported)}
         _emit_json({"command": "report", **payload})
     return code
+
+
+def _orchestrated_commentary(doc: dict, provider_name: str, root: Path):
+    """Commentary through config/providers.yaml; notes on stderr, keys never printed."""
+    from finance_engine.commentary.orchestrator import write_commentary
+    from finance_engine.commentary.providers import ProvidersConfig
+    from finance_engine.credentials import EnvCredentialStore
+
+    config = ProvidersConfig.load(root / "config" / "providers.yaml")
+    credentials = EnvCredentialStore(config.key_names(), env_file=root / ".env")
+    return write_commentary(doc, provider_name, config, credentials,
+                            notify=lambda line: print(line, file=sys.stderr))
 
 
 def _metrics_path(args) -> Path:
@@ -544,14 +605,16 @@ def _list_periods(args) -> int:
         choice = None              # several workbooks and no default: list them all
     # The per-file listing is only needed when the folder really holds several of this
     # client's workbooks, or for --json; otherwise the output is exactly as before.
-    many = is_own_folder(config, settings, root) and len(list_workbooks(folder)) > 1
+    from finance_engine.sources.factory import open_source, source_pattern
+    many = (is_own_folder(config, settings, root)
+            and len(list_workbooks(folder, source_pattern(config))) > 1)
     inventory = workbook_inventory(config, settings, root) if (many or args.json
                                                                or choice is None) else []
 
     rows: list[dict] = []
     lines: list[str] = []
     if choice is not None:
-        dataset = ExcelSource(choice.path).load(config)
+        dataset = open_source(choice.path, config).load(config)
         keys = dataset.period_keys()
         lines.append(f"{config.company_name} ({config.client_id}) — {len(keys)} month(s)")
         lines.append(f"source: {dataset.source_path}")
@@ -595,6 +658,53 @@ def _list_periods(args) -> int:
     for line in lines:
         print(line)
     return EXIT_OK
+
+
+def _pull(args) -> dict:
+    from finance_engine.model import Period
+    from finance_engine.sources.quickbooks_api import pull_snapshot
+
+    for flag, value in (("--start", args.start), ("--end", args.end)):
+        if not value:
+            raise UsageError(f"{flag} YYYY-MM is required to pull from QuickBooks.")
+        try:
+            Period.from_key(value)
+        except ValueError as exc:
+            raise UsageError(f"{flag}: {exc}. Use YYYY-MM, e.g. 2026-09.") from None
+    root = _root(args)
+    settings = Settings.from_env(root)
+    config = ClientConfig.load(args.client, settings)
+    return pull_snapshot(config, root, settings.data_dir, args.start, args.end)
+
+
+def _pull_quickbooks(args) -> int:
+    """Read-only: one token refresh, one GET, one new snapshot file."""
+    root = _root(args)
+    result = _pull(args)
+    _say(args, f"wrote {result['path']}")
+    _say(args, f"  sha256:         {result['sha256']}")
+    _say(args, f"  months:         {result['first_period']}..{result['last_period']} "
+               f"({result['period_count']})")
+    _say(args, f"  next:           python -m finance_engine report --client {args.client} "
+               f"--period {result['last_period']} --file {result['filename']}")
+    if args.json:
+        _emit_json({"ok": True, "command": "pull-quickbooks", "exit_code": EXIT_OK,
+                    "client_id": args.client, "snapshot": _rel(result["path"], root),
+                    "filename": result["filename"], "sha256": result["sha256"],
+                    "first_period": result["first_period"],
+                    "last_period": result["last_period"],
+                    "period_count": result["period_count"]})
+    return EXIT_OK
+
+
+def _pull_for_report(args) -> None:
+    """`report --source quickbooks`: pull, then analyse exactly that snapshot."""
+    if args.workbook:
+        raise UsageError("--source quickbooks pulls a new snapshot; do not also pass --file.")
+    result = _pull(args)
+    print(f"pulled {result['filename']} (sha256 {result['sha256'][:16]}...)",
+          file=sys.stderr)
+    args.workbook = result["filename"]
 
 
 def _init_client(args) -> int:

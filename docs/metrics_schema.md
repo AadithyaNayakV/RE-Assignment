@@ -596,6 +596,10 @@ Implement `CommentaryProvider` in `finance_engine/commentary/`. The contract:
 Rule 1 is enforced mechanically for every provider. Rules 2–4 are structural for the
 deterministic provider and must be enforced by prompt and review for a model provider.
 
-Planned (documented, not implemented): `ollama.py` reading `OLLAMA_BASE_URL`, and
-`claude_api.py` reading `ANTHROPIC_API_KEY` from the environment via a `CredentialStore`
-— never from a config file or a literal.
+Built in Phase 5C: Gemini and the Claude API (`commentary/providers.py`), run by
+`commentary/orchestrator.py` for `--provider auto | gemini | claude-api`. They receive only
+the compact brief, never this file. The orchestrator runs rule 5 for them (the guard, the
+causal-wording check, every failed reconciliation month named), retries, falls back, and
+always ends with the deterministic provider. Keys are read by name through a
+`CredentialStore` (`finance_engine/credentials.py`), never from a config file or a
+literal. The Claude API is opt-in and paid. Ollama is not built.

@@ -6,16 +6,18 @@ statements, calculates verified metrics, and produces a **draft report for a hum
 ## The one hard rule
 
 **Python is the only source of numbers.** `finance_engine` calculates everything.
-Commentary providers (templates now, Claude/Ollama later) receive only `metrics.json` and
-may *describe* those numbers. A provider must never calculate, estimate, or invent a figure.
+Commentary providers (the deterministic template, and optionally Gemini or the Claude API)
+receive only `metrics.json` or the compact brief built from it, and may *describe* those
+numbers. A provider must never calculate, estimate, or invent a figure.
 `guard.py` enforces this by checking every number in commentary text against `metrics.json`.
 
 ## Pipeline
 
 ```
-Data source (Excel now, QuickBooks later)
+Data source (Excel workbook, or a saved QuickBooks sandbox snapshot)
   -> finance_engine: read -> validate -> calculate -> metrics.json
-  -> CommentaryProvider (deterministic templates now)
+  -> CommentaryProvider (deterministic template; optional Gemini / Claude API,
+     checked, retried, deterministic fallback)
   -> guard (number check) -> report.md
 ```
 
@@ -26,11 +28,11 @@ Data source (Excel now, QuickBooks later)
 | Path | Purpose |
 |---|---|
 | `config/clients/<client_id>.yaml` | Per-client sheet layout, section anchors, categories, thresholds. A new company is a new YAML file, not new code. |
-| `finance_engine/sources/` | `DataSource` interface + `excel.py` reader (openpyxl) |
+| `finance_engine/sources/` | `DataSource` interface, `excel.py` reader (openpyxl), `quickbooks.py` (reads a saved QuickBooks P&L snapshot), `quickbooks_api.py` (read-only sandbox fetch for `pull-quickbooks`), `factory.py` |
 | `finance_engine/validation.py` | Errors (block a metric) vs warnings (continue, but show) |
 | `finance_engine/metrics.py` | All calculations; emits `metrics.json` |
 | `finance_engine/reconciliation.py` | Computed totals vs the workbook's own formula totals |
-| `finance_engine/commentary/` | `CommentaryProvider` interface + `deterministic.py` |
+| `finance_engine/commentary/` | `CommentaryProvider` interface, `deterministic.py`, and the optional cloud providers (`providers.py`, `orchestrator.py`, `writer_prompt.md`; configured in `config/providers.yaml`) |
 | `finance_engine/guard.py` | Rejects numbers not supported by `metrics.json` |
 | `finance_engine/report.py` | Builds `report.md` |
 | `data/clients/<id>/source/` | Original workbooks — **never modified** |
@@ -41,15 +43,25 @@ Data source (Excel now, QuickBooks later)
 | `finance_engine/sources/selection.py` | Which workbook a run reads when a client's folder holds several (`--file`); never merged |
 | `finance_engine/init_client.py` | `init-client`: drafts and validates a new client's YAML from its workbook |
 | `.claude/skills/monthly-financial-analysis/` | The skill: Claude Code writes the commentary from the brief, then runs the guard |
-| `evals/` | 18 golden cases, Level 1 (engine) and Level 2 (report) runners, baselines. See `evals/grading.md` |
+| `evals/` | 19 golden cases, Level 1 (engine) and Level 2 (report) runners, baselines. See `evals/grading.md` |
 
 ## Boundaries
 
-- `finance_engine` contains **no AI, no web server, no QuickBooks code**.
+- **No AI ever produces or changes a number.** Reading, validation, calculation,
+  reconciliation, the brief and every table are plain Python. AI only writes commentary
+  text, through the providers in `finance_engine/commentary/`, and that text must pass
+  the guard. `finance_engine` has no web server.
+- QuickBooks is read **read-only, sandbox only**: `sources/quickbooks_api.py` makes GETs
+  plus the OAuth token refresh, nothing else, with its own token store
+  (`.secrets/quickbooks_reader_token.json`), never the MCP server's. The engine analyses a
+  saved snapshot file, never a live response. See `docs/quickbooks_setup.md`.
 - Everything is keyed by `client_id`.
 - External dependencies sit behind interfaces: `DataSource`, `CommentaryProvider`, `CredentialStore`.
 - Settings come from environment variables (`LLM_PROVIDER=deterministic` by default).
-- No Gemini, no paid/remote AI provider. Never assume an API key exists.
+- Cloud commentary is optional. Gemini runs only when `GEMINI_API_KEY` is set;
+  `claude-api` is **opt-in and paid** (billed separately from Claude Pro; `enabled: false`
+  by default in `config/providers.yaml`). Never assume an API key exists: a missing key
+  skips the provider. **The deterministic report is always the final fallback.**
 
 ## Rules for calculations
 
@@ -77,6 +89,8 @@ python -m finance_engine brief   --client abc_inc --period 2026-06   # figures f
 python -m finance_engine report  --client test_clean --scope year --year 2025   # or --scope all
 python -m finance_engine analyze --client test_multi --period 2025-06 --file test_multi_second_half.xlsx
 python -m finance_engine init-client --file book.xlsx --client-id acme_ltd --name "Acme Ltd"
+python -m finance_engine pull-quickbooks --client qb_sandbox --start 2025-10 --end 2026-10
+python -m finance_engine report  --client qb_sandbox_fixture --period 2026-09   # case 19's snapshot
 # every command above also takes --json (one result on stdout; notes on stderr)
 python -m pytest -q          # full test suite
 python -m pytest -q -m mutation   # mutation check (expects injected faults to be caught)

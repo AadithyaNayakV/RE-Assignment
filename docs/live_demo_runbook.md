@@ -110,5 +110,5 @@ Each was done once for real on 2026-10-11, then reverted with Git. Revert with
 - **Run:** `python -m finance_engine list-periods --client company_k_demo`, then
   `python -m finance_engine report --client company_k_demo --period 2026-06`, then
   `python evals/run_engine_evals.py`.
-- **Expect:** 18 months, reconciliation 108/108, guard PASS, and all 18 engine cases still pass.
+- **Expect:** 18 months, reconciliation 108/108, guard PASS, and every engine case (19) still passes.
 - **Recorded:** done; the file and its output folder were deleted.

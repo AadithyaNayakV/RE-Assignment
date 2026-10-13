@@ -1,0 +1,189 @@
+{
+  "case_id": "19_quickbooks_sandbox",
+  "client_id": "qb_sandbox_fixture",
+  "period": "2026-09",
+  "generated_by": "evals/tools/build_expected.py",
+  "independent_of_engine": true,
+  "input_sha256": "c40719a00b6dc54fa3f2957448600b3ecd89c6c71c062f8081ef12b5c88a775b",
+  "source": "the raw QuickBooks Profit and Loss JSON, read with json alone by evals/tools/build_expected.py; every section sum checked against Intuit's own totals",
+  "ttm": {
+    "complete": true,
+    "window": [
+      "2025-10",
+      "2025-11",
+      "2025-12",
+      "2026-01",
+      "2026-02",
+      "2026-03",
+      "2026-04",
+      "2026-05",
+      "2026-06",
+      "2026-07",
+      "2026-08",
+      "2026-09"
+    ]
+  },
+  "values": [
+    {
+      "metric": "revenue.total",
+      "expected": 6641.38,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "revenue.total for 2026-09"
+    },
+    {
+      "metric": "cogs.total",
+      "expected": 405.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "cogs.total for 2026-09"
+    },
+    {
+      "metric": "gross_profit",
+      "expected": 6236.38,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "gross_profit for 2026-09"
+    },
+    {
+      "metric": "opex.total",
+      "expected": 2755.1,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "opex.total for 2026-09"
+    },
+    {
+      "metric": "operating_income",
+      "expected": 3481.28,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "operating_income for 2026-09"
+    },
+    {
+      "metric": "gross_margin_pct",
+      "expected": 93.90186979212152,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "gross_margin_pct for 2026-09"
+    },
+    {
+      "metric": "operating_margin_pct",
+      "expected": 52.41802155576101,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "operating_margin_pct for 2026-09"
+    },
+    {
+      "metric": "revenue.total.mom_abs",
+      "expected": 4856.24,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "revenue.total: 6641.38 - 1785.14 (2026-08)"
+    },
+    {
+      "metric": "revenue.total.mom_pct",
+      "expected": 272.03692707574754,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "revenue.total: (6641.38 - 1785.14) / 1785.14 x 100"
+    },
+    {
+      "metric": "cogs.total.mom_abs",
+      "expected": 405.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "cogs.total: 405.0 - 0.0 (2026-08)"
+    },
+    {
+      "metric": "gross_profit.mom_abs",
+      "expected": 4451.24,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "gross_profit: 6236.38 - 1785.14 (2026-08)"
+    },
+    {
+      "metric": "gross_profit.mom_pct",
+      "expected": 249.34963084127855,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "gross_profit: (6236.38 - 1785.14) / 1785.14 x 100"
+    },
+    {
+      "metric": "opex.total.mom_abs",
+      "expected": 1212.46,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "opex.total: 2755.1 - 1542.64 (2026-08)"
+    },
+    {
+      "metric": "opex.total.mom_pct",
+      "expected": 78.59643209044233,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "opex.total: (2755.1 - 1542.64) / 1542.64 x 100"
+    },
+    {
+      "metric": "operating_income.mom_abs",
+      "expected": 3238.78,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "operating_income: 3481.28 - 242.5 (2026-08)"
+    },
+    {
+      "metric": "operating_income.mom_pct",
+      "expected": 1335.579381443299,
+      "tolerance": 0.0005,
+      "unit": "percent",
+      "derivation": "operating_income: (3481.28 - 242.5) / 242.5 x 100"
+    },
+    {
+      "metric": "net_income.reported",
+      "expected": 1481.28,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "Intuit's Net Income for 2026-09 (Other Expenses included)"
+    },
+    {
+      "metric": "revenue.total.ttm",
+      "expected": 10200.77,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "sum of revenue.total over 2025-10..2026-09"
+    },
+    {
+      "metric": "cogs.total.ttm",
+      "expected": 405.0,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "sum of cogs.total over 2025-10..2026-09"
+    },
+    {
+      "metric": "gross_profit.ttm",
+      "expected": 9795.77,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "sum of gross_profit over 2025-10..2026-09"
+    },
+    {
+      "metric": "opex.total.ttm",
+      "expected": 5203.31,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "sum of opex.total over 2025-10..2026-09"
+    },
+    {
+      "metric": "operating_income.ttm",
+      "expected": 4592.46,
+      "tolerance": 0.01,
+      "unit": "currency",
+      "derivation": "sum of operating_income over 2025-10..2026-09"
+    }
+  ],
+  "unavailable": [
+    {
+      "metric": "cogs.total.mom_pct",
+      "reason": "zero_base",
+      "derivation": "cogs.total: 2026-08 was exactly 0"
+    }
+  ]
+}

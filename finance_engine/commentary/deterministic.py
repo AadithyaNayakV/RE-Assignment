@@ -33,6 +33,7 @@ class DeterministicProvider(CommentaryProvider):
 
         blocks = [
             self._headline(doc, m, fmt, period, prior),
+            self._caveats(doc, period),
             self._revenue(doc, m, fmt, period, prior),
             self._costs(doc, m, fmt, period, prior),
             self._movements(doc, m, fmt, period, prior),
@@ -99,6 +100,40 @@ class DeterministicProvider(CommentaryProvider):
         notes = doc.get("classification_notes") or []
         if notes:
             lines += ["", "**Classification note.** " + " ".join(notes)]
+        return "\n".join(lines)
+
+    def _caveats(self, doc, period) -> str:
+        """Comparisons that rest on a month that does not reconcile. Only when there are
+        any, so a clean client's commentary is unchanged."""
+        block = doc.get("comparison_caveats")
+        if not block:
+            return ""
+        lines = ["### Comparisons that need care", ""]
+        groups: dict[tuple, list[dict]] = {}
+        for item in block.get("items") or []:
+            groups.setdefault((item["comparison"], item["against"]), []).append(item)
+        for (comparison, against), items in groups.items():
+            measures = [i["label"][0].lower() + i["label"][1:] for i in items]
+            named = (measures[0] if len(measures) == 1 else
+                     f"{', '.join(measures[:-1])} and {measures[-1]}")
+            checks = list(dict.fromkeys(k for i in items for k in i["failed_checks"]))
+            cells = list(dict.fromkeys(
+                f"{'blank' if c['code'] == 'blank_cell' else 'non-numeric'} cell at "
+                f"{c['cell']} ({c['label']})" for i in items for c in i["cells"]))
+            side = "prior month" if comparison == "mom" else "year-ago month"
+            detail = "; ".join(([f"the {side} failed {' and '.join(checks)}"]
+                                if checks else []) + cells)
+            lines.append(
+                f"- Against {against}: the change{'s' if len(measures) > 1 else ''} in "
+                f"{named} rest{'' if len(measures) > 1 else 's'} on a month that does "
+                f"not reconcile ({detail}). Read "
+                f"{'them' if len(measures) > 1 else 'it'} with care: "
+                f"{'they may not be real movements' if len(measures) > 1 else 'it may not be a real movement'}.")
+        if block.get("period_reconciles"):
+            lines.append(f"- {period} itself reconciles.")
+        else:
+            lines.append(f"- {period} itself does not reconcile: "
+                         f"{', '.join(block.get('period_failed_checks') or [])} failed.")
         return "\n".join(lines)
 
     def _revenue(self, doc, m, fmt, period, prior) -> str:

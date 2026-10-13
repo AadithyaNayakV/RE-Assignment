@@ -6,16 +6,31 @@ design question "where would this run?" has a written answer.
 
 The local Claude Code MCP connection (`.mcp.json`, stdio, one laptop) is a **separate
 thing** from a future hosted app's QuickBooks integration. The hosted app would not use
-Claude Code's MCP connection. It would read QuickBooks through
-`finance_engine/sources/quickbooks.py`, a new `DataSource` implementation, with its own
-OAuth app and per-client tokens. That file does not exist yet.
+Claude Code's MCP connection. It would read QuickBooks through the direct reader,
+`finance_engine/sources/quickbooks_api.py` (fetch) and `sources/quickbooks.py` (the
+`DataSource` for a saved snapshot), with its own OAuth app. **Those two files exist since
+Phase 5C, for the sandbox only, with one token file**; per-client tokens and a hosted
+service do not.
 
 ## Configuration by environment variable only
 
 Already true today (`finance_engine/config.py`, `.env.example`):
-`LLM_PROVIDER`, `FINANCE_CONFIG_DIR`, `FINANCE_DATA_DIR`, `FINANCE_OUTPUT_DIR`. The
-planned additions are `OLLAMA_BASE_URL` and `ANTHROPIC_API_KEY`, read through a
-`CredentialStore`. Neither provider is implemented, and no API key is assumed to exist.
+`LLM_PROVIDER`, `FINANCE_CONFIG_DIR`, `FINANCE_DATA_DIR`, `FINANCE_OUTPUT_DIR`. Since
+Phase 5C the optional cloud commentary providers read `GEMINI_API_KEY` and
+`ANTHROPIC_API_KEY` by name through a `CredentialStore` (environment, then a git-ignored
+`.env`); no API key is assumed to exist, and the Claude API is off unless enabled in
+`config/providers.yaml`. A hosted version would put those keys in a secrets manager
+instead of `.env` (not built). Ollama is not built.
+
+## AWS option [PLANNED, not built, not verified]
+
+- **Secrets:** AWS Secrets Manager, one entry per client for the QuickBooks refresh token
+  and one for each API key, read through a new `CredentialStore` implementation. The
+  reader's token rotation would write back to the same entry. Nothing reads AWS today.
+- **Claude via Amazon Bedrock:** a further `CommentaryProvider` next to `gemini` and
+  `claude-api`, receiving the same brief and passing the same checks, with the
+  deterministic report still the final fallback. Not built; model availability and
+  pricing on Bedrock were not checked.
 
 ## Dockerfile (sketch)
 

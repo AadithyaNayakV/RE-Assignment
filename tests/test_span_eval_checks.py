@@ -72,8 +72,8 @@ def _insert(report, sentence):
 
 
 class TestCasesAreRegistered:
-    def test_eighteen_cases(self):
-        assert [c["id"][:2] for c in load_cases()] == [f"{i:02d}" for i in range(1, 19)]
+    def test_nineteen_cases(self):
+        assert [c["id"][:2] for c in load_cases()] == [f"{i:02d}" for i in range(1, 20)]
 
     def test_inputs_map_to_flags_and_paths(self):
         assert scope_args({"period": "2026-06"}) == ["--period", "2026-06"]
@@ -234,7 +234,11 @@ class TestFreshClone:
         import make_test_workbooks
         generated = {f"data/clients/{c}/source/{f}" for c, f, *_ in
                      make_test_workbooks.WORKBOOKS}
-        tracked = set(subprocess.run(["git", "ls-files", "data"], cwd=ROOT, text=True,
+        # Tracked, or not git-ignored (so it goes in with the next commit): case 19's
+        # fixture is tests/fixtures/qb_pl_monthly.json.
+        tracked = set(subprocess.run(["git", "ls-files", "--cached", "--others",
+                                      "--exclude-standard", "data", "tests/fixtures"],
+                                     cwd=ROOT, text=True,
                                      capture_output=True).stdout.split("\n"))
         needs = sorted(c["id"] for c in load_cases()
                        if c["input"].get("workbook")

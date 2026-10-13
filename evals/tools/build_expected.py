@@ -9,6 +9,11 @@ Where the expected numbers come from:
   `scenarios()` and `compute_expected()`), which never import finance_engine. Derived
   values (margins, % changes, shares, TTM sums) are worked out here by hand-written
   arithmetic, following the definitions in docs/metrics_schema.md, not the engine code.
+* **QuickBooks snapshot** (case 19): the raw Profit and Loss JSON, read with `json`
+  alone. Each section's figure is the sum of every account amount under it (nested
+  accounts and a parent account's own amount, shown in its header row, included; a blank
+  cell is QuickBooks' zero), and that sum must equal Intuit's own section total before
+  anything is written.
 * **ABC Inc**: the workbook's own cached formula results (Total Income, Total COGS,
   Gross Profit, Total Operating Expenses, Net Income, subtotal rows, balance-sheet
   totals), plus single line cells read as spot checks. Rows are found by their label,
@@ -797,6 +802,85 @@ def _span_cell_warnings(book: Book, inp: dict, cfg: dict, scope: str) -> dict | 
             "enabled": enabled, "expected": found}
 
 
+# ---- QuickBooks snapshot (case 19) -----------------------------------------
+
+QB_GROUPS = {"Income": "revenue.total", "COGS": "cogs.total", "Expenses": "opex.total"}
+
+
+def _qb_amount(cell: dict) -> float:
+    """QuickBooks leaves a cell blank when an account had no activity: its zero."""
+    text = str(cell.get("value", "")).strip()
+    return float(text) if text else 0.0
+
+
+def _qb_accounts(rows: list[dict], n: int) -> list[float]:
+    """Every account amount under a section, column `n`: data rows, and the header
+    row of a nested section (a parent account's own postings)."""
+    out = []
+    for row in rows:
+        if row.get("type") == "Data" or ("ColData" in row and "Rows" not in row):
+            out.append(_qb_amount(row["ColData"][n]))
+        if "Rows" in row:
+            header = (row.get("Header") or {}).get("ColData")
+            if header:
+                out.append(_qb_amount(header[n]))
+            out += _qb_accounts((row.get("Rows") or {}).get("Row", []), n)
+    return out
+
+
+def quickbooks_expected(case: dict) -> dict:
+    inp = case["input"]
+    raw = json.loads((ROOT / inp["workbook"]).read_text(encoding="utf-8"))
+    titles = [c.get("ColTitle", "") for c in raw["Columns"]["Column"]]
+    cols = {}
+    for n, t in enumerate(titles):
+        m = re.fullmatch(r"([A-Z][a-z]{2}) (\d{4})", t.strip())
+        if m:
+            cols[f"{m.group(2)}-{MONTH_NAMES.index(m.group(1)) + 1:02d}"] = n
+    months = sorted(cols)
+    summary = {r["group"]: r["Summary"]["ColData"] for r in raw["Rows"]["Row"]
+               if r.get("group") and r.get("Summary")}
+    fig: dict[str, dict] = {}
+    for key, n in cols.items():
+        f = {}
+        for row in raw["Rows"]["Row"]:
+            name = QB_GROUPS.get(row.get("group"))
+            if not name:
+                continue                       # Other Income / Other Expenses stay out
+            total = sum(_qb_accounts((row.get("Rows") or {}).get("Row", []), n))
+            own = _qb_amount(row["Summary"]["ColData"][n])
+            if abs(total - own) > CURRENCY_TOL:
+                raise SystemExit(f"{name} {key}: accounts sum to {total}, Intuit's total "
+                                 f"is {own}")
+            f[name] = total
+        f["gross_profit"] = f["revenue.total"] - f["cogs.total"]
+        f["operating_income"] = f["gross_profit"] - f["opex.total"]
+        for check, group in (("gross_profit", "GrossProfit"),
+                             ("operating_income", "NetOperatingIncome")):
+            if abs(f[check] - _qb_amount(summary[group][n])) > CURRENCY_TOL:
+                raise SystemExit(f"{check} {key} disagrees with Intuit's {group}")
+        r = f["revenue.total"]
+        for margin, num in MARGIN_NUM.items():
+            f[margin] = f[num] / r * 100 if r > 0 else None
+        f["net_income.reported"] = _qb_amount(summary["NetIncome"][n])
+        fig[key] = f
+
+    period, e = inp["period"], Expect()
+    _month_values(e, fig, months, period, others={})
+    e.value("net_income.reported", fig[period]["net_income.reported"],
+            f"Intuit's Net Income for {period} (Other Expenses included)")
+    window = window_of(period)
+    if all(k in months for k in window):
+        for name in HEADLINE5:
+            e.value(f"{name}.ttm", sum(fig[k][name] for k in window),
+                    f"sum of {name} over {window[0]}..{window[-1]}")
+    return {"source": ("the raw QuickBooks Profit and Loss JSON, read with json alone by "
+                       "evals/tools/build_expected.py; every section sum checked against "
+                       "Intuit's own totals"),
+            "ttm": {"complete": all(k in months for k in window), "window": window},
+            "values": e.values, "unavailable": e.unavailable}
+
+
 # ---- driver -------------------------------------------------------------
 
 def build(case_dir: Path) -> dict | None:
@@ -811,6 +895,8 @@ def build(case_dir: Path) -> dict | None:
     generated = case.get("builder") == "test_workbook"
     if case.get("builder") == "test_workbook":
         body = test_workbook_expected(case)
+    elif case.get("builder") == "quickbooks_snapshot":
+        body = quickbooks_expected(case)
     elif case.get("synthetic"):
         body = synthetic_expected(inp["client_id"], inp["period"])
     else:

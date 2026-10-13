@@ -14,6 +14,7 @@ evidence in the right-hand column.
 | Where it would run for a whole team | PARTIAL | `docs/quickbooks_setup.md`, `docs/future_hosting.md` | The answer is written (hosted MCP over HTTPS behind SSO, per-client tokens in a secret manager). **Not built or deployed.** The brief says reasoning matters more than having deployed one. |
 | Credentials handled throughout | PARTIAL | `.gitignore`, `.env.example`, `docs/quickbooks_setup.md` | `.env` ignored in both repos; `.mcp.json` has an empty `env`; no secret in tracked files or in git history (scan below); the server rotates its own refresh token. **Gap:** the refresh token sits in plaintext in the server's git-ignored `.env`; a secret manager is planned, not built. |
 | Read-only access enforced | PASS | `.claude/settings.json` | All create/update/delete tools denied in both spellings; `tests/integration/test_quickbooks_mcp.py` checks it (3 config tests always run). 71 of 142 tools visible. |
+| (Phase 5C) Direct read-only reader for the CLI | PASS (sandbox) | `finance_engine/sources/quickbooks_api.py`, `sources/quickbooks.py`, `config/clients/qb_sandbox.yaml`, `tests/test_quickbooks.py`, case 19 | `pull-quickbooks` saves the monthly Profit and Loss as a snapshot the engine reads like a workbook. GET only plus the token refresh (checked by an AST test), sandbox host only, own token store, secrets redacted (checked with a fake server that echoes them). One real pull (2026-10-12) reconciled 65/65 for 2026-09. Loading the ABC workbook into the sandbox: **not done**. Secrets manager: **planned**. |
 
 ## Part 2: A skill that produces the monthly trend analysis
 
@@ -34,7 +35,7 @@ evidence in the right-hand column.
 
 | Requirement | Status | Where | Evidence |
 |---|---|---|---|
-| At least 5 golden cases (data state + expected output) | PASS (18) | `evals/cases/` | 18 cases, each with `case.yaml` (flags, forbidden claims, pass criteria) and, except case 12, `expected.json` (a derivation per value). Cases 14 to 18 (Phase 5B: year, year to date, gap, whole file, two workbooks) pass Level 1 and the deterministic Level 2; they have not been run through Claude. |
+| At least 5 golden cases (data state + expected output) | PASS (19) | `evals/cases/` | 19 cases, each with `case.yaml` (flags, forbidden claims, pass criteria) and, except case 12, `expected.json` (a derivation per value). Cases 14 to 18 (Phase 5B: year, year to date, gap, whole file, two workbooks) pass Level 1 and the deterministic Level 2; they have not been run through Claude. Case 19 (Phase 5C) reads a scrubbed real QuickBooks sandbox snapshot; its expected values are summed with plain `json`; it passes Level 1 and the deterministic Level 2 and has not been run through Claude. |
 | Expected values independent of the engine | PASS | `evals/tools/build_expected.py` | Built from the generator's inputs and the workbook's own cached totals; refuses to finish if `finance_engine` is imported; a test enforces it. |
 | Concrete grading approach | PASS | `evals/grading.md` | Three levels, thresholds, rubric. |
 | Regression detection | PASS | `evals/baseline/`, `evals/regression_demo.py` | A wrong subtotal in a test copy was caught by reconciliation; a temporary TTM off-by-one made 12 of 13 cases newly fail; reverted byte-identical. |

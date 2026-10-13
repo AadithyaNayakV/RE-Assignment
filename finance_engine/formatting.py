@@ -100,6 +100,20 @@ def significance_rule(thresholds: dict, symbol: str = "$") -> str:
     return f"{', or '.join(parts[:-1])}, or {parts[-1]}"
 
 
+def check_count(recon: dict, passed_word: str = "passed",
+                failed_word: str = "failed") -> str:
+    """"60/60 passed" when every check passed; "4 of 55 failed" otherwise.
+
+    Both numbers are stored in metrics.json. A passed count like "51/55" is derived
+    (checks_run - checks_failed), so no figure check could trace it; when anything fails,
+    the stored failed count is quoted instead.
+    """
+    run, failed = recon.get("checks_run", 0), recon.get("checks_failed", 0)
+    if failed:
+        return f"{failed} of {run} {failed_word}"
+    return f"{run}/{run} {passed_word}"
+
+
 def reason(code: str | None) -> str:
     if not code:
         return ""

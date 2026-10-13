@@ -115,7 +115,8 @@ class TestReport:
                                                                      abc_workspace,
                                                                      capsys):
         code = main(["report", "--client", "abc_inc", "--period", "2026-06",
-                     "--provider", "gemini", "--root", str(abc_workspace)])
+                     # Was "gemini", until Phase 5C made that a real provider value.
+                     "--provider", "no-such-provider", "--root", str(abc_workspace)])
         assert code == EXIT_OK
         assert "Unknown commentary provider" in capsys.readouterr().err
 

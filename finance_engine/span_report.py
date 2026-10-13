@@ -29,13 +29,15 @@ CURRENCY_HEADLINE = ["revenue.total", "cogs.total", "gross_profit", "opex.total"
 
 
 def build_span_report(doc: dict, commentary: str = "", provider_id: str = "deterministic",
-                      guard_result: dict | None = None) -> str:
+                      guard_result: dict | None = None,
+                      commentary_from_brief: bool = False) -> str:
     fmt = Formatter(doc.get("currency_symbol", "$"), doc.get("currency", "USD"))
     m = {x["name"]: x for x in doc.get("metrics", [])}
     if doc.get("scope") == "year":
         parts = [
             _header(doc), _status(doc, m, guard_result), _source(doc),
-            _commentary(commentary, provider_id, guard_result), _year_coverage(doc),
+            _commentary(commentary, provider_id, guard_result, commentary_from_brief),
+            _year_coverage(doc),
             _revenue(doc, m, fmt), _margins(doc, m, fmt), _expenses(doc, m, fmt),
             _quarters(doc, m, fmt), _year_on_year(doc, m, fmt),
             _monthly_table(doc, m, fmt), _extremes(doc, m, fmt),
@@ -45,7 +47,8 @@ def build_span_report(doc: dict, commentary: str = "", provider_id: str = "deter
     else:
         parts = [
             _header(doc), _status(doc, m, guard_result), _source(doc),
-            _commentary(commentary, provider_id, guard_result), _all_coverage(doc),
+            _commentary(commentary, provider_id, guard_result, commentary_from_brief),
+            _all_coverage(doc),
             _years(doc, m, fmt), _start_to_end(doc, m, fmt), _monthly_table(doc, m, fmt),
             _seasonality(doc), _reconciliation(doc, fmt), _data_quality(doc),
             _limitations(doc), _checklist(doc, m),

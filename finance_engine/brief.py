@@ -54,6 +54,7 @@ def build_brief(doc: dict, metric_filter: str | None = None) -> str:
         return build_span_brief(doc)
     parts = [
         _header(doc),
+        _caveats(doc),
         _status(doc),
         _reconciliation_failures(doc, fmt),
         _issues(doc),
@@ -90,6 +91,28 @@ def _header(doc) -> str:
         "exactly as printed. A figure that is not printed here or in "
         "`brief --metric <name>` is not in metrics.json: do not derive it.",
     ])
+
+
+def _caveats(doc) -> str:
+    """Comparisons that need care. First, so a writer cannot miss them; only when any."""
+    block = doc.get("comparison_caveats")
+    if not block:
+        return ""
+    period = doc.get("period")
+    lines = ["## Comparison caveats: state each one in the summary", "",
+             "Each change below rests on a comparison month that does not reconcile. "
+             "State it in the summary with the measure and the month, and say it should "
+             "not be read as a real movement. Give no cause.", ""]
+    for item in block.get("items") or []:
+        lines.append(f"- `{item['measure']}` ({item['label']}) vs {item['against']} "
+                     f"({'prior month' if item['comparison'] == 'mom' else 'year ago'}): "
+                     f"{item['text'].split(': ', 1)[-1]}")
+    lines.append("")
+    lines.append(f"- Reporting month {period}: "
+                 + ("reconciles." if block.get("period_reconciles") else
+                    f"does NOT reconcile ({', '.join(block.get('period_failed_checks') or [])} "
+                    f"failed)."))
+    return "\n".join(lines)
 
 
 def _status(doc) -> str:

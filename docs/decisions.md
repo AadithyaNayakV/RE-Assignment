@@ -31,13 +31,23 @@ can explain every one as my own.
 - **Cost:** the guard proves a number exists, not that it sits in the right sentence. I
   measured and published that limit instead of claiming safety.
 
-## 3. No Gemini, no paid or remote model API
-- **Chose:** commentary comes from Claude Code itself on a Pro plan, plus a deterministic
-  template provider that needs nothing. No API key is assumed to exist anywhere.
-- **Why:** the project rule, and a template fallback means the firm still gets a correct
-  draft if every model is down. It is also the control for the evals.
-- **Rejected:** Gemini and any metered API. Ollama and a paid Claude API stay as documented
-  `CommentaryProvider` slots (`LLM_PROVIDER`), unbuilt.
+## 3. Commentary: the template always, cloud models optional (revised in Phase 5C)
+- **Chose:** commentary from Claude Code itself on a Pro plan (the skill), the
+  deterministic template that needs nothing, and since Phase 5C, optional cloud
+  providers for the CLI: Gemini (a Google AI Studio key) and the Claude API (opt-in and
+  paid, billed separately from Claude Pro, off by default). No API key is assumed to
+  exist; a missing key skips the provider.
+- **The rule that did not change:** no AI ever produces or changes a number. A cloud
+  model receives only the compact brief and writes commentary text; the guard, the
+  causal-wording check and the reconciliation-month check run on it in process, a
+  failure is retried and then handed to the next provider, and the deterministic report
+  is always the final fallback.
+- **Why:** the user asked for commentary without Claude Code. The template fallback
+  means the firm still gets a correct draft if every model is down or keeps failing the
+  checks; it is also the control for the evals.
+- **Before Phase 5C:** Gemini and any metered API were rejected outright, with Ollama and
+  a paid Claude API kept as unbuilt `CommentaryProvider` slots. Ollama is still not
+  built.
 
 ## 4. `metrics.json` is the only contract
 - **Chose:** one versioned JSON document (`docs/metrics_schema.md`) between every stage.
@@ -78,3 +88,22 @@ can explain every one as my own.
 - **Why:** the brief says reasoning matters more than a deployment, and the ground rules
   keep everything inside the sandbox. I do not claim production readiness or tenant
   isolation, because neither exists.
+
+## 8. QuickBooks for the pipeline: a direct read-only reader, saved as snapshots (Phase 5C)
+- **Chose:** a small Python reader (`sources/quickbooks_api.py`) that refreshes its own
+  token and GETs one report, the monthly Profit and Loss, from the sandbox. The raw
+  response is saved as a snapshot file, and the engine reads that file through the
+  `DataSource` interface like a workbook.
+- **Why:** the MCP server serves Claude Code; the pipeline needs Python as the only source
+  of numbers and a reproducible input with a hash. A separate Intuit app and token file
+  avoid two programs rotating one refresh token.
+- **Other Income / Other Expenses:** kept outside revenue, COGS and operating expenses.
+  Operating income is Intuit's Net Operating Income; net income as reported is Intuit's Net
+  Income, which includes them. Folding them in would make operating figures disagree with
+  Intuit's own report.
+- **Blank cells:** read as 0, because QuickBooks leaves a cell blank for no activity and its
+  own totals count it as zero. This departs from the workbook rule (blank is not zero) for
+  this source only, and the client config's classification note says so.
+- **Rejected:** analysing the live response directly (not reproducible); reusing the MCP
+  server's token (rotation conflicts); production access (out of scope; refused in code).
+- **Not done:** loading the ABC workbook into the sandbox; a secrets manager (planned).

@@ -11,7 +11,7 @@ The report is a **draft for a human reviewer**, and says so. Rules it follows:
 
 from __future__ import annotations
 
-from finance_engine.formatting import (Formatter, na_with_reason,
+from finance_engine.formatting import (Formatter, check_count, na_with_reason,
                                        one_off_multiple_reason,
                                        significance_rule)
 
@@ -20,13 +20,18 @@ NOT_AVAILABLE_NOTE = "_No supporting data for this section._"
 
 def build_report(metrics_doc: dict, commentary: str = "",
                  provider_id: str = "deterministic",
-                 guard_result: dict | None = None) -> str:
+                 guard_result: dict | None = None, footer: str | None = None,
+                 commentary_from_brief: bool = False) -> str:
+    """`footer`: one line naming the commentary provider, its attempt and whether data
+    left the machine. Only `--provider auto|gemini|claude-api` passes one; without it
+    the report is exactly as before."""
     doc = metrics_doc
     if doc.get("scope") in ("year", "all"):
         # Year and whole-file documents have their own layout. Month documents carry no
         # `scope` key, so this branch never touches a month report.
         from finance_engine.span_report import build_span_report
-        return build_span_report(doc, commentary, provider_id, guard_result)
+        return _with_footer(build_span_report(doc, commentary, provider_id, guard_result,
+                                              commentary_from_brief), footer)
     fmt = Formatter(doc.get("currency_symbol", "$"), doc.get("currency", "USD"))
     m = {x["name"]: x for x in doc.get("metrics", [])}
 
@@ -34,7 +39,7 @@ def build_report(metrics_doc: dict, commentary: str = "",
         _header(doc),
         _status(doc, guard_result),
         _source(doc),
-        _commentary(commentary, provider_id, guard_result),
+        _commentary(commentary, provider_id, guard_result, commentary_from_brief),
         _revenue(doc, m, fmt),
         _margins(doc, m, fmt),
         _expenses(doc, m, fmt),
@@ -49,7 +54,13 @@ def build_report(metrics_doc: dict, commentary: str = "",
         _limitations(doc),
         _checklist(doc),
     ]
-    return "\n\n".join(p for p in parts if p).rstrip() + "\n"
+    return _with_footer("\n\n".join(p for p in parts if p).rstrip() + "\n", footer)
+
+
+def _with_footer(report: str, footer: str | None) -> str:
+    if not footer:
+        return report
+    return report.rstrip() + "\n\n---\n\n" + footer.strip() + "\n"
 
 
 # ---- sections ----------------------------------------------------------
@@ -82,8 +93,7 @@ def _status(doc, guard_result) -> str:
     rows = [
         ("Reconciliation",
          "PASS" if recon.get("all_passed") else "**FAIL**",
-         f"{recon.get('checks_run', 0) - recon.get('checks_failed', 0)}"
-         f"/{recon.get('checks_run', 0)} checks passed across all periods "
+         f"{check_count(recon, 'checks passed', 'checks failed')} across all periods "
          f"(tolerance {fmt_tolerance(recon)})"),
         ("Data-quality errors",
          "none" if not errors else f"**{len(errors)}**",
@@ -99,6 +109,15 @@ def _status(doc, guard_result) -> str:
          f"window {(doc.get('ttm') or {}).get('window', ['?'])[0]}"
          f"..{(doc.get('ttm') or {}).get('window', ['?'])[-1]}"),
     ]
+    caveats = doc.get("comparison_caveats")
+    if caveats:
+        rows.append((
+            "Reporting month reconciles",
+            "yes" if caveats.get("period_reconciles") else "**no**",
+            "; ".join(caveats.get("period_failed_checks") or []) or "—"))
+        rows.append((
+            "Comparison caveats", f"**{len(caveats.get('items') or [])}**",
+            "changes marked † rest on a month that does not reconcile"))
     if guard_result is not None:
         rows.append((
             "Commentary number check",
@@ -140,11 +159,19 @@ def _source(doc) -> str:
     return "\n".join(lines)
 
 
-def _commentary(commentary: str, provider_id: str, guard_result) -> str:
+def _commentary(commentary: str, provider_id: str, guard_result,
+                from_brief: bool = False) -> str:
     if not commentary.strip():
         return ""
-    lines = ["## Commentary", "",
-             f"_Written by the `{provider_id}` commentary provider from metrics.json._"]
+    if from_brief:
+        traced = (" every number was traced to metrics.json"
+                  if guard_result is not None and guard_result.get("passed") else
+                  " its numbers were checked against metrics.json")
+        source = (f"_Written by the `{provider_id}` commentary provider from the brief "
+                  f"(the compact view of metrics.json);{traced}._")
+    else:
+        source = f"_Written by the `{provider_id}` commentary provider from metrics.json._"
+    lines = ["## Commentary", "", source]
     if guard_result is not None:
         if guard_result.get("passed"):
             lines.append(
@@ -184,19 +211,21 @@ def _revenue(doc, m, fmt) -> str:
     total = m.get("revenue.total")
     lines.append(
         f"| **Total revenue** | **{fmt.metric(total)}** | — | "
-        f"**{fmt.metric_signed(m.get('revenue.total.mom_abs'))}** | "
+        f"**{fmt.metric_signed(m.get('revenue.total.mom_abs'))}**{_mark(doc, 'revenue.total')} | "
         f"**{fmt.metric_signed(m.get('revenue.total.mom_pct'))}** |"
     )
     lines += ["",
               f"- Trailing twelve months: {fmt.metric(m.get('revenue.total.ttm'))}",
               f"- Year on year: "
-              f"{fmt.change_pair(m.get('revenue.total.yoy_abs'), m.get('revenue.total.yoy_pct'))}"]
+              f"{fmt.change_pair(m.get('revenue.total.yoy_abs'), m.get('revenue.total.yoy_pct'))}"
+              f"{_mark(doc, 'revenue.total', 'yoy')}"]
     if total and total.get("reported_value") is not None:
         lines.append(
             f"- The workbook's own Total Income row reads "
             f"{fmt.money(total['reported_value'])}; the figure above is independently "
             f"summed from the line items and reconciled against it."
         )
+    lines += _caveat_note(doc, ["revenue.total"], ("mom", "yoy"))
     return "\n".join(lines)
 
 
@@ -221,12 +250,13 @@ def _margins(doc, m, fmt) -> str:
         if metric is None:
             continue
         if pts_key:
-            change = fmt.metric(m.get(pts_key))
+            change = fmt.metric(m.get(pts_key)) + _mark(doc, value_key)
         elif abs_key:
-            change = fmt.metric_signed(m.get(abs_key))
+            change = fmt.metric_signed(m.get(abs_key)) + _mark(doc, value_key)
         else:
             change = "—"
         lines.append(f"| {label} | {fmt.metric(metric)} | {change} |")
+    lines += _caveat_note(doc, [k for _, k, _, _ in rows])
 
     notes = doc.get("classification_notes") or []
     if notes:
@@ -260,10 +290,11 @@ def _expenses(doc, m, fmt) -> str:
     total = m.get("opex.total")
     lines.append(
         f"| **Total** | **{fmt.metric(total)}** | — | "
-        f"**{fmt.metric_signed(m.get('opex.total.mom_abs'))}** | "
+        f"**{fmt.metric_signed(m.get('opex.total.mom_abs'))}**{_mark(doc, 'opex.total')} | "
         f"**{fmt.metric_signed(m.get('opex.total.mom_pct'))}** | "
         f"**{fmt.metric(m.get('opex.total.ttm'))}** |"
     )
+    lines += _caveat_note(doc, ["opex.total"])
     lines += ["", "Categories are assigned by the client config, not by line name alone. "
                   "They partition every operating expense line exactly once, so they sum "
                   "to the total above."]
@@ -310,13 +341,32 @@ def _mom_summary(doc, m, fmt) -> str:
         # here as current - change, which put five untraceable numbers in every report.
         lines.append(
             f"| {label} | {fmt.metric(m.get(f'{key}.prior'))} | {fmt.metric(current)} | "
-            f"{fmt.metric_signed(change)} | "
+            f"{fmt.metric_signed(change)}{_mark(doc, key)} | "
             f"{fmt.metric_signed(m.get(f'{key}.mom_pct'))} |"
         )
+    lines += _caveat_note(doc, [k for _, k in rows])
     lines += ["", "A percentage change is shown only where the prior month was strictly "
                   "positive. A zero or negative base is reported as n/a, with a note saying which, "
                   "never as an infinite or sign-flipped percentage."]
     return "\n".join(lines)
+
+
+def _caveat_items(doc, measures, comparisons=("mom",)) -> list[dict]:
+    items = (doc.get("comparison_caveats") or {}).get("items") or []
+    return [i for i in items if i["measure"] in measures and i["comparison"] in comparisons]
+
+
+def _mark(doc, measure: str, comparison: str = "mom") -> str:
+    """A † on a change that rests on a month that does not reconcile; else nothing."""
+    return " †" if _caveat_items(doc, [measure], (comparison,)) else ""
+
+
+def _caveat_note(doc, measures, comparisons=("mom",)) -> list[str]:
+    items = _caveat_items(doc, measures, comparisons)
+    if not items:
+        return []
+    return ["", "† Rests on a month that does not reconcile, so read it with care: "
+                + "; ".join(i["text"] for i in items) + "."]
 
 
 def _ttm(doc, m, fmt) -> str:

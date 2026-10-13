@@ -20,20 +20,16 @@ The contract, in order of importance:
 `guard.py` enforces rule 1 mechanically, whatever the provider. Rules 2-4 are enforced by
 prompt and review for a model provider, and structurally for the deterministic one.
 
-### Adding a provider later (documented, not implemented)
+### Cloud providers (Phase 5C)
 
-Phase 1 ships `deterministic.py` only. Two more are planned and both slot in here without
-touching the engine:
-
-* `ollama.py` — a local model over HTTP. Reads `OLLAMA_BASE_URL`. Needs no API key, so it
-  keeps the "runs on a laptop with no paid services" property.
-* `claude_api.py` — the Anthropic API. Reads `ANTHROPIC_API_KEY` from the environment via
-  a `CredentialStore`, never from a config file or a literal.
-
-Both must: accept only the metrics document, return text, and pass their own output
-through `guard.check_commentary` before returning it. A provider that cannot reach its
-backend must raise `ProviderUnavailable` so the caller can fall back to the deterministic
-provider rather than emit nothing.
+`get_provider` below resolves the original values only (deterministic, template, none;
+ollama and claude_api still fall back to the template, as before). The cloud providers,
+Gemini and the Claude API, live in `providers.py` and are run by `orchestrator.py` for
+`--provider auto | gemini | claude-api`. They receive the compact brief, never the
+workbook, and never produce a number: the orchestrator checks their text with the guard,
+the causal-wording check and the failed-reconciliation-month check, retries, falls back,
+and always ends with the deterministic provider. The Claude API is opt-in and paid.
+Ollama is not built.
 """
 
 from __future__ import annotations
@@ -88,8 +84,9 @@ class CommentaryProvider(ABC):
 def get_provider(name: str) -> CommentaryProvider:
     """Resolve a provider by the `LLM_PROVIDER` value.
 
-    Only the deterministic provider exists in Phase 1. Unknown names fail loudly rather
-    than silently falling back, so a misconfigured environment is visible immediately.
+    The original values only; `auto`, `gemini` and `claude-api` go through
+    `orchestrator.write_commentary` instead. Unknown names fail loudly rather than
+    silently falling back, so a misconfigured environment is visible immediately.
     """
     from finance_engine.commentary.deterministic import DeterministicProvider
 

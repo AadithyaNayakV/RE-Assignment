@@ -360,6 +360,7 @@ class MetricsBuilder:
         self._movements()
         self._seasonality()
         self._limitations()
+        self.caveats = self._comparison_caveats()
         return self._document()
 
     def _revenue(self) -> None:
@@ -965,6 +966,9 @@ class MetricsBuilder:
         self._emit(f"{base_name}.yoy_pct", pct, PERCENT, "yoy_pct_v1", traces, reason,
                    notes=[_pct_note(reason, ya, base)])
 
+    def _comparison_caveats(self) -> dict | None:
+        return _caveats(self)
+
     def _limitations(self) -> None:
         first, last = self.sheet.period_keys()[0], self.sheet.period_keys()[-1]
         self.limitations.insert(0,
@@ -1043,10 +1047,114 @@ class MetricsBuilder:
             "movements": self.movements,
             "seasonality": self.seasonality,
             "reconciliation": self.rec.to_dict(),
+            # Present only when a comparison needs care or the month itself does not
+            # reconcile, so a clean client's document is unchanged.
+            **({"comparison_caveats": self.caveats} if self.caveats else {}),
             "data_quality_issues": self.val.to_list(),
             "classification_notes": self.cfg.classification_notes,
             "limitations": self.limitations,
         }
+
+
+# ---- comparison caveats ----------------------------------------------------------
+#
+# A change is only as good as both months it compares. If the comparison month failed a
+# reconciliation check that feeds a measure, or a line feeding it holds a text or blank
+# cell, the change in that measure rests on a month that does not add up. That is a
+# finding about the data, computed here so no writer has to work it out.
+
+CAVEAT_MEASURES = [
+    ("revenue.total", "Total revenue"),
+    ("cogs.total", "Cost of goods sold"),
+    ("gross_profit", "Gross profit"),
+    ("gross_margin_pct", "Gross margin"),
+    ("opex.total", "Total operating expenses"),
+    ("operating_income", "Operating income"),
+    ("operating_margin_pct", "Operating margin"),
+]
+_BELOW_REVENUE = ("gross_profit", "gross_margin_pct", "operating_income",
+                  "operating_margin_pct")
+#: The headline measures each reconciliation check vouches for.
+CHECK_MEASURES = {
+    "revenue_items_vs_total": ("revenue.total",) + _BELOW_REVENUE,
+    "cogs_items_vs_total": ("cogs.total",) + _BELOW_REVENUE,
+    "opex_items_vs_total": ("opex.total", "operating_income", "operating_margin_pct"),
+    "opex_group_subtotals": ("opex.total", "operating_income", "operating_margin_pct"),
+    "gross_profit": _BELOW_REVENUE,
+    "operating_income": ("operating_income", "operating_margin_pct"),
+}
+#: The headline measures a line in each section feeds.
+SECTION_MEASURES = {
+    "revenue": ("revenue.total",) + _BELOW_REVENUE,
+    "cogs": ("cogs.total",) + _BELOW_REVENUE,
+    "opex": ("opex.total", "operating_income", "operating_margin_pct"),
+}
+_CELL_WORDS = {"blank_cell": "blank cell", "non_numeric_cell": "non-numeric cell"}
+
+
+def _caveats(builder: "MetricsBuilder") -> dict | None:
+    failed: dict[str, list[str]] = {}
+    for result in builder.rec.failures:
+        keys = failed.setdefault(result.period, [])
+        if result.key not in keys:
+            keys.append(result.key)
+    sections = {}
+    for item in builder.sheet.line_items:
+        if item.role == "item" and item.section in SECTION_MEASURES:
+            sections.setdefault(item.label, item.section)
+    cells: dict[str, list[dict]] = {}
+    for issue in builder.val.issues:
+        if issue.code not in _CELL_WORDS:
+            continue
+        for c in issue.cells:
+            section = sections.get(c.get("label"))
+            if section:
+                cells.setdefault(c["period"], []).append(
+                    {"code": issue.code, "sheet": c.get("sheet"), "cell": c.get("cell"),
+                     "label": c.get("label"), "section": section})
+
+    names = set(builder.metrics.names())
+    items = []
+    for comparison, against, side in (("mom", builder.prior, "prior month"),
+                                      ("yoy", year_ago(builder.period), "year-ago month")):
+        checks, bad_cells = failed.get(against, []), cells.get(against, [])
+        if not checks and not bad_cells:
+            continue
+        for measure, label in CAVEAT_MEASURES:
+            suffixes = (("mom_abs", "mom_pct", "mom_pts", "prior") if comparison == "mom"
+                        else ("yoy_abs", "yoy_pct"))
+            metrics = [f"{measure}.{s}" for s in suffixes if f"{measure}.{s}" in names]
+            change = next((builder.metrics.value(m) for m in metrics
+                           if m.endswith(("_abs", "_pts"))), None)
+            if not metrics or change is None:
+                continue                     # no comparison was made, so nothing rests on it
+            hit_checks = [k for k in checks if measure in CHECK_MEASURES.get(k, ())]
+            hit_cells = [c for c in bad_cells if measure in SECTION_MEASURES[c["section"]]]
+            if not hit_checks and not hit_cells:
+                continue
+            reasons = []
+            if hit_checks:
+                reasons.append(f"{side} failed {', '.join(hit_checks)}")
+            reasons += [f"{_CELL_WORDS[c['code']]} at {c['cell']} ({c['label']})"
+                        for c in hit_cells]
+            items.append({
+                "measure": measure, "label": label, "comparison": comparison,
+                "against": against, "metrics": metrics, "failed_checks": hit_checks,
+                "cells": hit_cells,
+                "text": f"{measure} vs {against}: {'; '.join(reasons)}"})
+    current = failed.get(builder.period, [])
+    if not items and not current:
+        return None
+    return {
+        "period": builder.period,
+        "period_reconciles": not current,
+        "period_failed_checks": current,
+        "rule": ("A change rests on both months. Each item is a headline comparison whose "
+                 "comparison month failed a reconciliation check feeding that measure, or "
+                 "has a text or blank cell on a line feeding it. Read it with care: it "
+                 "may not be a real movement."),
+        "items": items,
+    }
 
 
 def _direction(change: float, sign_change: bool, previous: float,

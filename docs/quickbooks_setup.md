@@ -1,9 +1,123 @@
-# QuickBooks Online Sandbox — MCP Connection (Phase 2)
+# QuickBooks Online sandbox: two read-only paths
+
+This project reads QuickBooks Online in two separate ways. Both are **sandbox only** and
+**read-only**, and each uses its own Intuit app and its own refresh token.
+
+| | Path 1: MCP server (Phase 2) | Path 2: direct reader (Phase 5C) |
+|---|---|---|
+| Used by | Claude Code, interactively (`mcp__quickbooks__*` tools) | The CLI (`pull-quickbooks`, `report --source quickbooks`) and any UI built on it |
+| Code | Intuit's `quickbooks-online-mcp-server/` (Node) | `finance_engine/sources/quickbooks_api.py` (fetch) and `sources/quickbooks.py` (snapshot reader), Python standard library only |
+| What it reads | Any read tool (company info, reports, entities) | One report: Profit and Loss, one column per month |
+| How it is read-only | `.claude/settings.json` denies every create/update/delete tool (the server itself registers them) | The code has no write function: every API request is a GET; the only POST is the OAuth token refresh to Intuit's token endpoint. Both are checked by tests |
+| Sandbox only | The server's `.env` says `QUICKBOOKS_ENVIRONMENT=sandbox` | The host must be `sandbox-quickbooks.api.intuit.com` and `QBO_ENVIRONMENT` must be `sandbox`; anything else is refused before a request is made |
+| Credentials | `quickbooks-online-mcp-server/.env` (`QUICKBOOKS_*`, written by `npm run auth`) | Root `.env`: `QBO_CLIENT_ID`, `QBO_CLIENT_SECRET`, `QBO_REFRESH_TOKEN`, `QBO_REALM_ID`, `QBO_ENVIRONMENT` |
+| Rotated refresh token saved to | `quickbooks-online-mcp-server/.env` | `.secrets/quickbooks_reader_token.json` (git-ignored) |
+
+**Why both exist.** The MCP server lets Claude explore a company during a conversation.
+The report pipeline needs something else: Python must be the only source of numbers, and
+a run must be reproducible. So the direct reader saves the raw response as a snapshot file
+with a SHA-256, and the engine analyses that file exactly as it analyses a workbook. It
+never analyses a live response. The pipeline also works without Claude Code or Node.
+
+**Why the tokens are not shared.** Intuit rotates the refresh token when it is used. If
+two programs used one token, each refresh would replace the token the other one holds, and
+one of them would eventually fail with `invalid_grant`. The reader therefore has its own
+Intuit development app, its own refresh token and its own token file. It never reads or
+writes `quickbooks-online-mcp-server/.env`.
+
+**Not done.** Loading the ABC workbook into the sandbox (the brief's stretch goal) was not
+attempted. The sandbox holds Intuit's sample company, so everything read from it is test
+data, not evidence about a client.
+
+## Path 2: the direct reader
+
+### Use
+
+```bash
+python -m finance_engine pull-quickbooks --client qb_sandbox --start 2025-10 --end 2026-10
+python -m finance_engine report --client qb_sandbox --period 2026-09 --file <snapshot>.json
+python -m finance_engine report --client qb_sandbox --period 2026-09 \
+    --source quickbooks --start 2025-10 --end 2026-10      # pull, then analyse that pull
+python scripts/qb_smoke.py      # by hand: one refresh, one GET, prints no secret, saves nothing
+```
+
+A pull makes one token refresh and one GET of the Profit and Loss report for whole
+calendar months `--start`..`--end`. The response is checked with the snapshot reader
+**before** anything is written, so a range with no data, a non-monthly report or a wrong
+currency gives a clear message and leaves no file. The response is then saved byte for
+byte as `data/clients/qb_sandbox/source/qb_pl_<start>_<end>_<UTC time>.json`. A snapshot is
+never overwritten. When the folder holds several snapshots, the usual file rules apply
+(`--file`, or the one snapshot that contains the period); snapshots are never merged.
+
+### Credentials and token handling
+
+- The five variables above go in the root `.env` (git-ignored). `.env.example` lists the
+  names only.
+- `QBO_REFRESH_TOKEN` is the **seed**. On every pull the reader tries the token saved in
+  `.secrets/quickbooks_reader_token.json` first, then the seed. Intuit's rotated token is
+  saved back to that file atomically (temp file, then replace).
+- The client secret, both tokens, the realm ID and the authorization header are redacted
+  from every error message, including an error body from Intuit that echoes them. The realm
+  ID is replaced with `<realm>` in any URL that is shown. Tests feed fake secrets through a
+  fake server that echoes them, and check that none appears in an exception, stdout,
+  stderr, the snapshot or any output file.
+
+### Re-authorising
+
+When a pull says "The token refresh was refused", the stored token and the seed have
+both expired or been revoked (refresh tokens last about 100 days). Then:
+
+1. Authorise the reader's **own** Intuit development app against the sandbox company again.
+   For example, use Intuit's OAuth 2.0 Playground: choose that app and the
+   `com.intuit.quickbooks.accounting` scope. Do not use the MCP server's app or its token.
+2. Put the new refresh token in `QBO_REFRESH_TOKEN`, and the company's realm ID in
+   `QBO_REALM_ID`, in the root `.env`.
+3. Run `python scripts/qb_smoke.py`. The stale stored token is refused, and the reader
+   falls back to the new seed and saves the token Intuit rotates. You may also delete
+   `.secrets/quickbooks_reader_token.json` first.
+
+Intuit offers no read-only scope for the Accounting API. The reader is read-only because
+of its code (GET only, tested), not because of the scope.
+
+### How the report is mapped (`config/clients/qb_sandbox.yaml`)
+
+- Sections come from Intuit's own groups: Income, Cost of Goods Sold and Expenses. Rows
+  between a section's header and its total belong to it. The label never decides.
+- **Other Income and Other Expenses stay outside all three sections.** Operating income is
+  Intuit's Net Operating Income. Net income as reported is Intuit's Net Income, which
+  includes them. A classification note in `metrics.json` says so.
+- Nested accounts are labelled with their path, for example
+  `Job Expenses: Job Materials: Plants and Soil`. A parent account's own postings (shown in
+  its section header row) become a line, `<account> (own amount)`. An account named like
+  its section becomes `<name> (account)`. Nested subtotals are kept but never summed.
+- **A blank cell is read as 0.** QuickBooks leaves a cell blank when an account had no
+  activity, and its own totals count that blank as zero. This is the one place where the
+  engine's "blank is not zero" rule does not apply, and the config's classification note
+  says so.
+- Every section sum is reconciled against Intuit's own total, for every month.
+
+### Verified
+
+- One real pull from the sandbox (2026-10-12): Oct 2025 to Oct 2026, 13 monthly columns.
+  For 2026-09, 65 of 65 reconciliation checks passed, and the deterministic report's number
+  check passed (38 of 38 numbers traced).
+- That response, scrubbed of every identifier, is `tests/fixtures/qb_pl_monthly.json`. It
+  drives `tests/test_quickbooks.py` (fake Intuit server, no network) and golden case
+  `19_quickbooks_sandbox`. That case's expected values are summed from the JSON with plain
+  `json` in `evals/tools/build_expected.py` and checked there against Intuit's own totals.
+- `scripts/qb_smoke.py` is for a person to run by hand. It is not run by the tests or the
+  evals.
+
+## Path 1: the MCP server (Phase 2)
+
+The rest of this document is the Phase 2 record of the MCP connection. Statements such as
+"`finance_engine/` was not modified" describe that phase. Path 2 above was added in
+Phase 5C.
 
 Status: **Connected and verified** (sandbox, local only). Registration with this Claude
 Code session is pending a one-time interactive trust approval — see "Open issues" below.
 
-## What I chose and why
+### What I chose and why
 
 **The cloned server** at `quickbooks-online-mcp-server/` (package `@qboapi/qbo-mcp-server`).
 Confirmed via `git remote -v` inside that directory:
@@ -26,7 +140,7 @@ Reasons to use it over the alternatives below:
 - Ships an `npm run auth` helper that runs the browser handshake and writes tokens straight
   into its own `.env` — no manual token copy-paste.
 
-## What I rejected and why
+### What I rejected and why
 
 - **A native Claude connector for QuickBooks.** I looked and did not find one in Claude's
   current first-party connector list. I did not exhaustively test this claim against a live
@@ -42,7 +156,7 @@ Reasons to use it over the alternatives below:
   entity types ourselves. Rejected for effort/maintenance reasons given a maintained
   alternative was already available.
 
-## Local vs. team hosting
+### Local vs. team hosting
 
 **Why local is right for this prototype:** sandbox OAuth only accepts `http://localhost`
 redirect URIs — Intuit rejects localhost for production apps — so a single developer running
@@ -63,17 +177,18 @@ locally only in this phase. Do not deploy.").
   ngrok tunnel for one-off re-auth, or a small deployed callback handler; after that initial
   handshake, only the refresh token matters for day-to-day use.
 
-## What changes for remote access / ten clients
+### What changes for remote access / ten clients
 
 - Ten clients means ten independent OAuth connections (ten refresh tokens), not ten copies of
   the server — same server, keyed token storage.
 - `QUICKBOOKS_TOKEN_STORE_PATH` per tenant is the interim mechanism already built into this
   server; a secrets-manager-backed store would be the longer-term replacement.
 - A future hosted app would read QuickBooks through `finance_engine/sources/quickbooks.py`
-  implementing the existing `DataSource` interface — **not built in this phase**, and
-  `finance_engine/` was not touched.
+  implementing the existing `DataSource` interface — not built in Phase 2. **Since Phase
+  5C** that reader exists for the sandbox (Path 2 above); per-client token storage in a
+  secrets manager is still planned.
 
-## Setup actually performed
+### Setup actually performed
 
 1. **Install + build** (already `npm install`ed from Phase 1 setup; rebuilt to confirm):
    ```
@@ -139,7 +254,7 @@ locally only in this phase. Do not deploy.").
    compiled module, not the caller's cwd), so `.mcp.json` only needs to know where `dist/index.js`
    lives.
 
-## Proof it works (real output, not assumptions)
+### Proof it works (real output, not assumptions)
 
 - `claude mcp list` lists `quickbooks` (see "Open issues" for its current status).
 - **Read-only API call succeeded**, independent of the MCP trust-approval step: I ran the
@@ -178,7 +293,7 @@ Not shown: the realm ID, which the response doesn't include anyway, plus the ent
 `SyncToken`, and `MetaData.LastUpdatedTime`. Reading the profile doesn't need any of them.
 This is an Intuit **sandbox** company, so its data is test data, not evidence about a client.
 
-## Token lifetime, storage, refresh, revocation
+### Token lifetime, storage, refresh, revocation
 
 - **Access token:** ~1 hour (`expires_in` from Intuit). `QuickbooksClient` refreshes it
   automatically 5 minutes before expiry on every tool invocation — no manual step.
@@ -195,7 +310,7 @@ This is an Intuit **sandbox** company, so its data is test data, not evidence ab
   development keys on the Intuit Developer Portal. Deleting the token values from `.env` stops
   this server from being able to act, but does not itself revoke the token at Intuit.
 
-## Security notes
+### Security notes
 
 - `.env`, `.env.*` (except `.env.example`), and `*token*.json` are gitignored in both this repo
   and the cloned server's repo (confirmed with `git check-ignore -v`).
@@ -209,7 +324,8 @@ This is an Intuit **sandbox** company, so its data is test data, not evidence ab
   the legitimate `client_id`/`client_secret` lines, a large stray block — a "Copy for AI"
   paste from Intuit's quickstart page containing instructional text, a live-looking example
   OAuth token-exchange response, and a `GEMINI_API_KEY`. None of that belongs in this project
-  (`CLAUDE.md` explicitly disallows Gemini/paid providers), and instructional text sitting
+  (at Phase 2, `CLAUDE.md` disallowed Gemini and paid providers; Phase 5C added Gemini as an
+  optional commentary provider with its own key), and instructional text sitting
   inside a file I was told to "use" is exactly the shape of a prompt-injection risk, so I
   treated it as inert data, did not act on it, and did not reuse any of its example tokens.
   Both `.env` files were rewritten to contain only the variables each project actually needs.
@@ -217,7 +333,7 @@ This is an Intuit **sandbox** company, so its data is test data, not evidence ab
   example OAuth tokens are real, the user should rotate/revoke them independently** — they are
   unrelated to this project and were never used by it.
 
-## Least privilege: Claude Code permission rules
+### Least privilege: Claude Code permission rules
 
 `.claude/settings.json` (new, checked in) adds a permission layer independent of the server's
 own `QUICKBOOKS_DISABLE_WRITE/UPDATE/DELETE` flags (which are not set):
@@ -258,7 +374,7 @@ precedence over allow rules. This is a second, independent
 layer — the first being the env flags above, which this phase leaves unset (all tools remain
 registered server-side; this is the enforcement point).
 
-## .mcp.json path and portability
+### .mcp.json path and portability
 
 `.mcp.json`'s `args` path was switched from an absolute, machine-specific path to a relative one:
 ```json
@@ -270,16 +386,17 @@ resolves correctly from the project root, which is where Claude Code spawns proj
 server processes. `.mcp.json` contains no secrets (empty `env` block), so unlike `.env` it is
 safe to commit — it's now also portable across machines since it has no absolute path baked in.
 
-## Boundaries kept
+### Boundaries kept
 
 - `finance_engine/` was not modified. The Excel path is untouched and still the only data
   source this engine reads.
 - This MCP connection is for Claude Code only, run locally, sandbox only.
 - A future hosted app would read QuickBooks via `finance_engine/sources/quickbooks.py`
-  implementing the existing `DataSource` interface — not built this phase.
+  implementing the existing `DataSource` interface — not built in Phase 2; built for the
+  sandbox in Phase 5C (Path 2 above).
 - Loading the Excel data into the sandbox (the optional stretch goal) was not done.
 
-## Open issues
+### Open issues
 
 - **Resolved 2026-10-11: trust approval granted.** The server is connected, and a real MCP call
   is recorded under "Verified MCP tool call" above. Original note:

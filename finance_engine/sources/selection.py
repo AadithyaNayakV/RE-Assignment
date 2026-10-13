@@ -146,18 +146,19 @@ def is_own_folder(config: ClientConfig, settings: Settings, root: Path) -> bool:
         return False
 
 
-def list_workbooks(folder: Path) -> list[Path]:
-    """`.xlsx` files, sorted, without Excel's `~$` lock files."""
+def list_workbooks(folder: Path, pattern: str = "*.xlsx") -> list[Path]:
+    """Source files, sorted, without Excel's `~$` lock files. `pattern` is `*.json` for
+    a QuickBooks client (its snapshots)."""
     if not folder.exists():
         return []
-    return sorted(p for p in folder.glob("*.xlsx") if not p.name.startswith("~$"))
+    return sorted(p for p in folder.glob(pattern) if not p.name.startswith("~$"))
 
 
 def read_periods(path: Path, config: ClientConfig) -> WorkbookInfo:
-    """The months one workbook holds, read with this client's config."""
-    from finance_engine.sources.excel import ExcelSource
+    """The months one workbook (or snapshot) holds, read with this client's config."""
+    from finance_engine.sources.factory import open_source
     try:
-        keys = ExcelSource(path).load(config).period_keys()
+        keys = open_source(path, config).load(config).period_keys()
         return WorkbookInfo(path.name, path, keys)
     except (LayoutError, KeyError, ValueError, OSError, zipfile.BadZipFile) as exc:
         return WorkbookInfo(path.name, path, [], " ".join(str(exc).split())[:200])
@@ -169,13 +170,15 @@ def workbook_inventory(config: ClientConfig, settings: Settings,
 
     For a shared folder only the configured file is the client's, so only it is listed.
     """
+    from finance_engine.sources.factory import source_pattern
     folder = source_folder(config, settings, root)
+    pattern = source_pattern(config)
     if is_own_folder(config, settings, root):
-        paths = list_workbooks(folder)
+        paths = list_workbooks(folder, pattern)
     elif config.source_filename and (folder / config.source_filename).exists():
         paths = [folder / config.source_filename]
     else:
-        paths = list_workbooks(folder)[:1]
+        paths = list_workbooks(folder, pattern)[:1]
     return [read_periods(p, config) for p in paths]
 
 
@@ -187,8 +190,10 @@ def _listing(infos: list[WorkbookInfo]) -> str:
 
 def choose(config: ClientConfig, settings: Settings, root: Path,
            file_name: str | None, want: Want | None) -> SourceChoice:
+    from finance_engine.sources.factory import source_pattern
     folder = source_folder(config, settings, root)
     own = is_own_folder(config, settings, root)
+    pattern = source_pattern(config)
 
     if file_name:
         if Path(file_name).name != file_name or file_name in (".", ".."):
@@ -196,12 +201,12 @@ def choose(config: ClientConfig, settings: Settings, root: Path,
                 f"--file takes a workbook name inside {folder}, not a path: {file_name!r}.")
         path = folder / file_name
         if not path.exists():
-            names = [p.name for p in list_workbooks(folder)]
+            names = [p.name for p in list_workbooks(folder, pattern)]
             raise SourceSelectionError(
                 f"--file {file_name!r} is not in {folder}. Workbooks there: "
                 f"{', '.join(names) or 'none'}.")
-        siblings = ([read_periods(p, config) for p in list_workbooks(folder) if p != path]
-                    if own else [])
+        siblings = ([read_periods(p, config) for p in list_workbooks(folder, pattern)
+                     if p != path] if own else [])
         return SourceChoice(path, "explicit", output_key=path.stem, siblings=siblings)
 
     filename = config.source_filename
@@ -214,9 +219,11 @@ def choose(config: ClientConfig, settings: Settings, root: Path,
             )
         return SourceChoice(path, "config")
 
-    candidates = list_workbooks(folder)
+    candidates = list_workbooks(folder, pattern)
     if not candidates:
-        raise FileNotFoundError(f"No .xlsx found in {folder}")
+        raise FileNotFoundError(f"No {pattern.lstrip('*')} found in {folder}"
+                                + (". Pull one with pull-quickbooks."
+                                   if config.source_type == "quickbooks" else ""))
     if len(candidates) == 1 or not own:
         return SourceChoice(candidates[0], "only")
 
@@ -253,7 +260,9 @@ def hint_for_missing_period(config: ClientConfig, settings: Settings, root: Path
         Period.from_key(period)
     except ValueError:
         return None
-    holders = [read_periods(p, config) for p in list_workbooks(chosen.parent)
+    from finance_engine.sources.factory import source_pattern
+    holders = [read_periods(p, config)
+               for p in list_workbooks(chosen.parent, source_pattern(config))
                if p != chosen]
     names = [i.filename for i in holders if period in i.periods]
     if not names:

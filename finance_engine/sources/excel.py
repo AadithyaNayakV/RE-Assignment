@@ -217,94 +217,98 @@ class ExcelSource(DataSource):
     # ---- structural tagging -------------------------------------------
 
     def _apply_income_statement_structure(self, sheet: Sheet, config: ClientConfig) -> None:
-        """Tag rows with section / group / category using the config's anchors.
+        apply_income_statement_structure(sheet, config)
 
-        Section membership is positional: the rows strictly between a section's header
-        label and its total label. A line's name never decides its section.
-        """
-        rows_by_label: dict[str, list[int]] = {}
-        for item in sheet.line_items:
-            rows_by_label.setdefault(_norm(item.label), []).append(item.row)
 
-        def anchor(label: str, what: str) -> int:
-            matches = rows_by_label.get(_norm(label), [])
-            if not matches:
+def apply_income_statement_structure(sheet: Sheet, config: ClientConfig) -> None:
+    """Tag rows with section / group / category using the config's anchors.
+
+    Section membership is positional: the rows strictly between a section's header
+    label and its total label. A line's name never decides its section.
+    """
+    rows_by_label: dict[str, list[int]] = {}
+    for item in sheet.line_items:
+        rows_by_label.setdefault(_norm(item.label), []).append(item.row)
+
+    def anchor(label: str, what: str) -> int:
+        matches = rows_by_label.get(_norm(label), [])
+        if not matches:
+            raise LayoutError(
+                f"{sheet.name}: {what} label {label!r} not found. "
+                f"Update config/clients/{config.client_id}.yaml to match the workbook."
+            )
+        if len(matches) > 1:
+            raise LayoutError(
+                f"{sheet.name}: {what} label {label!r} appears on rows {matches}. "
+                f"Refusing to choose between them."
+            )
+        return matches[0]
+
+    by_row = {item.row: item for item in sheet.line_items}
+
+    for sec in config.sections:
+        key = sec["key"]
+        header_row = anchor(sec["header_label"], f"section {key!r} header")
+        total_row = anchor(sec["total_label"], f"section {key!r} total")
+        if total_row <= header_row:
+            raise LayoutError(
+                f"{sheet.name}: section {key!r} total row {total_row} is not below "
+                f"its header row {header_row}"
+            )
+
+        if header_row in by_row:
+            by_row[header_row].role = "header"
+            by_row[header_row].section = key
+        total_item = by_row[total_row]
+        total_item.role = "section_total"
+        total_item.section = key
+
+        # Claim subtotal groups first so their members leave the direct pool.
+        claimed: set[int] = set()
+        for grp in sec.get("subtotal_groups") or []:
+            g_header = anchor(grp["header_label"], f"group {grp['key']!r} header")
+            g_total = anchor(grp["total_label"], f"group {grp['key']!r} total")
+            if not (header_row < g_header < g_total < total_row):
                 raise LayoutError(
-                    f"{sheet.name}: {what} label {label!r} not found. "
-                    f"Update config/clients/{config.client_id}.yaml to match the workbook."
+                    f"{sheet.name}: subtotal group {grp['key']!r} (rows "
+                    f"{g_header}-{g_total}) does not sit inside section {key!r} "
+                    f"(rows {header_row}-{total_row})"
                 )
-            if len(matches) > 1:
-                raise LayoutError(
-                    f"{sheet.name}: {what} label {label!r} appears on rows {matches}. "
-                    f"Refusing to choose between them."
-                )
-            return matches[0]
-
-        by_row = {item.row: item for item in sheet.line_items}
-
-        for sec in config.sections:
-            key = sec["key"]
-            header_row = anchor(sec["header_label"], f"section {key!r} header")
-            total_row = anchor(sec["total_label"], f"section {key!r} total")
-            if total_row <= header_row:
-                raise LayoutError(
-                    f"{sheet.name}: section {key!r} total row {total_row} is not below "
-                    f"its header row {header_row}"
-                )
-
-            if header_row in by_row:
-                by_row[header_row].role = "header"
-                by_row[header_row].section = key
-            total_item = by_row[total_row]
-            total_item.role = "section_total"
-            total_item.section = key
-
-            # Claim subtotal groups first so their members leave the direct pool.
-            claimed: set[int] = set()
-            for grp in sec.get("subtotal_groups") or []:
-                g_header = anchor(grp["header_label"], f"group {grp['key']!r} header")
-                g_total = anchor(grp["total_label"], f"group {grp['key']!r} total")
-                if not (header_row < g_header < g_total < total_row):
-                    raise LayoutError(
-                        f"{sheet.name}: subtotal group {grp['key']!r} (rows "
-                        f"{g_header}-{g_total}) does not sit inside section {key!r} "
-                        f"(rows {header_row}-{total_row})"
-                    )
-                if g_header in by_row:
-                    by_row[g_header].role = "header"
-                    by_row[g_header].section = key
-                    by_row[g_header].group = grp["name"]
-                    by_row[g_header].group_key = grp["key"]
-                for r in range(g_header + 1, g_total):
-                    item = by_row.get(r)
-                    if item is None:
-                        continue
-                    item.section = key
-                    item.group = grp["name"]
-                    item.group_key = grp["key"]
-                    if item.role == "item":
-                        item.category = config.categorise_opex(item.label)
-                g_total_item = by_row[g_total]
-                g_total_item.role = "group_total"
-                g_total_item.section = key
-                g_total_item.group = grp["name"]
-                g_total_item.group_key = grp["key"]
-                claimed.update(range(g_header, g_total + 1))
-
-            for r in range(header_row + 1, total_row):
-                if r in claimed:
-                    continue
+            if g_header in by_row:
+                by_row[g_header].role = "header"
+                by_row[g_header].section = key
+                by_row[g_header].group = grp["name"]
+                by_row[g_header].group_key = grp["key"]
+            for r in range(g_header + 1, g_total):
                 item = by_row.get(r)
                 if item is None:
                     continue
                 item.section = key
-                if item.role == "item" and key == "opex":
+                item.group = grp["name"]
+                item.group_key = grp["key"]
+                if item.role == "item":
                     item.category = config.categorise_opex(item.label)
+            g_total_item = by_row[g_total]
+            g_total_item.role = "group_total"
+            g_total_item.section = key
+            g_total_item.group = grp["name"]
+            g_total_item.group_key = grp["key"]
+            claimed.update(range(g_header, g_total + 1))
 
-        for name, label in config.reported_lines.items():
-            row = anchor(label, f"reported line {name!r}")
-            by_row[row].role = "reported"
-            by_row[row].section = by_row[row].section or None
+        for r in range(header_row + 1, total_row):
+            if r in claimed:
+                continue
+            item = by_row.get(r)
+            if item is None:
+                continue
+            item.section = key
+            if item.role == "item" and key == "opex":
+                item.category = config.categorise_opex(item.label)
+
+    for name, label in config.reported_lines.items():
+        row = anchor(label, f"reported line {name!r}")
+        by_row[row].role = "reported"
+        by_row[row].section = by_row[row].section or None
 
 
 def _coerce(raw) -> tuple[float | None, bool]:

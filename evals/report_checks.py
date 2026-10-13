@@ -10,6 +10,7 @@ Generic checks (every report; year and whole-file reports use their own section 
   reviewer_checklist, causal_language_hedged, causal_words_outside_questions,
   cause_vocabulary_hedged,
   seasonality_not_asserted, one_offs_hedged, ttm_incomplete_*, impossible_values,
+  comparison_caveats_stated (only when metrics.json has comparison caveats),
   client_isolation, no_credentials, reconciliation_failure_shown,
   reconciliation_failures_named
 Case checks (from case.yaml `skill:`): required_figures, required_flags,
@@ -26,6 +27,11 @@ from pathlib import Path
 
 from finance_engine.formatting import Formatter
 from finance_engine.guard import NumberGuard
+from finance_engine.wording import CAUSAL_WORDS, strip_comments, units  # noqa: F401
+from finance_engine.wording import labels as _labels  # noqa: F401
+from finance_engine.wording import outside_section as _outside_section  # noqa: F401
+from finance_engine.wording import period_named as _period_named  # noqa: F401
+from finance_engine.wording import without as _without  # noqa: F401
 
 # ---- vocabulary ---------------------------------------------------------------
 
@@ -37,15 +43,6 @@ HEDGE = re.compile(
 CAUSAL = re.compile(
     r"\b(due to|driven by|caused by|owing to|attributable to|as a result of|"
     r"resulted from|thanks to|on the back of|because of|led to|reflecting)\b", re.I)
-
-# Causal words that may appear ONLY under "Questions for the reviewer", hedged or not.
-# Elsewhere the report says where a change sits, never why (SKILL.md step 5).
-# "reason"/"reasons" is matched as a whole word, so "the whole reason" and "one reason"
-# fail too. The one exception is "no reason(s)": "the workbook records no reason for any
-# movement" denies a cause rather than stating one, and the deterministic template says
-# it in every report. Without the exception the control fails six cases.
-CAUSAL_WORDS = re.compile(r"\b(because|due to|caused|driven by)\b|(?<!\bno )\breasons?\b",
-                          re.I)
 
 # Business events a writer might reach for. None of them is ever in the workbook.
 CAUSE_WORDS = re.compile(
@@ -66,11 +63,10 @@ CAUSE_LABEL = re.compile(
     rf"\b(is|was|are|were|represents?|reflects?|being|as)\s+(an?\s+|the\s+)?{_CAUSE_LABELS}\b"
     rf"|[:—–]\s*(an?\s+)?{_CAUSE_LABELS}\b", re.I)
 
-# House style: the direction lives in the word, the amount is unsigned.
-# "fell $12,452.80 (-6.0%)", never "fell -$12,452.80".
-SIGNED_AFTER_DIRECTION = re.compile(
-    r"\b(fell|decreased|declined|dropped|down|narrowed|rose|increased|grew|up|widened|"
-    r"climbed)\s+(by\s+)?[*_]*[+\-−]\s?[$€£₹]?\d", re.I)
+# House style: the direction lives in the word, the amount is unsigned. Shared with the
+# engine's commentary validation (finance_engine/wording.py).
+from finance_engine.wording import SIGNED_AFTER_DIRECTION  # noqa: E402,F401
+from finance_engine.wording import unstated_caveats  # noqa: E402
 
 FIGURE = re.compile(r"[+\-−]?[$€£₹]\s?\d[\d,]*(\.\d+)?|[+\-−]?\d[\d,]*(\.\d+)?\s?(%|pts\b)")
 FIGURE_LABEL = re.compile(r"\b(change|level)\b[^$€£₹\d]{0,25}$", re.I)
@@ -158,48 +154,6 @@ PROVIDER_LABEL = {
 
 # ---- text units ------------------------------------------------------------------
 
-def strip_comments(text: str) -> str:
-    return re.sub(r"<!--.*?-->", "", text, flags=re.S)
-
-
-def units(text: str) -> list[str]:
-    """Table rows and headings whole; prose and list items split into sentences.
-
-    Hard-wrapped lines are joined first. A writer who wraps at 90 columns puts "No
-    movement is" on one line and "described as seasonal." on the next, and checking
-    the lines separately separates the claim from its negation.
-    """
-    blocks: list[str] = []
-    current: list[str] = []
-
-    def flush():
-        if current:
-            blocks.append(" ".join(current))
-            current.clear()
-
-    for raw in strip_comments(text).splitlines():
-        line = raw.strip()
-        if not line or re.fullmatch(r"\|?[\s:|-]+\|?", line):
-            flush()
-        elif line.startswith(("|", "#")):
-            flush()
-            blocks.append(line)
-        elif re.match(r"([-*+]|\d{1,3}\.)\s", line) or line.startswith(">"):
-            flush()
-            current.append(line)
-        else:
-            current.append(line)
-    flush()
-
-    out = []
-    for block in blocks:
-        if block.startswith(("|", "#")):
-            out.append(block)
-        else:
-            out += [s for s in re.split(r"(?<=[.!?])\s+(?=[A-Z*_`(\[])", block) if s]
-    return out
-
-
 def headings(text: str) -> list[tuple[int, str]]:
     return [(m.start(), m.group(1).strip())
             for m in re.finditer(r"(?m)^#{1,3}\s+(.+)$", strip_comments(text))]
@@ -278,6 +232,12 @@ def check_report(text: str, doc: dict, case: dict, provider: str,
            if CAUSE_LABEL.search(_without(u, labels)) and not HEDGE.search(u)]
     add("cause_label_hedged", not bad,
         "say what a line may be, not what it is: " + _show(bad) if bad else "")
+    if (doc.get("comparison_caveats") or {}).get("items"):
+        missing = unstated_caveats(body, doc)
+        add("comparison_caveats_stated", not missing,
+            "the commentary must state each comparison caveat (measure, comparison "
+            "month, and that it does not reconcile): " + "; ".join(
+                i["text"] for i in missing[:4]) if missing else "")
     bad = [u for u in all_units if SIGNED_AFTER_DIRECTION.search(u)]
     add("direction_amounts_unsigned", not bad,
         'write "fell $12,452.80", not "fell -$12,452.80": ' + _show(bad) if bad else "")
@@ -376,56 +336,6 @@ def _section(text: str, heading: str) -> str | None:
         return None
     nxt = re.search(r"(?m)^##\s", text[m.end():])
     return text[m.end(): m.end() + nxt.start()] if nxt else text[m.end():]
-
-
-def _period_named(text: str, key: str) -> bool:
-    """`2025-08`, `Aug 2025` or `August 2025` appears in the text."""
-    import calendar
-    year, month = int(key[:4]), int(key[5:7])
-    forms = [re.escape(key),
-             rf"{calendar.month_abbr[month]}\.? {year}",
-             rf"{calendar.month_name[month]} {year}"]
-    return re.search(rf"\b({'|'.join(forms)})\b", text, re.I) is not None
-
-
-def _outside_section(text: str, heading: str) -> str:
-    """`text` minus the section whose heading (any level) matches, up to the next
-    heading of the same or a higher level. Unchanged if there is no such section."""
-    m = re.search(rf"(?im)^(#{{1,6}})\s+{heading}\s*$", text)
-    if not m:
-        return text
-    level = len(m.group(1))
-    nxt = re.search(rf"(?m)^#{{1,{level}}}\s", text[m.end():])
-    end = m.end() + nxt.start() if nxt else len(text)
-    return text[:m.start()] + text[end:]
-
-
-def _labels(doc: dict) -> list[str]:
-    """Text the writer quotes rather than claims: line labels and source/config wording.
-
-    A line called "Legal Settlement" is a name, not a claimed cause, and a workbook
-    titled "Scenario: pronounced Nov/Dec seasonal peak" is the source speaking, not
-    the writer asserting seasonality.
-    """
-    found = {x.get("label") for x in doc.get("metrics", []) if x.get("label")}
-    mv = doc.get("movements") or {}
-    for key in ("significant", "possible_one_offs", "ttm_window_one_offs"):
-        found |= {e.get("label") for e in mv.get(key, []) if e.get("label")}
-    for titles in ((doc.get("source") or {}).get("sheet_headings") or {}).values():
-        found |= {str(t) for t in titles or []}
-    found |= {str(n) for n in doc.get("classification_notes") or []}
-    found |= {str(i.get("message", "")) for i in doc.get("data_quality_issues") or []}
-    # Units are sentences, so quoted text must be removable sentence by sentence too.
-    for text in list(found):
-        found |= set(re.split(r"(?<=[.!?])\s+", text))
-    return sorted((l for l in found if len(l) > 2), key=len, reverse=True)
-
-
-def _without(unit: str, labels: list[str]) -> str:
-    """Remove quoted labels and source wording before looking for claims."""
-    for label in labels:
-        unit = unit.replace(label, " ")
-    return unit
 
 
 def _show(units_: list[str]) -> str:

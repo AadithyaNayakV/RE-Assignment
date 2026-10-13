@@ -11,9 +11,9 @@ The brief (`docs/Build Exercise - AI Solutions Builder.pdf`) asks for four thing
 
 | # | Deliverable | Where | Status |
 |---|---|---|---|
-| 1 | **The working connection**: QuickBooks sandbox to Claude | `.mcp.json` (config), `.claude/settings.json` (read-only permission rules), `quickbooks-online-mcp-server/` (Intuit's official server), `docs/quickbooks_setup.md` (choice, rejected options, credentials, team hosting), `tests/integration/test_quickbooks_mcp.py`, `scripts/preflight_check.py` | Working against the sandbox, local only |
+| 1 | **The working connection**: QuickBooks sandbox to Claude | `.mcp.json` (config), `.claude/settings.json` (read-only permission rules), `quickbooks-online-mcp-server/` (Intuit's official server), `docs/quickbooks_setup.md` (both paths, choice, rejected options, credentials, team hosting), `tests/integration/test_quickbooks_mcp.py`, `scripts/preflight_check.py`. Also a direct read-only reader for the CLI: `pull-quickbooks`, `finance_engine/sources/quickbooks_api.py`, `tests/test_quickbooks.py`, `scripts/qb_smoke.py` | Working against the sandbox, local only |
 | 2 | **The skill file(s)** | `.claude/skills/monthly-financial-analysis/` (`SKILL.md` and `reference/`), backed by `finance_engine/` and `config/clients/*.yaml` | Working |
-| 3 | **The eval cases and grading approach** | `evals/cases/` (18 cases), `evals/grading.md`, `evals/run_engine_evals.py`, `evals/run_skill_evals.py`, `evals/baseline/`, `evals/CHANGELOG.md`, `evals/evaluation_report.md` | Working |
+| 3 | **The eval cases and grading approach** | `evals/cases/` (19 cases), `evals/grading.md`, `evals/run_engine_evals.py`, `evals/run_skill_evals.py`, `evals/baseline/`, `evals/CHANGELOG.md`, `evals/evaluation_report.md` | Working |
 | 4 | **The one-page architecture note** | `docs/architecture.md` (hosting plan: `docs/future_hosting.md`) | Written |
 
 Also: `docs/requirements_checklist.md` (every requirement with evidence and status),
@@ -128,6 +128,75 @@ generated config gives the same figures as the hand-written one); Company J and 
 also run by hand and validated. It does not configure balance sheets, and it refuses a
 workbook with no row of month headers.
 
+## Commentary from Gemini or the Claude API (optional, no Claude Code needed)
+
+`report` can have the commentary written by a cloud model instead of the template:
+
+```bash
+pip install -r requirements-optional.txt          # google-genai, anthropic (optional)
+python -m finance_engine report --client test_clean --period 2026-01 --provider auto
+python -m finance_engine report --client test_clean --period 2026-01 --provider gemini
+```
+
+What happens, every time:
+
+- The model receives only the compact `brief` (month, year or whole file) and the writer
+  prompt in `finance_engine/commentary/writer_prompt.md`, never metrics.json, the
+  workbook or a key. It writes three sections (Summary, What moved, Questions for the
+  reviewer). Every table, status line and check in the report stays Python-made.
+- Its text is checked in process: every number and direction word (the same guard as
+  `check-commentary`), causal wording outside the reviewer questions, and every failed
+  reconciliation month named. A failure is sent back to the same model with the exact
+  problems, up to `max_attempts` (2) times; then the next provider in
+  `config/providers.yaml` is tried. **The last step is always the deterministic
+  template, so a model that keeps failing the checks simply falls back to the
+  deterministic report. That is the safe behaviour, not an error.**
+- A transient failure (HTTP 5xx, 429, a timeout) is retried twice, after about 2 and
+  then 5 seconds; these retries are not check attempts and are recorded in the log.
+  After that, or for any other failure (a missing package or key, a disabled provider,
+  an invalid model name, a rejected request), the provider is skipped with one line on
+  stderr. Keys are never printed, logged or written.
+- `commentary_log.json` is written next to `report.md`: every provider tried, each
+  attempt's pass or fail and violations, token counts per call, and
+  `data_left_machine`. The report ends with one line naming the provider, the attempt
+  and whether data left the machine. `--json` includes the same summary.
+
+The existing `--provider` values (`deterministic` and the rest) are unchanged and write
+neither the log nor the footer.
+
+**Gemini key (Google AI Studio).** Sign in at <https://aistudio.google.com/>, choose
+*Get API key*, create a key, and put it in the git-ignored `.env` in the project root:
+
+```text
+GEMINI_API_KEY=<your key>
+```
+
+Then find a model your key can use and set it as `providers.gemini.model` in
+`config/providers.yaml` (the committed default is marked unverified, because Gemini
+model IDs change):
+
+```bash
+python scripts/provider_smoke.py --list-models
+python scripts/provider_smoke.py --provider gemini --client test_clean --period 2026-01
+```
+
+The smoke script makes one real call and prints only pass or fail, the violations, the
+model that answered and the token counts; add `--full` to run the real orchestrator for
+that provider (check retries with the violations sent back, and transient retries).
+Gemini counts thinking tokens against `max_output_tokens`, so `config/providers.yaml`
+sets `thinking_level: low` (Gemini 3 models; Gemini 2.5 models use `thinking_budget`
+instead) and `max_output_tokens: 16384`; thinking tokens are logged separately when the
+API reports them.
+
+**The Claude API is separate from Claude Pro, and is OFF by default.** It needs its own
+key and prepaid credits from the Anthropic Console (<https://console.anthropic.com/>),
+billed per token apart from any Claude Pro plan. It runs only after you set
+`providers.claude-api.enabled: true` in `config/providers.yaml` and
+`ANTHROPIC_API_KEY=<your key>` in `.env`. The configured model is `claude-sonnet-5-5`;
+Anthropic's server-side refusal fallback is off (`refusal_fallback: false`), so a refusal
+skips to the next provider. `commentary_log.json` records the model that actually
+answered each attempt. `allow_cloud: false` in the same file stops every cloud provider at once.
+
 ## The skill
 
 Project skills in `.claude/skills/` load automatically when Claude Code starts in this
@@ -177,6 +246,28 @@ QBO_INTEGRATION=1 QBO_LIVE=1 python -m pytest tests/integration -v   # opt-in li
 
 Claude can only call read tools; every create/update/delete tool is denied.
 
+## QuickBooks direct reader (CLI, read-only)
+
+A second, separate path for the report pipeline: Python pulls the sandbox Profit and Loss
+(one column per month), saves the raw response as a snapshot file, and the engine analyses
+that file like a workbook. It uses its own Intuit app and token, never the MCP server's.
+Set `QBO_CLIENT_ID`, `QBO_CLIENT_SECRET`, `QBO_REFRESH_TOKEN`, `QBO_REALM_ID` and
+`QBO_ENVIRONMENT=sandbox` in the root `.env` (names in `.env.example`), then:
+
+```bash
+python -m finance_engine pull-quickbooks --client qb_sandbox --start 2025-10 --end 2026-10
+python -m finance_engine report --client qb_sandbox --period 2026-09 --file <snapshot>.json
+python -m finance_engine report --client qb_sandbox --period 2026-09 \
+    --source quickbooks --start 2025-10 --end 2026-10      # pull, then analyse that pull
+python scripts/qb_smoke.py                                  # by hand: one refresh, one GET
+```
+
+GET only (the token refresh is the one POST), sandbox host only, secrets redacted from
+every message. Other Income and Other Expenses stay outside revenue and operating
+expenses; a blank QuickBooks cell is read as 0, as Intuit's own totals do. Details,
+re-authorising and the mapping: `docs/quickbooks_setup.md`. Case 19 runs on a scrubbed
+copy of a real pull (`tests/fixtures/qb_pl_monthly.json`, client `qb_sandbox_fixture`).
+
 ## Troubleshooting
 
 | Symptom | Fix |
@@ -188,6 +279,8 @@ Claude can only call read tools; every create/update/delete tool is denied.
 | ABC cases say SKIP | The workbook is not at `data/clients/abc_inc/source/`. |
 | `check-commentary` says REJECTED | A figure is not in `metrics.json`, or a direction word contradicts its change. The output names the line. |
 | QuickBooks `401` / `invalid_grant` | Token lapsed: `cd quickbooks-online-mcp-server && npm run auth`. |
+| `pull-quickbooks`: "The token refresh was refused" | The reader's own token lapsed: re-authorise its Intuit app and update `QBO_REFRESH_TOKEN` (`docs/quickbooks_setup.md`, "Re-authorising"). |
+| `QuickBooks has no Profit and Loss data between ...` | The sandbox has no activity in that range; nothing was saved. Pick another range. |
 | `quickbooks` missing in `/mcp` | Run `npm run build` there, then approve the server once. |
 | Skill runs fail with "session limit" | Pro usage is exhausted until the reset time; use the deterministic report. |
 | `claude` not found by the eval runner | `--claude-bin <path>` or set `CLAUDE_BIN`. |
@@ -203,6 +296,7 @@ Claude can only call read tools; every create/update/delete tool is denied.
 - **The skill needs a Pro session.** A full 13-case run cost about $4 to $5 API-equivalent;
   the five Phase 5B cases (14 to 18) have not been run through Claude.
 - **Sandbox only.** The QuickBooks data is Intuit's sample data, not evidence about a client.
-- **Excel only.** `finance_engine` has no QuickBooks reader yet; the `DataSource` interface
-  is where it would go.
+- **QuickBooks: sandbox Profit and Loss only.** The direct reader pulls one report, from
+  the sandbox only; production, the balance sheet and other reports are not read. A
+  blank QuickBooks cell is read as 0 (Intuit's convention), unlike a blank workbook cell.
 - **Stretch goal not attempted.**

@@ -1,0 +1,53 @@
+id: 19_quickbooks_sandbox
+title: QuickBooks sandbox snapshot (qb_sandbox_fixture)
+synthetic: true
+builder: quickbooks_snapshot
+input:
+  client_id: qb_sandbox_fixture
+  period: "2026-09"
+  workbook: tests/fixtures/qb_pl_monthly.json
+  config: config/clients/qb_sandbox_fixture.yaml
+why: >
+  A real Profit and Loss response from Intuit's QuickBooks Online sandbox (one column per
+  month, Oct 2025 - Oct 2026), pulled once by the read-only reader and scrubbed of every
+  identifier. It exercises what an Excel workbook does not: nested accounts, parent
+  accounts with postings of their own (shown in the section header, not as a line),
+  an account named like its section ("Cost of Goods Sold"), blank cells meaning no
+  activity, and Other Expenses below Net Operating Income that must stay outside
+  revenue, COGS and operating expenses. Expected values are summed from the JSON with
+  plain json in build_expected.py and checked there against Intuit's own totals.
+
+engine:
+  command: report
+  exit_code: 0
+  reconciliation_passed: true
+  ttm_complete: true
+  max_errors: 0
+  required_codes: [no_balance_sheet, negative_revenue_line]
+  report_guard_passes: true
+  report_must_match:
+    - 'qb_pl_monthly\.json'
+
+skill:
+  run: true
+  mode: deterministic
+  provider_label: deterministic
+  required_figures: [revenue.total, revenue.total.mom_abs, opex.total, operating_income,
+                     revenue.total.ttm]
+  required_flags:
+    - id: revenue_rose
+      description: States that revenue rose from August.
+      pattern: 'revenue[^\n]{0,120}(\b(rose|grew|increased|up\b|higher)|\(\+\$)'
+  forbidden_claims:
+    - id: other_expenses_in_opex
+      description: The 2,000.00 of Other Expenses is never presented as operating expense.
+      pattern: '(?i)operating expenses?[^\n]{0,60}4,755\.10'
+    - id: causal_wording
+      description: States no cause for any movement.
+      pattern: '\b(because|due to|driven by|caused by)\b'
+
+pass_criteria: >
+  Level 1: every headline figure, margin, month-over-month change and TTM total matches
+  the plain-json derivation; reconciliation passes against Intuit's totals; the TTM window
+  is complete; the report names the snapshot and passes the number check. Level 2: the
+  deterministic report passes every generic check.

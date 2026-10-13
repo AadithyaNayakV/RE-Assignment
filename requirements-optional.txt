@@ -1,0 +1,5 @@
+# Optional: only for `--provider auto | gemini | claude-api`. The engine, the
+# deterministic report and every test run without these.
+#   pip install -r requirements-optional.txt
+google-genai>=1.0
+anthropic>=1.0

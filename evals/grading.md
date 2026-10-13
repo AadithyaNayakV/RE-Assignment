@@ -5,7 +5,7 @@ optional opinion and never decides anything on its own.
 
 | Level | What is graded | Runner | Cost | Decides pass/fail |
 |---|---|---|---|---|
-| 1 | The engine's `metrics.json` against independently derived values | `evals/run_engine_evals.py` | free, ~40 s for 18 cases | **yes** |
+| 1 | The engine's `metrics.json` against independently derived values | `evals/run_engine_evals.py` | free, ~40 s for 19 cases | **yes** |
 | 2 | The `report.md` the skill writes (or the deterministic fallback) | `evals/run_skill_evals.py` | Pro usage per case; free with `--provider deterministic` | **yes** |
 | 3 | Clarity and usefulness, scored 1–5 by a read-only Claude judge | `run_skill_evals.py --rubric` | Pro usage | **no**, advisory only |
 
@@ -63,6 +63,11 @@ writing to `evals/runs/` and never to `output/`, then checks:
 - **Synthetic cases:** the generator's own inputs (`scripts/generate_synthetic.py`).
   Margins, % changes, shares and TTM sums are derived by hand-written arithmetic
   following `docs/metrics_schema.md`.
+- **QuickBooks snapshot (case 19):** the raw Profit and Loss JSON
+  (`tests/fixtures/qb_pl_monthly.json`), read with `json` alone. Each section is the sum
+  of every account amount under it, nested accounts and parent accounts' own amounts
+  included, a blank cell counted as QuickBooks' zero; each sum must equal Intuit's own
+  total before `expected.json` is written. `input_unchanged` compares the file's sha256.
 - **Test workbooks (cases 14 to 18):** the cells of the generated workbook, read with
   openpyxl. Section membership, line-item sums, categories, year totals, quarters, year on
   year, extremes and the cell-level warnings are re-derived in `build_expected.py` from
