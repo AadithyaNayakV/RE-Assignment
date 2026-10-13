@@ -10,6 +10,17 @@
     python -m finance_engine report --client qb_sandbox --period 2026-09 \
         --source quickbooks --start 2025-10 --end 2026-10      # pull, then analyse
 
+Onboarding, review and status (each is also a web UI action; see service/parity.py):
+
+    python -m finance_engine init-client --draft --file PATH.xlsx --client-id ID --name "Co"
+    python -m finance_engine validate-config  --client ID [--draft] [--from edited.yaml]
+    python -m finance_engine approve-config   --client ID --by "A. Reviewer"
+    python -m finance_engine list-clients | list-files --client ID | show-report --client ID ...
+    python -m finance_engine review submit|approve|send-back|status|log --client ID --period P --by NAME
+    python -m finance_engine review queue
+    python -m finance_engine list-evals | provider-status | quickbooks-status
+    python -m finance_engine serve            # the local web app, 127.0.0.1 only
+
 `--period latest` resolves to the newest month in the source (the top line of
 list-periods) and prints `period: latest -> YYYY-MM` to stderr.
 
@@ -71,7 +82,8 @@ class UsageError(Exception):
     """A bad command-line value. Reported in one line, never as a traceback."""
 
 
-def main(argv: list[str] | None = None) -> int:
+def build_parser() -> argparse.ArgumentParser:
+    """Every command and flag. The web UI's parity registry is checked against this."""
     parser = argparse.ArgumentParser(
         prog="python -m finance_engine",
         description="Deterministic monthly financial trend analysis. "
@@ -155,16 +167,98 @@ def main(argv: list[str] | None = None) -> int:
                         help="project root (defaults to the working directory)")
     p_init.add_argument("--json", action="store_true",
                         help="print one JSON result on stdout; notes go to stderr")
+    p_init.add_argument("--draft", action="store_true",
+                        help="write data/clients/<ID>/draft/config.yaml and "
+                             "draft_summary.json for approve-config, never config/clients")
 
+    def add_plain(p):
+        p.add_argument("--root", default=None,
+                       help="project root (defaults to the working directory)")
+        p.add_argument("--json", action="store_true",
+                       help="print one JSON result on stdout; notes go to stderr")
+
+    add_plain(sub.add_parser("list-clients", help="list every client config and every "
+                                                  "draft waiting for approval"))
+    p_files = sub.add_parser("list-files", help="list a client's source files and the "
+                                                "months each holds")
+    p_files.add_argument("--client", required=True, help="client_id, e.g. abc_inc")
+    add_plain(p_files)
+
+    p_show = sub.add_parser("show-report", help="the status of an existing report: "
+                                                "reconciliation, number check, provider, "
+                                                "source fingerprint, review status")
+    add_common(p_show)
+
+    p_val = sub.add_parser("validate-config", help="check a client config with the real "
+                                                   "loader, reader and reconciliation")
+    p_val.add_argument("--client", required=True, help="client_id, e.g. acme_ltd")
+    p_val.add_argument("--draft", action="store_true",
+                       help="validate data/clients/<ID>/draft/config.yaml instead of the "
+                            "live config")
+    p_val.add_argument("--from", dest="from_file", default=None, metavar="FILE",
+                       help="with --draft: replace the draft with this edited YAML first")
+    add_plain(p_val)
+
+    p_appr = sub.add_parser("approve-config", help="re-validate a draft config and make it "
+                                                   "live, recording who approved it")
+    p_appr.add_argument("--client", required=True, help="client_id, e.g. acme_ltd")
+    p_appr.add_argument("--by", required=True, help='your name, e.g. "A. Reviewer" '
+                                                    '(self-declared; there is no sign-in)')
+    add_plain(p_appr)
+
+    p_rev = sub.add_parser("review", help="review workflow for one report: submit, approve, "
+                                          "send-back, status, log; queue lists everything "
+                                          "in review")
+    p_rev.add_argument("action", choices=["submit", "approve", "send-back", "status", "log",
+                                          "queue"])
+    p_rev.add_argument("--client", default=None, help="client_id (all actions but queue)")
+    p_rev.add_argument("--period", default=None, help="reporting month, YYYY-MM")
+    p_rev.add_argument("--scope", choices=["month", "year", "all"], default="month")
+    p_rev.add_argument("--year", type=int, default=None)
+    p_rev.add_argument("--file", dest="workbook", default=None, metavar="NAME",
+                       help="the workbook the report was run with --file NAME")
+    p_rev.add_argument("--by", default=None, help='your name (self-declared; no sign-in)')
+    p_rev.add_argument("--comment", default=None, help="required for send-back")
+    add_plain(p_rev)
+
+    add_plain(sub.add_parser("list-evals", help="the golden cases and their newest saved "
+                                                "baseline results"))
+    add_plain(sub.add_parser("provider-status", help="the commentary provider chain: "
+                                                     "configured yes/no and the names of "
+                                                     "missing variables, never a value"))
+    add_plain(sub.add_parser("quickbooks-status", help="the read-only QuickBooks sandbox "
+                                                       "reader: configured yes/no and the "
+                                                       "names of missing variables"))
+    p_serve = sub.add_parser("serve", help="start the local web app on 127.0.0.1")
+    p_serve.add_argument("--host", default="127.0.0.1",
+                         help="must be 127.0.0.1: the app is local only")
+    p_serve.add_argument("--port", type=int, default=8765)
+    p_serve.add_argument("--root", default=None,
+                         help="project root (defaults to the working directory)")
+    parser.subparsers_action = sub
+    return parser
+
+
+#: Commands that take no period and are dispatched before scope checks.
+_PLAIN = ("init-client", "pull-quickbooks", "list-clients", "list-files", "validate-config",
+          "approve-config", "review", "list-evals", "provider-status", "quickbooks-status",
+          "serve")
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = build_parser()
+    sub = parser.subparsers_action
     args = parser.parse_args(argv)
     if getattr(args, "scope", "month") == "month" and getattr(args, "period_required", False) \
             and args.period is None:
         sub.choices[args.command].error("the following arguments are required: --period")
+    from finance_engine.onboarding import OnboardingError
+    from finance_engine.review import ReviewError
+    from finance_engine.service.commands import CommandError
+    from finance_engine.service.core import ServiceError
     try:
-        if args.command == "init-client":
-            return _init_client(args)
-        if args.command == "pull-quickbooks":
-            return _pull_quickbooks(args)
+        if args.command in _PLAIN:
+            return _plain_command(args)
         if args.command == "report" and args.source == "quickbooks":
             _pull_for_report(args)
         _check_scope_args(args)
@@ -180,8 +274,11 @@ def main(argv: list[str] | None = None) -> int:
             return _brief(args)
         if args.command == "list-periods":
             return _list_periods(args)
+        if args.command == "show-report":
+            return _show_report(args)
     except (ConfigError, LayoutError, UsageError, SourceSelectionError, SpanError,
-            InitError, QuickBooksError, FileNotFoundError) as exc:
+            InitError, QuickBooksError, FileNotFoundError, OnboardingError, ReviewError,
+            CommandError, ServiceError) as exc:
         # A layout or config problem is reported, never worked around.
         print(f"error: {exc}", file=sys.stderr)
         if getattr(args, "json", False):
@@ -460,7 +557,8 @@ def _report(args) -> int:
     if (provider_name or "").strip().lower() in ORCHESTRATED:
         # auto | gemini | claude-api: generate, validate, retry, fall back. Every other
         # value keeps the path below, exactly as before.
-        outcome = _orchestrated_commentary(doc, provider_name, root)
+        outcome = _orchestrated_commentary(doc, provider_name, root,
+                                           _reviewer_notes(out))
         commentary, provider_id, guard = outcome.text, outcome.provider_id, outcome.guard
         report_md = build_report(doc, commentary, provider_id, guard.to_dict(),
                                  footer=outcome.footer,
@@ -479,6 +577,10 @@ def _report(args) -> int:
         # provider that cannot pass it has no business writing a client report.
         guard = NumberGuard(doc).check(commentary)
         report_md = build_report(doc, commentary, provider_id, guard.to_dict())
+        if _reviewer_notes(out, quiet=True):
+            print("reviewer notes: the last send-back comment is shown beside the draft "
+                  "(review log); the template provider does not take notes.",
+                  file=sys.stderr)
     report_path = out / "report.md"
     report_path.write_text(report_md, encoding="utf-8")
     log_path = None
@@ -521,7 +623,26 @@ def _report(args) -> int:
     return code
 
 
-def _orchestrated_commentary(doc: dict, provider_name: str, root: Path):
+def _reviewer_notes(out: Path, quiet: bool = False) -> str | None:
+    """The last send-back comment for this report folder, if the last review action was a
+    send-back. Plain text for the writer; it never changes a figure or the guard."""
+    from finance_engine.review import ReviewError, last_send_back
+    try:
+        entry = last_send_back(out)
+    except ReviewError as exc:
+        print(f"warning: review log unreadable, no reviewer notes passed: {exc}",
+              file=sys.stderr)
+        return None
+    if not entry or not entry.get("comment"):
+        return None
+    if not quiet:
+        print(f"reviewer notes: passing the send-back comment by {entry.get('name')} "
+              f"({entry.get('time_utc')}) to the commentary writer", file=sys.stderr)
+    return entry["comment"]
+
+
+def _orchestrated_commentary(doc: dict, provider_name: str, root: Path,
+                             reviewer_notes: str | None = None):
     """Commentary through config/providers.yaml; notes on stderr, keys never printed."""
     from finance_engine.commentary.orchestrator import write_commentary
     from finance_engine.commentary.providers import ProvidersConfig
@@ -530,7 +651,8 @@ def _orchestrated_commentary(doc: dict, provider_name: str, root: Path):
     config = ProvidersConfig.load(root / "config" / "providers.yaml")
     credentials = EnvCredentialStore(config.key_names(), env_file=root / ".env")
     return write_commentary(doc, provider_name, config, credentials,
-                            notify=lambda line: print(line, file=sys.stderr))
+                            notify=lambda line: print(line, file=sys.stderr),
+                            reviewer_notes=reviewer_notes)
 
 
 def _metrics_path(args) -> Path:
@@ -712,6 +834,8 @@ def _init_client(args) -> int:
 
     root = _root(args)
     settings = Settings.from_env(root)
+    if args.draft:
+        return _init_draft(args, root, settings)
     result = init_client(Path(args.file), args.client_id, args.name, root,
                          settings.config_dir, settings.data_dir, force=args.force)
     lines = summary_lines(result, root)
@@ -738,6 +862,245 @@ def _init_client(args) -> int:
     for line in lines:
         print(line)
     return code
+
+
+# ---- onboarding, review, status and the web app (Phase 5D) -----------------------------
+#
+# Each of these is the terminal equivalent of a web UI action (see
+# finance_engine/service/parity.py). They read files or call finance_engine.service;
+# none of them calculates a figure.
+
+def _plain_command(args) -> int:
+    handlers = {"init-client": _init_client, "pull-quickbooks": _pull_quickbooks,
+                "list-clients": _list_clients, "list-files": _list_files,
+                "validate-config": _validate_config, "approve-config": _approve_config,
+                "review": _review, "list-evals": _list_evals,
+                "provider-status": _provider_status,
+                "quickbooks-status": _quickbooks_status, "serve": _serve}
+    return handlers[args.command](args)
+
+
+def _done(args, command: str, payload: dict, lines: list[str], code: int = EXIT_OK) -> int:
+    if args.json:
+        _emit_json({"ok": code in (EXIT_OK, EXIT_DATA), "command": command,
+                    "exit_code": code, **payload})
+        for line in lines:
+            print(line, file=sys.stderr)
+        return code
+    sys.stdout.reconfigure(encoding="utf-8")
+    for line in lines:
+        print(line)
+    return code
+
+
+def _init_draft(args, root: Path, settings: Settings) -> int:
+    from finance_engine.onboarding import init_draft
+    s = init_draft(Path(args.file), args.client_id, args.name, root, settings.data_dir,
+                   force=args.force)
+    lines = [f"Drafted {s['config_path']} from {s['workbook']} (the original is untouched).",
+             f"Detected: sheet {s['sheet']!r}, header row {s['header_row']}, "
+             f"{s['periods']['count']} month(s)"
+             + (f" ({s['periods']['first']} to {s['periods']['last']})"
+                if s['periods']['count'] else "") + ".",
+             f"Checks: {s['checks'] or 'not run'}; status {s['status'].upper()}."]
+    lines += [f"  problem: {p}" for p in s["problems"]]
+    lines += [f"  warning: {w}" for w in s["warnings"]]
+    lines += [f"  decide: {d}" for d in s["needs_decision"]]
+    lines.append("Not live: config/clients/ is unchanged until approve-config.")
+    lines.append(f"Next: {s['next_command']}")
+    return _done(args, "init-client", {"draft": s}, lines,
+                 EXIT_OK if s["status"] == "valid" else EXIT_DATA)
+
+
+def _list_clients(args) -> int:
+    from finance_engine.service.core import list_clients
+    data = list_clients(_root(args))
+    lines = [f"{len(data['clients'])} client config(s):"]
+    for c in data["clients"]:
+        approved = (f"  approved by {c['approval']['approved_by']}"
+                    f"{'' if c['approval']['config_matches'] else ' (config changed since)'}"
+                    if c.get("approval") else "")
+        lines.append(f"  {c['client_id']:<36} {c.get('source_type') or '?':<10} "
+                     f"{c.get('company_name') or c.get('error')}{approved}")
+    if data["drafts"]:
+        lines.append(f"{len(data['drafts'])} draft(s) waiting for approve-config:")
+        for d in data["drafts"]:
+            lines.append(f"  {d['client_id']:<36} {d['status']:<8} checks "
+                         f"{d['checks'] or 'not run'}{'  (replaces a live config)' if d['live'] else ''}")
+    return _done(args, "list-clients", data, lines)
+
+
+def _list_files(args) -> int:
+    from finance_engine.service.core import list_files
+    data = list_files(_root(args), args.client)
+    lines = [f"{data['company_name']} ({args.client}): {len(data['files'])} file(s) in "
+             f"{data['source_folder']}"]
+    for f in data["files"]:
+        span = (f"{f['first_period']}..{f['last_period']}, {f['period_count']} month(s)"
+                if f["period_count"] else f.get("error") or "no months found")
+        lines.append(f"  {f['filename']}  {span}  sha256 {str(f['sha256'])[:12]}"
+                     f"{'  (default)' if f['default'] else ''}")
+    return _done(args, "list-files", data, lines)
+
+
+def _show_report(args) -> int:
+    from finance_engine.service.core import get_report
+    _output_key(args)
+    data = get_report(_root(args), args.client, _scope(args), args.period, args.year,
+                      args.workbook)
+    b = data["badges"]
+    nc = b["number_check"]
+    p = b["provider"]
+    lines = [f"{data['company_name']} — {b['scope_label']}",
+             f"  folder:         {data['folder']}",
+             f"  reconciliation: {b['reconciliation']['label']}",
+             f"  number check:   " + (f"{nc['result']} ({nc['detail']})" if nc else
+                                      "no report.md yet"),
+             f"  provider:       {p['provider'] or '-'} (attempt: {p['attempt'] or '-'})",
+             f"  data left this machine: "
+             + ({True: "yes", False: "no", None: "-"}[p["data_left_machine"]]),
+             f"  scope:          {b['scope_label']}",
+             f"  source sha256:  {str(b['source_sha256'])[:16]}",
+             f"  review:         {b['review']}",
+             f"  report.md:      {data['files']['report'] or '-'}",
+             f"  metrics.json:   {data['files']['metrics']}"]
+    if data["cell_warnings"]:
+        lines.append(f"  cell warnings:  {len(data['cell_warnings'])}")
+    return _done(args, "show-report", data, lines)
+
+
+def _validate_config(args) -> int:
+    from finance_engine.onboarding import validate_config
+    root = _root(args)
+    text = None
+    if args.from_file:
+        text = Path(args.from_file).read_text(encoding="utf-8")
+    r = validate_config(args.client, root, Settings.from_env(root), draft=args.draft,
+                        from_text=text)
+    lines = [f"{'VALID' if r['ok'] else 'INVALID'}: {r['config_path']}"
+             + (f" — analyze {r['latest']} reconciled {r['checks']}" if r["checks"] else "")]
+    lines += [f"  error{' line ' + str(e['line']) if e['line'] else ''}: {e['message']}"
+              for e in r["errors"]]
+    lines += [f"  warning {w['code']}: {w['message']}" for w in r["warnings"]]
+    if r["ok"] and args.draft:
+        lines.append(f"Next: python -m finance_engine approve-config --client {args.client} "
+                     f"--by \"<your name>\"")
+    return _done(args, "validate-config", {"validation": r}, lines,
+                 EXIT_OK if r["ok"] else EXIT_DATA)
+
+
+def _approve_config(args) -> int:
+    from finance_engine.onboarding import approve_config
+    root = _root(args)
+    rec = approve_config(args.client, args.by, root, Settings.from_env(root))
+    lines = [f"Approved by {rec['approved_by']} (self-declared) at {rec['approved_at_utc']}.",
+             f"Live: {rec['config_path']} (sha256 {rec['config_sha256'][:16]}...)",
+             f"Checks: {rec['validation']['checks']} for {rec['validation']['latest']}.",
+             f"Next: python -m finance_engine report --client {args.client} --period "
+             f"{rec['validation']['latest']}"]
+    return _done(args, "approve-config", {"approval": rec}, lines)
+
+
+def _review(args) -> int:
+    from finance_engine import review
+    from finance_engine.service import core
+    root = _root(args)
+    if args.action == "queue":
+        data = core.review_queue(root)
+        lines = [f"{len(data['in_review'])} report(s) in review:"]
+        lines += [f"  {q['folder']}  submitted by {q['submitted_by']} at "
+                  f"{q['submitted_at_utc']}" for q in data["in_review"]]
+        return _done(args, "review", {"action": "queue", **data}, lines)
+    if not args.client:
+        raise UsageError(f"review {args.action} needs --client.")
+    _check_scope_args(args)
+    if _scope(args) == "month" and not args.period:
+        raise UsageError(f"review {args.action} needs --period YYYY-MM (or --scope year "
+                         f"--year YYYY, or --scope all).")
+    where = dict(scope=_scope(args), period=args.period, year=args.year, file=args.workbook)
+    if args.action in ("status", "log"):
+        data = core.review_status(root, args.client, **where)
+        lines = [f"{data['folder']}: {data['label']}"]
+        if args.action == "log" or data["last_entry"]:
+            entries = data["log"] if args.action == "log" else data["log"][-1:]
+            for e in entries:
+                lines.append(f"  {e['time_utc']}  {e['action']:<9}  {e['name']}"
+                             + (f"  — {e['comment']}" if e.get("comment") else "")
+                             + f"  (report {str(e.get('report_sha256'))[:12]}, "
+                               f"provider {e.get('provider')})")
+        if not data["log_intact"]:
+            lines.append("  WARNING: the review log's hash chain is broken.")
+        return _done(args, "review", {"action": args.action, **data}, lines)
+    action = {"submit": review.SUBMIT, "approve": review.APPROVE,
+              "send-back": review.SEND_BACK}[args.action]
+    data = core.review_action(root, args.client, action, args.by, args.comment, **where)
+    e = data["entry"]
+    lines = [f"{args.action}: recorded for {e['name']} (self-declared) at {e['time_utc']}.",
+             f"  status: {data['status']['label']}",
+             f"  report.md sha256 {e['report_sha256'][:16]}..., metrics.json sha256 "
+             f"{e['metrics_sha256'][:16]}..."]
+    if e.get("version_file"):
+        lines.append(f"  copy kept: review/{e['version_file']}")
+    return _done(args, "review", {"action": args.action, **data}, lines)
+
+
+def _list_evals(args) -> int:
+    from finance_engine.service.core import list_evals
+    data = list_evals(_root(args))
+    lines = [f"{len(data['cases'])} golden cases (newest baselines: "
+             + ", ".join(f"{k}={v or 'none'}" for k, v in data["baselines"].items()) + ")"]
+    for c in data["cases"]:
+        lines.append(f"  {c['id']:<32} engine {c['engine'] or '-':<5} "
+                     f"deterministic {c['skill_deterministic'] or '-':<5} "
+                     f"claude {c['skill'] or '-'}")
+    lines.append("Free: " + " ; ".join(data["free_commands"]))
+    lines.append(f"Paid (run it yourself; uses Claude Pro usage): {data['paid_command']}")
+    return _done(args, "list-evals", data, lines)
+
+
+def _provider_status(args) -> int:
+    from finance_engine.service.core import provider_status
+    data = provider_status(_root(args))
+    lines = [f"order: {' -> '.join(data['order'])}; allow_cloud: {data['allow_cloud']}"]
+    for p in data["providers"]:
+        lines.append(f"  {p['provider']:<14} enabled {'yes' if p['enabled'] else 'no':<4}"
+                     f"configured {'yes' if p['configured'] else 'no':<4}"
+                     + (f"missing: {', '.join(p['missing_variables'])}"
+                        if p["missing_variables"] else "")
+                     + ("" if p.get("package_installed") in (True, None)
+                        else "  package not installed"))
+    lines.append(f"What leaves: {data.get('what_leaves', '-')}")
+    return _done(args, "provider-status", data, lines)
+
+
+def _quickbooks_status(args) -> int:
+    from finance_engine.service.core import quickbooks_status
+    data = quickbooks_status(_root(args))
+    lines = [f"QuickBooks (sandbox only, read-only): configured "
+             f"{'yes' if data['configured'] else 'no'}",
+             f"  environment: {data['environment']}; token file present: "
+             f"{'yes' if data['token_store_present'] else 'no'}",
+             f"  QuickBooks clients: {', '.join(data['clients']) or 'none'}"]
+    if data["missing_variables"]:
+        lines.append(f"  missing variables: {', '.join(data['missing_variables'])}")
+    return _done(args, "quickbooks-status", data, lines)
+
+
+LOOPBACK = "127.0.0.1"
+
+
+def _serve(args) -> int:
+    host = "127.0.0.1" if args.host == "localhost" else args.host
+    if host != LOOPBACK:
+        raise UsageError(f"--host {args.host!r} refused: the web app binds to {LOOPBACK} "
+                         f"only. It has no sign-in, so it must never listen on a network.")
+    try:
+        from finance_engine.web import app as web_app      # Part 2
+    except ImportError as exc:
+        raise UsageError(f"The web app cannot start: {exc}. It needs the optional "
+                         f"packages (pip install -r requirements-optional.txt) and the "
+                         f"finance_engine/web module.") from None
+    return web_app.serve(_root(args), host, args.port)
 
 
 if __name__ == "__main__":

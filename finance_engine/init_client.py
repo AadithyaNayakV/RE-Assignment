@@ -622,6 +622,20 @@ def _comment_block(draft: Draft, source: Path, status: str, validation: dict) ->
     return "\n".join(lines) + "\n\n"
 
 
+def copy_workbook(source: Path, data_dir: Path, client_id: str) -> Path:
+    """Copy the workbook to `data/clients/<id>/source/`. Never overwrites a different file."""
+    dest_dir = Path(data_dir) / client_id / "source"
+    dest = dest_dir / Path(source).name
+    if dest.exists() and dest.resolve() != Path(source).resolve() \
+            and _sha(dest) != _sha(source):
+        raise InitError(f"{dest} already exists and differs from {source}. Rename one; a "
+                        f"client's source workbook is never overwritten.")
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    if not dest.exists():
+        shutil.copy2(source, dest)
+    return dest
+
+
 def init_client(source: Path, client_id: str, company_name: str, root: Path,
                 config_dir: Path, data_dir: Path, force: bool = False) -> InitResult:
     source = Path(source)
@@ -638,14 +652,7 @@ def init_client(source: Path, client_id: str, company_name: str, root: Path,
 
     draft = detect(source, client_id, company_name.strip())   # raises before any write
 
-    dest_dir = data_dir / client_id / "source"
-    dest = dest_dir / source.name
-    if dest.exists() and dest.resolve() != source.resolve() and _sha(dest) != _sha(source):
-        raise InitError(f"{dest} already exists and differs from {source}. Rename one; a "
-                        f"client's source workbook is never overwritten.")
-    dest_dir.mkdir(parents=True, exist_ok=True)
-    if not dest.exists():
-        shutil.copy2(source, dest)
+    dest = copy_workbook(source, data_dir, client_id)
 
     problems, validation = (draft.problems, {}) if draft.problems else \
         _validate(draft.config, dest, root)

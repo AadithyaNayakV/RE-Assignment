@@ -65,7 +65,9 @@ class CommentaryResult:
         sent = [p["provider"] for p in self.log["providers"] if p.get("data_sent")]
         if sent:
             services = " and ".join(_SERVICE.get(p, p) for p in dict.fromkeys(sent))
-            left = (f"yes: the brief was sent to {services}"
+            what = ("the brief and the reviewer's notes were"
+                    if self.log.get("reviewer_notes") else "the brief was")
+            left = (f"yes: {what} sent to {services}"
                     + ("" if self.provider_id in sent else ", whose drafts were not used"))
         else:
             left = "no"
@@ -130,14 +132,23 @@ def _scope_line(doc: dict) -> str:
     return (f"Client {doc.get('client_id')}, {what}: {doc.get('period_label')}.")
 
 
-def first_prompt(doc: dict, brief: str) -> str:
-    return (f"{_scope_line(doc)} Write the three commentary sections for this brief, "
+def first_prompt(doc: dict, brief: str, reviewer_notes: str | None = None) -> str:
+    text = (f"{_scope_line(doc)} Write the three commentary sections for this brief, "
             f"following your instructions.\n\n<brief>\n{brief.rstrip()}\n</brief>\n")
+    if reviewer_notes and reviewer_notes.strip():
+        # Plain notes from the person who sent the last draft back. Wording guidance
+        # only: every figure still comes from the brief, and the same checks apply.
+        text += ("\nA reviewer sent the previous draft back with these notes. Take them "
+                 "into account in the wording. They are not a source of figures: quote "
+                 "figures only from the brief.\n<reviewer_notes>\n"
+                 f"{reviewer_notes.strip()}\n</reviewer_notes>\n")
+    return text
 
 
-def retry_prompt(doc: dict, brief: str, draft: str, problems: list[str]) -> str:
+def retry_prompt(doc: dict, brief: str, draft: str, problems: list[str],
+                 reviewer_notes: str | None = None) -> str:
     listed = "\n".join(f"- {p}" for p in problems)
-    return (first_prompt(doc, brief)
+    return (first_prompt(doc, brief, reviewer_notes)
             + f"\nYour previous draft was rejected by the checks. Problems:\n{listed}\n\n"
               f"Your previous draft:\n<draft>\n{draft.rstrip()}\n</draft>\n\n"
               f"Write the whole commentary again, fixing every problem listed.\n")
@@ -173,7 +184,8 @@ def _call_with_retries(provider, name, settings, system, prompt, sleep, note, cl
 
 def write_commentary(doc: dict, requested: str, config: ProvidersConfig,
                      credentials: CredentialStore, factories: dict | None = None,
-                     notify=None, sleep=time.sleep) -> CommentaryResult:
+                     notify=None, sleep=time.sleep,
+                     reviewer_notes: str | None = None) -> CommentaryResult:
     factories = CLIENT_FACTORIES if factories is None else factories
     secrets = credentials.loaded_values
     clean = lambda s: redact(s, secrets())                         # noqa: E731
@@ -202,6 +214,12 @@ def write_commentary(doc: dict, requested: str, config: ProvidersConfig,
     }
     if config.note:
         note(f"commentary: {config.note}")
+    reviewer_notes = (reviewer_notes or "").strip() or None
+    if reviewer_notes:
+        log["reviewer_notes"] = {"passed_to_writer": True,
+                                 "source": "the last send-back comment in "
+                                           "review/review_log.json",
+                                 "characters": len(reviewer_notes)}
 
     for name in order[:-1]:
         entry = {"provider": name, "status": "skipped", "data_sent": False, "attempts": []}
@@ -221,8 +239,8 @@ def write_commentary(doc: dict, requested: str, config: ProvidersConfig,
             continue
         draft, problems = "", []
         for attempt in range(1, settings.max_attempts + 1):
-            prompt = (first_prompt(doc, brief) if attempt == 1
-                      else retry_prompt(doc, brief, draft, problems))
+            prompt = (first_prompt(doc, brief, reviewer_notes) if attempt == 1
+                      else retry_prompt(doc, brief, draft, problems, reviewer_notes))
             entry["data_sent"] = entry["data_sent"] or provider.data_leaves_machine
             completion, retries, skip = _call_with_retries(
                 provider, name, settings, system, prompt, sleep, note, clean)
