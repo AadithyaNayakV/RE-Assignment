@@ -1,4 +1,5 @@
-// Charts of the engine's monthly series (Chart.js, vendored). Every plotted value and
+// Charts of the engine's figures (Chart.js, vendored): lines for a year or the whole file,
+// bars for one month against the prior month and by category. Every plotted value and
 // every label comes from /api/charts, which reads metrics.json files; nothing is summed,
 // averaged, annualised or rounded here. A month missing from the source is a GAP (null:
 // the line breaks), never zero. A month that failed reconciliation gets a cross marker
@@ -129,6 +130,102 @@ export function chartCard(title, data, measures, opts) {
     redraw() {
       if (chart) chart.destroy();
       chart = draw();
+    },
+    alive() { return card.isConnected; },
+  };
+  live.add(entry);
+  requestAnimationFrame(() => entry.redraw());
+  return card;
+}
+
+/** One bar chart card for a month report: `chart` comes from /api/charts (scope month)
+ *  with its categories, series and the engine's display strings. The first series is a
+ *  filled bar, the second an outlined one, so colour is never the only cue. */
+export function barChartCard(chart, data) {
+  const series = chart.series;
+  const canvas = h("canvas", { role: "img",
+    "aria-label": `${chart.title}. Use "View as table" for the values.` });
+  const tableBox = h("div", { class: "chart-table", hidden: true },
+    table(`${chart.title} as a table`, ["Line", ...series.map((s) => s.label), "Status"],
+      chart.categories.map((category, idx) => [
+        category,
+        ...series.map((s) => (s.points[idx].detail
+          ? `${s.points[idx].display} (${s.points[idx].detail})` : s.points[idx].display)),
+        series.map((s) => s.points[idx].status).filter((t) => t !== "ok")
+          .filter((t, k, all) => all.indexOf(t) === k).join("; ") || "ok",
+      ]), { numeric: series.map((s, k) => k + 1) }));
+  const toggle = button("View as table", () => {
+    const show = tableBox.hidden;
+    tableBox.hidden = !show;
+    toggle.setAttribute("aria-pressed", String(show));
+    toggle.textContent = show ? "Hide table" : "View as table";
+  }, { "aria-pressed": "false" });
+  const notes = [
+    h("p", { class: "chart-note", text: `${data.label}. One month's figures; nothing is annualised.` }),
+    data.reconciliation_failed.length ? h("p", { class: "chart-note bad-text",
+      text: `✗ Checks failed in: ${data.reconciliation_failed.join(", ")}` }) : null,
+    h("p", { class: "chart-note muted", text: `Read from: ${chart.source}` }),
+  ];
+  const card = h("section", { class: "chart-card", "aria-label": chart.title },
+    h("h3", { text: chart.title }), notes,
+    h("div", { class: "chart-box" }, canvas), toggle, tableBox);
+
+  const draw = () => {
+    if (typeof window.Chart !== "function") {
+      canvas.replaceWith(box("warn", "Chart library not loaded",
+        "The table below has the same values."));
+      tableBox.hidden = false;
+      return null;
+    }
+    const text = cssVar("--muted");
+    const grid = cssVar("--divider");
+    const money = (v) => `${data.currency_symbol}${Number(v)
+      .toLocaleString("en-US", { maximumFractionDigits: 20 })}`;
+    const valueAxis = { ticks: { color: text, callback: money }, grid: { color: grid } };
+    const categoryAxis = { ticks: { color: text }, grid: { color: grid } };
+    window.Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
+    window.Chart.defaults.font.size = 14;
+    return new window.Chart(canvas, {
+      type: "bar",
+      data: {
+        labels: chart.categories,
+        datasets: series.map((s, k) => {
+          const color = cssVar(STYLES[k % STYLES.length].color);
+          return {
+            label: s.label,
+            data: s.points.map((p) => p.value),
+            backgroundColor: k === 0 ? color : "transparent",
+            borderColor: color, borderWidth: k === 0 ? 0 : 3,
+          };
+        }),
+      },
+      options: {
+        indexAxis: chart.horizontal ? "y" : "x",
+        responsive: true, maintainAspectRatio: false,
+        animation: reducedMotion() ? false : { duration: 250 },
+        plugins: {
+          legend: { labels: { color: text } },
+          tooltip: {
+            callbacks: {
+              label: (c) => {
+                const p = series[c.datasetIndex].points[c.dataIndex];
+                return `${series[c.datasetIndex].label}: ${p.display}`
+                  + (p.detail ? ` (${p.detail})` : "")
+                  + (p.status !== "ok" ? ` (${p.status})` : "");
+              },
+            },
+          },
+        },
+        scales: chart.horizontal ? { x: valueAxis, y: categoryAxis }
+          : { x: categoryAxis, y: valueAxis },
+      },
+    });
+  };
+  let drawn = null;
+  const entry = {
+    redraw() {
+      if (drawn) drawn.destroy();
+      drawn = draw();
     },
     alive() { return card.isConnected; },
   };

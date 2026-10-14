@@ -129,6 +129,7 @@ def init_draft(source: Path, client_id: str, company_name: str, root: Path,
                       "subtotal_groups": [g["name"] for g in s.get("subtotal_groups") or []]}
                      for s in draft.config["income_statement"]["sections"]],
         "reported_lines": draft.config["income_statement"]["reported_lines"],
+        **_balance_sheet_summary(draft.config, validation),
         "detected": [{"what": x.what, "value": x.value, "confidence": x.confidence,
                       "how": x.how} for x in draft.detected],
         "categories": draft.categories,
@@ -151,6 +152,21 @@ def init_draft(source: Path, client_id: str, company_name: str, root: Path,
                  "errors": [{"message": p, "line": None} for p in draft.problems],
                  "checks": summary["checks"], "by": "init-client --draft"})
     return summary
+
+
+def _balance_sheet_summary(config: dict, validation: dict) -> dict:
+    """The drafted balance sheet for draft_summary.json; nothing when there is none."""
+    if "balance_sheet" not in config:
+        return {}
+    sheet = config["sheets"]["balance_sheet"]
+    return {"balance_sheet": {
+        "sheet": sheet["name"], "header_row": sheet["header_row"],
+        "label_columns": sheet["label_columns"],
+        "first_data_column": sheet["first_data_column"],
+        "last_data_column": sheet["last_data_column"],
+        **config["balance_sheet"],
+        "balance_check": validation.get("balance_check"),
+    }}
 
 
 def _checks(validation: dict) -> str | None:

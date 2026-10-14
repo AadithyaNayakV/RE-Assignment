@@ -238,7 +238,14 @@ def build_parser() -> argparse.ArgumentParser:
     p_chart.add_argument("--file", dest="workbook", default=None, metavar="NAME",
                          help="the workbook the whole-file report was run with")
     p_chart.add_argument("--year", type=int, default=None,
-                         help="only this calendar year's months")
+                         help="only this calendar year's months (with --scope year: read "
+                              "that year's own report)")
+    p_chart.add_argument("--scope", choices=["month", "year", "all"], default=None,
+                         help="month: bar charts from that month's report (needs --period); "
+                              "year: lines from that year's report (needs --year); "
+                              "default: the whole-file report")
+    p_chart.add_argument("--period", default=None,
+                         help="YYYY-MM for --scope month (given alone, implies it)")
     add_plain(p_chart)
     p_serve = sub.add_parser("serve", help="start the local web app on 127.0.0.1")
     p_serve.add_argument("--host", default="127.0.0.1",
@@ -932,6 +939,11 @@ def _init_draft(args, root: Path, settings: Settings) -> int:
              + (f" ({s['periods']['first']} to {s['periods']['last']})"
                 if s['periods']['count'] else "") + ".",
              f"Checks: {s['checks'] or 'not run'}; status {s['status'].upper()}."]
+    if "balance_sheet" in s:
+        bs = s["balance_sheet"]
+        lines.append(f"Balance sheet: tab {bs['sheet']!r} of the same workbook, totals "
+                     f"{', '.join(bs['reported_totals'].values())}; trend lines "
+                     f"{', '.join(t['label'] for t in bs['trend_lines']) or 'none'}.")
     lines += [f"  problem: {p}" for p in s["problems"]]
     lines += [f"  warning: {w}" for w in s["warnings"]]
     lines += [f"  decide: {d}" for d in s["needs_decision"]]
@@ -1124,7 +1136,24 @@ def _quickbooks_status(args) -> int:
 
 def _chart_data(args) -> int:
     from finance_engine.service.core import chart_data
-    data = chart_data(_root(args), args.client, args.workbook, args.year)
+    scope = args.scope or ("month" if args.period else None)
+    data = chart_data(_root(args), args.client, args.workbook, args.year, scope, args.period)
+    if data["kind"] == "bar":
+        lines = [f"{args.client}: {data['label']} (one month; bars)"]
+        if data["reconciliation_failed"]:
+            lines.append(f"  reconciliation failed in: "
+                         f"{', '.join(data['reconciliation_failed'])}")
+        for chart in data["charts"]:
+            lines.append(f"  {chart['title']}  [{chart['source']}]")
+            for k, category in enumerate(chart["categories"]):
+                cells = "  ".join(f"{s['label']}: {s['points'][k]['display']}"
+                                  + (f" ({s['points'][k]['detail']})"
+                                     if s["points"][k].get("detail") else "")
+                                  + ("" if s["points"][k]["status"] == "ok"
+                                     else f" [{s['points'][k]['status']}]")
+                                  for s in chart["series"])
+                lines.append(f"    {category:<34} {cells}")
+        return _done(args, "chart-data", data, lines)
     lines = [f"{args.client}: {data['label']} (monthly; never annualised)"]
     if data["gaps"]:
         lines.append(f"  gaps (missing from the source): {', '.join(data['gaps'])}")

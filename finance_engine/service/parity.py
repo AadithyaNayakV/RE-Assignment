@@ -35,7 +35,7 @@ ROUTES: list[dict] = [
     {"method": "GET", "path": "/api/export/metrics.json", "kind": "read",
      "cli": f"{FE} show-report --client {{client}} {SCOPE} {FILE}"},
     {"method": "GET", "path": "/api/charts", "kind": "read",
-     "cli": f"{FE} chart-data --client {{client}} {FILE} --json"},
+     "cli": f"{FE} chart-data --client {{client}} {SCOPE} {FILE} --json"},
     {"method": "POST", "path": "/api/jobs/analyze-months", "kind": "action",
      "cli": f"{FE} analyze --client {{client}} --period {{period}} {FILE}"},
     {"method": "GET", "path": "/api/cloud-notice", "kind": "read",

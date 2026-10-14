@@ -71,7 +71,7 @@ and `source ~/venvs/re-assignment/bin/activate`.
 | See a report, its badges and figures | `show-report --client ID --period P [--file NAME]`, `brief ...` |
 | Generate (Keep data on this machine) | `report --client ID --period P --provider deterministic` (unticked: `--provider auto`) |
 | Year / whole file | `--scope year --year YYYY`, `--scope all` on the commands above |
-| Charts, "view as table" | `chart-data --client ID [--file NAME] [--year YYYY]` |
+| Charts, "view as table" | `chart-data --client ID [--file NAME] [--period YYYY-MM \| --scope year --year YYYY \| --year YYYY]` |
 | Add company: upload, validate, approve | `init-client --draft --file book.xlsx --client-id ID --name "Co"`, `validate-config --client ID --draft [--from edited.yaml]`, `approve-config --client ID --by "Name"` |
 | Review: a generated report is Ready for review; mark as reviewed, send back, log, queue | `review mark-reviewed`, `send-back`, `status`, `log` with `--client ID --period P --by "Name"` (send-back also `--comment "..."`); `review queue`; `review submit` only for a hand-edited report.md |
 | Evals panel, Run free evals | `list-evals`; `python evals/run_engine_evals.py --compare` and `python evals/run_skill_evals.py --provider deterministic --compare` |
@@ -132,7 +132,9 @@ picks the newest month in the source and prints `period: latest -> YYYY-MM`. Out
 or reconciliation failure, 3 the guard rejected the text.
 
 Adding a company is adding `config/clients/<id>.yaml` and its workbook. No code changes.
-`init-client` drafts that YAML from the workbook (below).
+`init-client` drafts that YAML from the workbook (below). The optional balance sheet is
+another tab of the same workbook (`sheets.balance_sheet` plus a `balance_sheet` block, as
+in `config/clients/abc_inc.yaml`), not a separate file and not QuickBooks.
 
 ### Years, the whole file, several workbooks
 
@@ -181,8 +183,20 @@ otherwise `acme_ltd.draft.yaml` with each problem listed. The file starts with w
 detected, how confident each value is, and what needs your decision. It never overwrites
 a config without `--force`. Automated tests cover test_clean and Companies A and B (the
 generated config gives the same figures as the hand-written one); Company J and ABC were
-also run by hand and validated. It does not configure balance sheets, and it refuses a
-workbook with no row of month headers.
+also run by hand and validated. It refuses a workbook with no row of month headers.
+
+**Balance sheet.** A balance sheet is read from another tab of the same workbook, one
+whose name contains "balance". It is never read from a separate file or from QuickBooks.
+When the workbook has such a tab, `init-client` (and `init-client --draft`) also drafts
+`sheets.balance_sheet` (tab, header row, label columns, data columns, date order) and the
+`balance_sheet` block: the reported totals (Total Assets, Total Liabilities and Equity,
+Total Liabilities, Total Equity) and the trend lines (cash, accounts receivable, deferred
+revenue), each found by exact label. The engine's balance check (Total Assets equals the
+workbook's Total Liabilities and Equity, every month) must pass, or the draft is not
+accepted (exit 2, the failing months listed). If the two rows that check compares cannot
+each be found exactly once, or a trend line has no match or more than one, nothing is
+guessed: it is listed under "needs your decision". A workbook without a balance tab is
+drafted exactly as before.
 
 ## Commentary from Gemini or the Claude API (optional, no Claude Code needed)
 

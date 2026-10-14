@@ -195,8 +195,10 @@ def create_app(root: Path, jobs: JobManager | None = None,
         return _export(request, "json")
 
     @app.get("/api/charts")
-    def charts(client: str, file: str | None = None, year: int | None = None):
-        return reply(core.chart_data(root, client, file or None, year))
+    def charts(client: str, file: str | None = None, year: int | None = None,
+               scope: str | None = None, period: str | None = None):
+        return reply(core.chart_data(root, client, file or None, year, scope or None,
+                                     period or None))
 
     @app.get("/api/cloud-notice")
     def cloud_notice(request: Request):

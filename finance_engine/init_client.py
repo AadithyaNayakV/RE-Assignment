@@ -14,6 +14,12 @@ all of that passes is `config/clients/<ID>.yaml` written. Otherwise the file is
 overwritten without `--force`, and the original workbook is never modified: it is copied
 to `data/clients/<ID>/source/`.
 
+A balance sheet is read only from another tab of the same workbook, one whose name contains
+"balance"; never from a separate file or QuickBooks. When there is one, its layout, totals
+and trend lines are drafted too, and the engine's balance check (Total Assets equals Total
+Liabilities and Equity, every month) must pass, or the draft is not accepted. Without both
+of those rows, or with anything else unsure, it is left for a person to decide.
+
 What a config needs (see config.py): `client_id`, `company_name`, `sheets.income_statement`
 with `name`, `header_row`, `label_columns`, `first_data_column` and `date_order`, and
 `income_statement.sections`, each with `key`, `header_label` and `total_label`. Every
@@ -99,6 +105,34 @@ RECONCILIATION_CHECKS = [
     ("gross_profit", "Revenue total minus COGS total equals the reported gross profit"),
     ("operating_income", "Gross profit minus opex total equals the reported operating income"),
 ]
+BALANCE_CHECK = ("balance_sheet_balances", "Total Assets equals Total Liabilities and Equity")
+
+#: Balance-sheet totals, by exact label. Assets and liabilities-and-equity are the two rows
+#: the engine's balance check compares, so a balance sheet is configured only when both
+#: are found exactly once. Order is the order of the block in the config.
+BS_TOTALS = {
+    "assets": ["total assets"],
+    "liabilities_and_equity": [
+        "total liabilities and equity", "total liabilities & equity",
+        "total liabilities and shareholders' equity", "total liabilities & shareholders' equity",
+        "total liabilities and stockholders' equity", "total liabilities & stockholders' equity",
+        "total liabilities and owners' equity", "total equity and liabilities"],
+    "liabilities": ["total liabilities"],
+    "equity": ["total equity", "total shareholders' equity", "total stockholders' equity",
+               "total owners' equity", "total owner's equity"],
+}
+BS_CHECKED = ("assets", "liabilities_and_equity")
+#: Balance-sheet trend lines, by exact label. Two candidates (say 'Cash' and 'Total Cash')
+#: are a decision for a person, never a pick.
+BS_TREND_LINES = {
+    "cash": ["cash", "total cash", "cash and cash equivalents",
+             "total cash and cash equivalents", "cash & cash equivalents",
+             "total cash & cash equivalents", "cash at bank"],
+    "accounts_receivable": ["accounts receivable", "accounts receivable (a/r)",
+                            "trade receivables", "trade debtors", "debtors"],
+    "deferred_revenue": ["deferred revenue", "unearned revenue", "deferred income",
+                         "contract liabilities"],
+}
 
 
 class InitError(Exception):
@@ -237,12 +271,6 @@ def detect(path: Path, client_id: str, company_name: str) -> Draft:
     if ties:
         d.decisions.append(f"Sheets {[sheet, *ties]} look equally like an income statement; "
                            f"{sheet!r} was used. Change sheets.income_statement.name if wrong.")
-    others = [n for n in sheets if n != sheet]
-    if any("balance" in _norm(n) for n in others):
-        d.decisions.append(
-            f"The workbook has a balance sheet ({', '.join(n for n in others if 'balance' in _norm(n))}). "
-            f"init-client does not configure it; balance-sheet trends stay unavailable until "
-            f"a balance_sheet block is added by hand.")
     rows = sheets[sheet]
     header_no, periods = info["header"]
     d.detected.append(Detected("header row", header_no, "high",
@@ -352,7 +380,169 @@ def detect(path: Path, client_id: str, company_name: str) -> Draft:
         "thresholds": dict(DEFAULT_THRESHOLDS),
         "ttm": {"months": 12},
     }
+    bs = _balance_sheet(d, sheets, sheet)
+    if bs is not None:
+        sheet_spec, block = bs
+        d.config["sheets"]["balance_sheet"] = sheet_spec
+        config = {}
+        for key, value in d.config.items():            # the block sits after the P&L's
+            config[key] = value
+            if key == "income_statement":
+                config["balance_sheet"] = block
+        d.config = config
+        d.config["reconciliation"]["checks"].append(
+            {"key": BALANCE_CHECK[0], "description": BALANCE_CHECK[1]})
     return d
+
+
+def _balance_sheet(d: Draft, sheets: dict[str, list[list]],
+                   is_sheet: str) -> tuple[dict, dict] | None:
+    """(sheets.balance_sheet, balance_sheet block) from a tab named like a balance sheet.
+
+    Read from the same workbook only. Layout and rows are detected as for the income
+    statement; totals and trend lines by exact label. Anything unsure is a decision, and
+    when the two rows the balance check compares are not both found exactly once, no
+    balance sheet is configured at all. Whether it balances is checked later, by the
+    engine, in `_validate`.
+    """
+    names = [n for n in sheets if n != is_sheet and "balance" in _norm(n)]
+    if not names:
+        return None
+    if len(names) > 1:
+        d.decisions.append(
+            f"Several tabs could be the balance sheet ({', '.join(map(repr, names))}); none "
+            f"was configured. Add sheets.balance_sheet and a balance_sheet block for the right "
+            f"one, then run validate-config.")
+        return None
+    name = names[0]
+    rows = sheets[name]
+
+    def skip(reason: str) -> None:
+        d.decisions.append(
+            f"The workbook has a balance sheet tab ({name!r}) but it was not configured: "
+            f"{reason} Balance-sheet figures stay unavailable until sheets.balance_sheet and "
+            f"a balance_sheet block are added and validate-config passes.")
+
+    header = _header_row(rows)
+    if header is None:
+        return skip(f"no row has at least {MIN_PERIODS} month labels.")
+    header_no, periods = header
+    cols = [c for c, _, _ in periods]
+    keys = [k for _, k, _ in periods]
+    formats = sorted({f for _, _, f in periods if f != "datetime cell"})
+    first, last = min(cols), max(cols)
+    header_cells = rows[header_no - 1]
+    stray = [get_column_letter(c) for c in range(first, last + 1)
+             if c not in cols and c - 1 < len(header_cells)
+             and header_cells[c - 1] not in (None, "")]
+    if stray:
+        return skip(f"header row {header_no} has non-month cells between the month columns "
+                    f"({', '.join(stray)}).")
+    if len(set(keys)) != len(keys):
+        return skip(f"duplicate month columns "
+                    f"({', '.join(sorted({k for k in keys if keys.count(k) > 1}))}).")
+    ordinals = [int(k[:4]) * 12 + int(k[5:]) for k in keys]
+    if all(a < b for a, b in zip(ordinals, ordinals[1:])):
+        order = "oldest_first"
+    elif all(a > b for a, b in zip(ordinals, ordinals[1:])):
+        order = "newest_first"
+    else:
+        return skip("the month columns are not in date order either way.")
+    if d.periods and d.periods[-1] not in keys:
+        return skip(f"it has no column for {d.periods[-1]}, the income statement's latest "
+                    f"month, so the engine would block every balance-sheet figure for it.")
+    if d.periods and sorted(keys) != d.periods:
+        only_is = sorted(set(d.periods) - set(keys))
+        only_bs = sorted(set(keys) - set(d.periods))
+        d.decisions.append(
+            f"The balance sheet and the income statement cover different months (income "
+            f"statement only: {only_is or 'none'}; balance sheet only: {only_bs or 'none'}). "
+            f"The engine warns about this on every run.")
+
+    # The label area: every column left of the first month, except one holding numbers
+    # (an account code would otherwise be read as the label). A blank column is harmless.
+    numeric = {c for c in range(1, first)
+               if any(c - 1 < len(r) and _number(r[c - 1]) for r in rows[header_no:])}
+    label_cols = [c for c in range(1, first) if c not in numeric]
+    lines = []                                   # (row, label, has_numbers)
+    for i, r in enumerate(rows[header_no:], start=header_no + 1):
+        label = next((" ".join(str(r[c - 1]).split()) for c in label_cols
+                      if c - 1 < len(r) and isinstance(r[c - 1], str) and r[c - 1].strip()),
+                     None)
+        if label:
+            lines.append((i, label, any(_number(r[c - 1]) for c in cols if c - 1 < len(r))))
+    if not lines:
+        return skip("no text labels to the left of the month columns.")
+    counts: dict[str, int] = {}
+    for _, label, _ in lines:
+        counts[_norm(label)] = counts.get(_norm(label), 0) + 1
+
+    def find(wanted: list[str]) -> tuple[list[tuple[int, str]], bool]:
+        """Rows with numbers whose label is one of `wanted`, and whether it is unique."""
+        found = [(n, label) for n, label, nums in lines if nums and _norm(label) in wanted]
+        return found, len(found) == 1 and counts[_norm(found[0][1])] == 1
+
+    def rows_text(found) -> str:
+        return ", ".join(f"{label!r} row {n}" for n, label in found)
+
+    totals, detected = {}, []
+    for key, wanted in BS_TOTALS.items():
+        found, unique = find(wanted)
+        what = key.replace("_", " ")
+        if unique:
+            totals[key] = found[0][1]
+            detected.append(Detected(f"balance-sheet total {what}",
+                                     f"{found[0][1]!r} (row {found[0][0]})", "high",
+                                     "exact label match"))
+        elif key in BS_CHECKED:
+            return skip(f"the balance check needs exactly one {what} row and "
+                        + (f"several could be it ({rows_text(found)})." if found else
+                           f"none was found (looked for {', '.join(map(repr, wanted))})."))
+        else:
+            d.decisions.append(
+                f"Balance sheet: " + (f"several rows could be total {what} "
+                                      f"({rows_text(found)}); none was configured."
+                                      if found else
+                                      f"no total {what} row found (looked for "
+                                      f"{', '.join(map(repr, wanted))}).")
+                + f" balance_sheet.{key} is reported as unavailable until you add it.")
+    trend_lines = []
+    for key, wanted in BS_TREND_LINES.items():
+        found, unique = find(wanted)
+        what = key.replace("_", " ")
+        if unique:
+            trend_lines.append({"key": key, "label": found[0][1]})
+            detected.append(Detected(f"balance-sheet trend line {what}",
+                                     f"{found[0][1]!r} (row {found[0][0]})", "high",
+                                     "exact label match"))
+        else:
+            d.decisions.append(
+                f"Balance sheet: " + (f"several rows could be the {what} trend line "
+                                      f"({rows_text(found)}); none was configured."
+                                      if found else
+                                      f"no {what} row found (looked for "
+                                      f"{', '.join(map(repr, wanted))}).")
+                + f" Add it under balance_sheet.trend_lines if the balance sheet has one.")
+
+    letters = [get_column_letter(c) for c in label_cols]
+    d.detected += [
+        Detected("balance-sheet sheet", name, "high",
+                 "the only other tab whose name contains 'balance'; same workbook"),
+        Detected("balance-sheet header row", header_no, "high",
+                 f"first row with {len(periods)} parseable month labels"),
+        Detected("balance-sheet data columns",
+                 f"{get_column_letter(first)} .. {get_column_letter(last)}", "high",
+                 f"{keys[0]} in the first column, {keys[-1]} in the last ({order})"),
+        Detected("balance-sheet label columns", letters, "high",
+                 "every column left of the first month column that holds no numbers"
+                 + (f"; {', '.join(get_column_letter(c) for c in sorted(numeric))} hold "
+                    f"numbers and are excluded" if numeric else "")),
+        *detected]
+    sheet_spec = {"name": name, "header_row": header_no, "label_columns": letters,
+                  "first_data_column": get_column_letter(first),
+                  "last_data_column": get_column_letter(last),
+                  "date_order": order, "date_formats": formats or ["%b %Y"]}
+    return sheet_spec, {"reported_totals": totals, "trend_lines": trend_lines}
 
 
 def _sections(d: Draft, lines, by_norm) -> tuple[list[dict], dict]:
@@ -573,10 +763,22 @@ def _validate(raw: dict, copy: Path, root: Path) -> tuple[list[str], dict]:
     recon = doc["reconciliation"]
     info.update(latest=latest, checks_run=recon["checks_run"],
                 checks_failed=recon["checks_failed"])
+    totals = config.balance_sheet.get("reported_totals") or {}
     for f in recon["failures"][:6]:
+        if f["key"] == BALANCE_CHECK[0]:
+            problems.append(f"Balance check failed: the balance sheet does not balance in "
+                            f"{f['period']}: {totals.get('assets')!r} is {f['computed']} but "
+                            f"{totals.get('liabilities_and_equity')!r} is {f['reported']}. "
+                            f"Assets must equal liabilities plus equity, so the draft is "
+                            f"not accepted.")
+            continue
         problems.append(f"Reconciliation failed: {f['key']} {f['period']} (computed "
                         f"{f['computed']}, workbook {f['reported']}). The detected section "
                         f"or group boundaries are probably wrong.")
+    balance = next((c for c in recon["by_check"] if c["key"] == BALANCE_CHECK[0]), None)
+    if balance is not None:
+        info["balance_check"] = {"months_checked": balance["periods_checked"],
+                                 "months_failed": balance["periods_failed"]}
     if recon["checks_failed"] > 6:
         problems.append(f"... and {recon['checks_failed'] - 6} more reconciliation failures.")
     for issue in doc["data_quality_issues"]:
@@ -600,6 +802,12 @@ def _comment_block(draft: Draft, source: Path, status: str, validation: dict) ->
                      f"{validation.get('latest')} reconciled "
                      f"{validation.get('checks_run', 0) - validation.get('checks_failed', 0)}"
                      f"/{validation.get('checks_run', 0)} checks.")
+        if "balance_check" in validation:
+            tab = draft.config["sheets"]["balance_sheet"]["name"]
+            lines.append(f"# Balance sheet: read from the {tab!r} tab of this workbook; the "
+                         f"engine's balance check (Total Assets equals Total Liabilities and "
+                         f"Equity) passed in all {validation['balance_check']['months_checked']}"
+                         f" month(s).")
     else:
         lines.append("# Validation: FAILED. This is a DRAFT and the engine will not load it "
                      "under --client.")
@@ -687,6 +895,8 @@ def summary_lines(result: InitResult, root: Path) -> list[str]:
            if d.categories.get(FALLBACK_CATEGORY) else "") + ".",
         f"Workbook copied to {rel(result.workbook_copy)} (the original is untouched).",
     ]
+    if "balance_sheet" in cfg:
+        lines.insert(3, balance_sheet_line(cfg))
     if result.ok:
         v = result.validation
         lines.append(f"Validation passed: analyze {v.get('latest')} reconciled "
@@ -705,6 +915,16 @@ def summary_lines(result: InitResult, root: Path) -> list[str]:
                      f"{cfg['client_id']}.yaml, then run python -m finance_engine "
                      f"list-periods --client {cfg['client_id']}")
     return lines
+
+
+def balance_sheet_line(cfg: dict) -> str:
+    """One line on the drafted balance sheet, for the terminal summary."""
+    sheet, block = cfg["sheets"]["balance_sheet"], cfg["balance_sheet"]
+    return (f"Balance sheet: tab {sheet['name']!r} of the same workbook, header row "
+            f"{sheet['header_row']}, labels {', '.join(sheet['label_columns'])}, months from "
+            f"{sheet['first_data_column']}. Totals: "
+            + ", ".join(block["reported_totals"].values()) + ". Trend lines: "
+            + (", ".join(t["label"] for t in block["trend_lines"]) or "none") + ".")
 
 
 def next_command(result: InitResult) -> str:

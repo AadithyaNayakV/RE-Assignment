@@ -499,6 +499,60 @@ class TestCharts:
         june = next(p for p in net["points"] if p["period"] == "2025-06")
         assert june["value"] is None and "different source" in june["status"]
 
+    def test_a_month_has_its_own_charts(self, root, c):
+        (root / "output" / "clients" / "multi_co" / "all" / "metrics.json").unlink()
+        data = c.get("/api/charts?client=multi_co&scope=month&period=2025-06").json()
+        doc = json.loads((root / "output" / "clients" / "multi_co" / "2025-06" /
+                          "metrics.json").read_text("utf-8"))
+        value = {m["name"]: m["value"] for m in doc["metrics"]}
+        assert data["kind"] == "bar" and data["scope"] == "month"
+        assert data["label"] == "Jun 2025" and data["prior_period"] == "2025-05"
+        compare, categories = data["charts"]
+        assert compare["title"] == "Jun 2025 against May 2025"
+        this, prior = compare["series"]
+        headline = ["revenue.total", "cogs.total", "gross_profit", "opex.total",
+                    "operating_income"]
+        assert [p["metric"] for p in this["points"]] == headline
+        assert [p["value"] for p in this["points"]] == [value[k] for k in headline]
+        assert [p["value"] for p in prior["points"]] == [value[f"{k}.prior"] for k in headline]
+        assert all(p["display"].startswith("$") for p in this["points"] + prior["points"])
+        names = [p["metric"] for p in categories["series"][0]["points"]]
+        assert names and all(re.fullmatch(r"opex\.category\.[a-z0-9_]+", n) for n in names)
+        assert [p["value"] for p in categories["series"][0]["points"]] == \
+            [value[n] for n in names]                              # copied, never changed
+        assert all("of operating expenses" in p["detail"]
+                   for p in categories["series"][0]["points"])
+
+    def test_a_year_reads_its_own_report(self, root, c):
+        (root / "output" / "clients" / "multi_co" / "all" / "metrics.json").unlink()
+        data = c.get("/api/charts?client=multi_co&scope=year&year=2025").json()
+        doc = json.loads((root / "output" / "clients" / "multi_co" / "year-2025" /
+                          "metrics.json").read_text("utf-8"))
+        value = {m["name"]: m["value"] for m in doc["metrics"]}
+        assert data["kind"] == "line" and data["scope"] == "year" and data["partial_year"]
+        assert data["gaps"] == ["2025-04"] and data["label"].startswith("2025: ")
+        rev = next(s for s in data["series"] if s["measure"] == "revenue.total")
+        assert "2025 report" in rev["source"]
+        for p in rev["points"]:
+            if p["period"] == "2025-04":
+                assert p["value"] is None and p["status"].startswith("gap")
+            else:
+                assert p["value"] == value[f"monthly.{p['period']}.revenue.total"]
+        failed = {f["period"] for f in doc["reconciliation"]["failures"]}
+        assert failed and set(data["reconciliation_failed"]) == failed
+
+    def test_a_month_without_its_report_names_the_command(self, root, c):
+        r = c.get("/api/charts?client=multi_co&scope=month&period=2025-05")
+        assert r.status_code >= 400
+        assert "report --client multi_co --period 2025-05" in r.json()["error"]
+
+    def test_the_terminal_gives_the_same_month_charts(self, root, c, capsys):
+        assert main(["chart-data", "--client", "multi_co", "--period", "2025-06", "--json",
+                     "--root", str(root)]) == 0
+        printed = json.loads(capsys.readouterr().out)
+        served = c.get("/api/charts?client=multi_co&scope=month&period=2025-06").json()
+        assert printed["charts"] == served["charts"]
+
 
 # ---- the UI does no calculation (best effort) ------------------------------------------------
 

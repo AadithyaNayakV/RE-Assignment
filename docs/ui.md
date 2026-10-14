@@ -127,8 +127,18 @@ in the browser when storage is available); below 1000 px it folds into a Menu bu
   (the trace: sheet, cell, raw value, method), and Review. The Review tab shows the status
   on the tab itself ("Review – Ready for review") and starts with a one-line **Next
   step**. See "Review flow" below.
-- **Charts**: revenue, gross profit and operating income; net income (as reported); the
-  two margins. The first and last come from the whole-file `metrics.json` (`series`).
+- **Charts** follow the report on screen. A **month** report shows two bar charts from
+  that month's own `metrics.json`: the month against the prior month (revenue, cost of
+  goods sold, gross profit, operating expenses, operating income; the prior figures are
+  the engine's `<measure>.prior` metrics) and operating expenses by category, with each
+  category's share as the engine formatted it. A **year** report shows monthly lines from
+  that year's own `metrics.json` (`monthly.<YYYY-MM>.*`); if only the whole-file report
+  exists, its months for that year are used. The **whole file** shows the lines below.
+  Terminal: `chart-data --client ID --period YYYY-MM`, `--scope year --year YYYY`, or no
+  scope for the whole file.
+- **Line charts**: revenue, gross profit and operating income; net income (as reported);
+  the two margins. The first and last come from the whole-file `metrics.json` (`series`)
+  or the year's own `metrics.json`.
   **Net income is not in that series**, so it is read from each month's own
   `metrics.json` when one exists for the same source file (same SHA-256); a month without
   one is a gap labelled "not analysed", and the "Analyse those months" button runs

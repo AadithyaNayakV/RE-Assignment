@@ -139,7 +139,9 @@ If the user hands you a workbook for a client that has no config (step 1 fails w
 "No config for client"), and asks you to set it up, run
 `python -m finance_engine init-client --file <path.xlsx> --client-id <id> --name "<Company>"`.
 It inspects the layout, copies the workbook into `data/clients/<id>/source/`, and
-validates the draft with the real engine. Then:
+validates the draft with the real engine. A balance-sheet tab in the same workbook is
+drafted too and must pass the engine's balance check; a balance sheet is never read from
+a separate file or QuickBooks. Then:
 
 - Exit 0: `config/clients/<id>.yaml` was written. Tell the user the "needs your decision"
   items at the top of that file (currency, categories, anything ambiguous); they are

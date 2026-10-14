@@ -162,6 +162,8 @@ def run(c: Client, root: Path) -> None:
               route="/api/export/metrics.json")
     c.request("GET", f"/api/charts?{q({'client': CLIENT})}", route="/api/charts")
     c.request("GET", f"/api/charts?{q({'client': CLIENT, 'year': 2025})}")
+    c.request("GET", f"/api/charts?{q({**where, 'scope': 'month'})}")
+    c.request("GET", f"/api/charts?{q({'client': CLIENT, 'scope': 'year', 'year': 2025})}")
 
     # review: the report job put the report in review (as "system"); send it back,
     # regenerate it with the comment, then mark it as reviewed

@@ -6,7 +6,7 @@ import { h, add, clear, box, errorBox, loading, empty, table, badge, button, fie
          help, sentence, confirmAction, runLog } from "../dom.js";
 import { getJSON, postJSON, qs, followJob } from "../api.js";
 import { renderMarkdown } from "../markdown.js";
-import { chartCard } from "../charts.js";
+import { chartCard, barChartCard } from "../charts.js";
 import { go, remember, refreshQueueCount } from "../app.js";
 
 const TABS = [["numbers", "Numbers"], ["warnings", "Warnings"], ["charts", "Charts"],
@@ -576,9 +576,13 @@ class Tabs {
 
   // ---- Charts
   async render_charts(panel) {
-    add(panel, loading("Loading the monthly series…"));
-    const params = { client: this.where.client, file: this.where.file,
-                     year: this.where.scope === "year" ? this.where.year : "" };
+    add(panel, loading("Loading the charts…"));
+    const scope = this.where.scope;
+    const params = { client: this.where.client, file: this.where.file, scope,
+                     year: scope === "year" ? this.where.year : "",
+                     period: scope === "month" ? this.where.period : "" };
+    const which = { month: "this month's report", year: "this year's report",
+                    all: "the whole-file report" }[scope];
     const redraw = () => {
       delete panel.dataset.ready;
       clear(panel);
@@ -590,24 +594,28 @@ class Tabs {
       data = await getJSON(`/api/charts?${qs(params)}`);
     } catch (err) {
       const msg = h("div", { "aria-live": "polite" });
-      add(clear(panel), empty("No charts yet. They are drawn from the whole-file report: run it to see them.",
+      add(clear(panel), empty(`No charts yet. They are drawn from ${which}: run it to see them.`,
         h("p", { class: "hint", text: err.message }),
-        button("Run the whole-file report (keeps data on this machine)", async (e) => {
+        button(`Run ${which} (keeps data on this machine)`, async (e) => {
           e.target.disabled = true;
-          add(clear(msg), loading("Running the whole-file report…"));
+          add(clear(msg), loading(`Running ${which}…`));
           try {
-            const job = await postJSON("/api/jobs/report", { client: this.where.client,
-              scope: "all", file: this.where.file, keep_data_local: true });
+            const job = await postJSON("/api/jobs/report", { ...this.where,
+              keep_data_local: true });
             await followJob(job, () => {});
             redraw();
           } catch (err2) {
-            add(clear(msg), errorBox("Could not run the whole-file report", err2.message));
+            add(clear(msg), errorBox(`Could not run ${which}`, err2.message));
             e.target.disabled = false;
           }
         }), msg));
       return;
     }
     clear(panel);
+    if (data.kind === "bar") {
+      add(panel, data.charts.map((chart) => barChartCard(chart, data)));
+      return;
+    }
     const missing = data.net_income_months_not_analysed;
     const netExtra = missing.length ? h("div", { class: "chart-note" },
       h("p", { text: `Not analysed yet, shown as a gap: ${missing.join(", ")}.` }),

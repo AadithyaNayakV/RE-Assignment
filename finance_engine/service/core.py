@@ -594,20 +594,46 @@ def cloud_notice(root: Path, keep_data_local: bool, client_id: str | None = None
 
 # ---- charts: read, never computed ------------------------------------------------------
 
-def chart_data(root: Path, client_id: str, file: str | None = None, year=None) -> dict:
-    """Monthly series for the charts, read from the engine's own files.
+#: The line-chart measures, in the order the whole-file series lists them.
+CHART_MEASURES = ("revenue.total", "gross_profit", "operating_income", "gross_margin_pct",
+                  "operating_margin_pct")
 
-    Revenue, gross profit, operating income and the margins come from the whole-file
-    metrics.json (`series`), which the engine builds from each month's figures. Net
-    income by month is not in that series, so it is READ from each month's own
-    metrics.json (`net_income.reported`) when one exists for the same source file
-    (same SHA-256); a month without one is a gap marked "not analysed". Months missing
-    from the source are gaps (never zero). Every value comes with the engine's display
-    string; nothing is summed, averaged, annualised or rounded here.
+
+def chart_data(root: Path, client_id: str, file: str | None = None, year=None,
+               scope: str | None = None, period: str | None = None) -> dict:
+    """The charts for one report, read from the engine's own files. Nothing is computed.
+
+    * No `scope` (or "all"): monthly lines from the whole-file metrics.json (`series`),
+      optionally only one calendar year of it (`year`).
+    * "year": monthly lines from that year's own metrics.json (`monthly.<YYYY-MM>.*`);
+      if the year report has not been run, the whole-file one for that year is used.
+    * "month": bar charts from that month's own metrics.json: the month against the prior
+      month (`<measure>` and `<measure>.prior`), and operating expenses by category.
+
+    Net income by month is in neither the whole-file nor the year file, so it is READ from
+    each month's own metrics.json (`net_income.reported`) when one exists for the same
+    source file (same SHA-256); a month without one is a gap marked "not analysed".
+    Months missing from the source are gaps (never zero). Every value comes with the
+    engine's display string; nothing is summed, averaged, annualised or rounded here.
     """
     commands.check_client(client_id)
     if file:
         commands.check_file_name(file)
+    if scope not in (None, "all", "month", "year"):
+        raise ServiceError(f"scope {scope!r}: use month, year or all.")
+    if scope == "month":
+        return _month_charts(root, client_id, period, file)
+    if scope == "year":
+        if year is None:
+            raise ServiceError("Charts for a year need the year, e.g. year=2025.")
+        folder = report_dir(root, client_id, "year", year=year, file=file)
+        if (folder / "metrics.json").exists():
+            return _year_charts(root, client_id, folder, year, file)
+        if not (report_dir(root, client_id, "all", file=file) / "metrics.json").exists():
+            what = commands.finance("report", ("--client", client_id),
+                                    *commands.scope_pairs("year", None, year, file))[1]
+            raise ServiceError(f"Charts for a year read that year's report, which has not "
+                               f"been run for these settings. Run: {what}")
     folder = report_dir(root, client_id, "all", file=file)
     path = folder / "metrics.json"
     if not path.exists():
@@ -628,37 +654,93 @@ def chart_data(root: Path, client_id: str, file: str | None = None, year=None) -
         year_status = entry.get("status") if entry else "absent"
         label = (f"{year}: {entry.get('label')}" if entry
                  else f"{year}: no months in this file")
-    failed = sorted({f["period"] for f in (doc.get("reconciliation") or {})
-                     .get("failures") or [] if f.get("period")})
-    sha = (doc.get("source") or {}).get("sha256")
-
-    def point(p, value, status_text, metric):
-        unit_value = value
-        return {"period": p, "value": unit_value, "metric": metric,
-                "status": status_text, "reconciliation_failed": p in failed}
+    failed = _failed_periods(doc)
 
     series = []
     for m in doc["series"]["measures"]:
-        if m["measure"] not in ("revenue.total", "gross_profit", "operating_income",
-                                "gross_margin_pct", "operating_margin_pct"):
+        if m["measure"] not in CHART_MEASURES:
             continue
         by_period = {pt["period"]: pt for pt in m["points"]}
         points = []
         for p in periods:
             pt = by_period.get(p)
-            name = f"monthly.{p}.{m['measure']}"
-            if pt is None:
-                points.append({**point(p, None, "gap: month missing from the source",
-                                       None), "display": "n/a"})
-            else:
-                from finance_engine.formatting import reason
-                text = ("ok" if pt["value"] is not None else
-                        f"n/a: {reason(pt.get('unavailable_reason'))}")
-                points.append({**point(p, pt["value"], text, name),
-                               "display": display(pt["value"], m["unit"], "", symbol)})
+            points.append(_line_point(
+                p, pt["value"] if pt else None, (pt or {}).get("unavailable_reason"),
+                f"monthly.{p}.{m['measure']}", m["unit"], symbol, failed,
+                missing=pt is None))
         series.append({"measure": m["measure"], "label": m["label"], "unit": m["unit"],
                        "source": "whole-file metrics.json (series)", "points": points})
+    return _line_result(root, client_id, file, year, "year" if year is not None else "all",
+                        label, periods, gaps, failed, year_status, symbol, doc, series)
 
+
+def _failed_periods(doc: dict) -> list[str]:
+    return sorted({f["period"] for f in (doc.get("reconciliation") or {})
+                   .get("failures") or [] if f.get("period")})
+
+
+def _line_point(period, value, unavailable, metric, unit, symbol, failed, missing=False):
+    """One point of a line chart, with the engine's display string and its status."""
+    from finance_engine.formatting import reason
+    if missing:
+        return {"period": period, "value": None, "metric": None,
+                "status": "gap: month missing from the source",
+                "reconciliation_failed": period in failed, "display": "n/a"}
+    return {"period": period, "value": value, "metric": metric,
+            "status": "ok" if value is not None else f"n/a: {reason(unavailable)}",
+            "reconciliation_failed": period in failed,
+            "display": display(value, unit, "", symbol)}
+
+
+def _year_charts(root: Path, client_id: str, folder: Path, year, file) -> dict:
+    """Monthly lines from a year report's own metrics.json (`monthly.<YYYY-MM>.*`)."""
+    from finance_engine.monthly import LABELS
+    doc = json.loads((folder / "metrics.json").read_text(encoding="utf-8"))
+    symbol = doc.get("currency_symbol", "$")
+    cov = doc.get("coverage") or {}
+    gaps = list(cov.get("gaps_inside_span") or [])
+    periods = sorted(set(cov.get("months_present") or []) | set(gaps))
+    failed = _failed_periods(doc)
+    by_name = {m["name"]: m for m in doc.get("metrics", [])}
+    series = []
+    for measure in CHART_MEASURES:
+        unit = "percent" if measure.endswith("_pct") else "currency"
+        points = []
+        for p in periods:
+            m = by_name.get(f"monthly.{p}.{measure}")
+            points.append(_line_point(
+                p, m["value"] if m else None, (m or {}).get("unavailable_reason"),
+                f"monthly.{p}.{measure}", unit, symbol, failed, missing=m is None))
+        series.append({"measure": measure, "label": LABELS[measure], "unit": unit,
+                       "source": f"the {year} report's metrics.json (monthly.<YYYY-MM>.*)",
+                       "points": points})
+    label = f"{year}: {cov.get('label') or 'no months in this file'}"
+    return _line_result(root, client_id, file, year, "year", label, periods, gaps, failed,
+                        cov.get("status"), symbol, doc, series)
+
+
+def _line_result(root, client_id, file, year, scope, label, periods, gaps, failed,
+                 year_status, symbol, doc, series) -> dict:
+    sha = (doc.get("source") or {}).get("sha256")
+    net = _net_income_points(root, client_id, file, periods, gaps, sha, failed, symbol)
+    series.append({"measure": "net_income.reported", "label": "Net income (as reported)",
+                   "unit": "currency",
+                   "source": "each month's own metrics.json (net_income.reported)",
+                   "points": net})
+    missing_months = [pt["period"] for pt in net
+                      if pt["status"].startswith("not analysed")]
+    return {"client_id": client_id, "file": file, "year": year, "scope": scope,
+            "kind": "line", "label": label,
+            "periods": periods, "gaps": [p for p in gaps if p in periods],
+            "reconciliation_failed": [p for p in failed if p in periods],
+            "year_status": year_status, "partial_year": year_status == "partial",
+            "never_annualised": True, "currency_symbol": symbol,
+            "source_sha256": sha, "series": series,
+            "net_income_months_not_analysed": missing_months}
+
+
+def _net_income_points(root, client_id, file, periods, gaps, sha, failed, symbol) -> list:
+    from finance_engine.formatting import reason
     net, base = [], report_dir(root, client_id, "all", file=file).parent
     for p in periods:
         month = base / p / "metrics.json"
@@ -675,25 +757,88 @@ def chart_data(root: Path, client_id: str, file: str | None = None, year=None) -
                 if m is None:
                     text = "n/a: the source has no reported net income line"
                 else:
-                    from finance_engine.formatting import reason
                     value, name = m.get("value"), "net_income.reported"
                     text = ("ok" if value is not None else
                             f"n/a: {reason(m.get('unavailable_reason'))}")
-        net.append({**point(p, value, text, name),
+        net.append({"period": p, "value": value, "metric": name, "status": text,
+                    "reconciliation_failed": p in failed,
                     "display": display(value, "currency", "", symbol)})
-    series.append({"measure": "net_income.reported", "label": "Net income (as reported)",
-                   "unit": "currency",
-                   "source": "each month's own metrics.json (net_income.reported)",
-                   "points": net})
-    missing_months = [pt["period"] for pt in net
-                      if pt["status"].startswith("not analysed")]
-    return {"client_id": client_id, "file": file, "year": year, "label": label,
-            "periods": periods, "gaps": [p for p in gaps if p in periods],
-            "reconciliation_failed": [p for p in failed if p in periods],
-            "year_status": year_status, "partial_year": year_status == "partial",
-            "never_annualised": True, "currency_symbol": symbol,
-            "source_sha256": sha, "series": series,
-            "net_income_months_not_analysed": missing_months}
+    return net
+
+
+_CATEGORY = re.compile(r"opex\.category\.[a-z0-9_]+")
+
+
+def _prior_label(period: str | None) -> str:
+    """'2025-12' -> 'Dec 2025' (text only)."""
+    if not period:
+        return "prior month"
+    return _month_label(dt.date(int(period[:4]), int(period[5:7]), 1))
+
+
+def _month_charts(root: Path, client_id: str, period, file) -> dict:
+    """Bar charts from one month report's own metrics.json. Values are copied, never
+    derived: the prior month's figures are the engine's `<measure>.prior` metrics."""
+    from finance_engine.formatting import reason
+    from finance_engine.monthly import HEADLINE, LABELS
+    if not period or period == "latest":
+        raise ServiceError("Charts for a month need the month as YYYY-MM.")
+    commands.check_period(period)
+    path = report_dir(root, client_id, "month", period=period, file=file) / "metrics.json"
+    if not path.exists():
+        what = commands.finance("report", ("--client", client_id),
+                                *commands.scope_pairs("month", period, None, file))[1]
+        raise ServiceError(f"Charts for a month read that month's report, which has not "
+                           f"been run for these settings. Run: {what}")
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    symbol = doc.get("currency_symbol", "$")
+    by_name = {m["name"]: m for m in doc.get("metrics", [])}
+    prior = doc.get("prior_period")
+    failed = _failed_periods(doc)
+
+    def bar(name: str, unit: str = "currency") -> dict:
+        m = by_name.get(name)
+        if m is None:
+            return {"value": None, "display": "n/a", "metric": None,
+                    "status": "n/a: not in this month's metrics.json"}
+        value = m.get("value")
+        return {"value": value, "display": display(value, unit, "", symbol), "metric": name,
+                "status": ("ok" if value is not None else
+                           f"n/a: {reason(m.get('unavailable_reason'))}")}
+
+    this_label, prior_label = doc.get("period_label") or period, _prior_label(prior)
+    compare = {
+        "id": "month_vs_prior", "kind": "bar",
+        "title": f"{this_label} against {prior_label}",
+        "categories": [LABELS[k] for k in HEADLINE],
+        "series": [{"label": this_label, "unit": "currency",
+                    "points": [bar(k) for k in HEADLINE]},
+                   {"label": prior_label, "unit": "currency",
+                    "points": [bar(f"{k}.prior") for k in HEADLINE]}],
+        "source": "this month's metrics.json (<measure> and <measure>.prior)",
+    }
+    names = [m["name"] for m in doc.get("metrics", []) if _CATEGORY.fullmatch(m["name"])]
+    points = []
+    for name in names:
+        pt, share = bar(name), bar(f"{name}.share_of_opex_pct", "percent")
+        if share["value"] is not None:
+            pt["detail"] = f"{share['display']} of operating expenses"
+        points.append(pt)
+    charts = [compare]
+    if names:
+        charts.append({
+            "id": "opex_by_category", "kind": "bar", "horizontal": True,
+            "title": f"Operating expenses by category, {this_label}",
+            "categories": [by_name[n].get("label") or n for n in names],
+            "series": [{"label": this_label, "unit": "currency", "points": points}],
+            "source": "this month's metrics.json (opex.category.*)",
+        })
+    return {"client_id": client_id, "file": file, "scope": "month", "kind": "bar",
+            "period": period, "prior_period": prior, "label": this_label,
+            "currency_symbol": symbol, "never_annualised": True,
+            "source_sha256": (doc.get("source") or {}).get("sha256"),
+            "reconciliation_failed": [p for p in failed if p in (period, prior)],
+            "charts": charts}
 
 
 def start_analyze_months(jobs, root: Path, client_id: str, file: str | None = None):
