@@ -7,7 +7,7 @@
 // clickable only where the engine found exactly one metric for it, and only when the
 // characters at that position are exactly the figure it named. Nothing is guessed here.
 
-import { h } from "./dom.js";
+import { h, scrollTable, looksNumeric } from "./dom.js";
 
 const HEADING = /^(#{1,6})\s+(.*)$/;
 const LIST_ITEM = /^(\s*)(-|\d+\.)\s+(\[[ xX]\]\s+)?(.*)$/;
@@ -123,12 +123,16 @@ function renderTable(rows, ctx) {
     .map((c) => c.trim());
   const header = cells(rows[0]);
   const body = rows.slice(1).filter((r) => !/^\s*\|?\s*:?-{2,}/.test(r)).map(cells);
-  return h("div", { class: "table-wrap", tabindex: "0", role: "region",
-                     "aria-label": header.join(", ") },
+  // A column whose cells are all figures (or a dash / n/a) is right-aligned.
+  const blank = (c) => !c || c === "—" || c === "-" || c === "n/a";
+  const numeric = header.map((_, k) => body.some((r) => looksNumeric(r[k]))
+    && body.every((r) => blank(r[k]) || looksNumeric(r[k])));
+  const cls = (k) => (numeric[k] ? "num" : null);
+  return scrollTable(header.join(", "),
     h("table", {},
-      h("thead", {}, h("tr", {}, header.map((c) => h("th", { scope: "col" },
+      h("thead", {}, h("tr", {}, header.map((c, k) => h("th", { scope: "col", class: cls(k) },
         inline(c, 0, 0, ctx))))),
-      h("tbody", {}, body.map((r) => h("tr", {}, r.map((c) => h("td", {},
+      h("tbody", {}, body.map((r) => h("tr", {}, r.map((c, k) => h("td", { class: cls(k) },
         inline(c, 0, 0, ctx))))))));
 }
 
@@ -207,7 +211,8 @@ function textRun(str, line, startCol, ctx) {
     if (from > pos) out.push(document.createTextNode(str.slice(pos, from)));
     out.push(h("button", {
       type: "button", class: "figure-link",
-      title: `Trace ${link.metric}`, "aria-label": `${link.text}: trace ${link.metric}`,
+      title: `Source cells: ${link.metric}`,
+      "aria-label": `${link.text}: show the source cells of ${link.metric}`,
       onclick: () => ctx.onTrace && ctx.onTrace(link.metric),
     }, link.text));
     pos = to;

@@ -163,18 +163,25 @@ def run(c: Client, root: Path) -> None:
     c.request("GET", f"/api/charts?{q({'client': CLIENT})}", route="/api/charts")
     c.request("GET", f"/api/charts?{q({'client': CLIENT, 'year': 2025})}")
 
-    # review
-    c.request("POST", "/api/review/submit", body={**where, "by": "Smoke Writer"},
-              route="/api/review/submit")
-    c.request("POST", "/api/review/approve", body={**where, "by": "Smoke Writer"},
-              expect=(400,))                                # the submitter cannot approve
-    c.request("GET", "/api/review/queue", route="/api/review/queue")
-    c.request("POST", "/api/review/send-back", body={**where, "by": "Smoke Approver",
+    # review: the report job put the report in review (as "system"); send it back,
+    # regenerate it with the comment, then mark it as reviewed
+    queue = c.request("GET", "/api/review/queue", route="/api/review/queue")
+    count = queue.get("count") if isinstance(queue, dict) else None
+    c.results.append((bool(count), "  generated reports are ready for review",
+                      f"count {count}"))
+    c.request("POST", "/api/review/send-back", body={**where, "by": "Smoke Reviewer"},
+              expect=(400,))                                 # a comment is required
+    c.request("POST", "/api/review/send-back", body={**where, "by": "Smoke Reviewer",
                                                       "comment": "Smoke comment"},
               route="/api/review/send-back")
-    c.request("POST", "/api/review/submit", body={**where, "by": "Smoke Writer"})
-    c.request("POST", "/api/review/approve", body={**where, "by": "Smoke Approver"},
-              route="/api/review/approve")
+    c.request("POST", "/api/review/mark-reviewed", body={**where, "by": "Smoke Reviewer"},
+              expect=(400,))                                 # changes requested first
+    c.wait(c.request("POST", "/api/jobs/report", body={**where, "keep_data_local": True},
+                     expect=(202,)))                         # regenerate with the comment
+    c.request("POST", "/api/review/mark-reviewed", body={**where, "by": "Smoke Reviewer"},
+              route="/api/review/mark-reviewed")
+    c.request("POST", "/api/review/approve", body={**where, "by": "Smoke Reviewer"},
+              expect=(404, 405))                             # no approve for reports
     status = c.request("GET", f"/api/review/status?{q(where)}", route="/api/review/status")
     c.request("GET", f"/api/review/log?{q(where)}", route="/api/review/log")
     c.request("GET", f"/api/review/version?{q({**where, 'name': status['versions'][0]})}",

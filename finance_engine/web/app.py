@@ -317,8 +317,9 @@ def create_app(root: Path, jobs: JobManager | None = None,
                                             b.get("comment"), **where(b)))
         return handler
 
-    app.post("/api/review/submit")(_review(review.SUBMIT))
-    app.post("/api/review/approve")(_review(review.APPROVE))
+    # No submit route: `report` submits a new report itself (as "system"). A report.md a
+    # person edited is submitted from the terminal (`review submit --by NAME`).
+    app.post("/api/review/mark-reviewed")(_review(review.MARK_REVIEWED))
     app.post("/api/review/send-back")(_review(review.SEND_BACK))
 
     @app.get("/api/review/queue")

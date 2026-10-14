@@ -70,6 +70,9 @@ class Cell:
     #: The cell's text when it holds text that is not a number ("n/a", "TBC"). `value`
     #: is then None: the cell is read as missing, never as zero. Not part of `trace()`.
     unreadable_text: str | None = None
+    #: Why a value is not a cell of the source (QuickBooks left the section out of the
+    #: report and the reader counts it as 0). In `trace()` only when set.
+    note: str | None = None
 
     def trace(self) -> dict:
         d = {
@@ -82,6 +85,8 @@ class Cell:
         }
         if self.is_formula:
             d["formula"] = self.formula
+        if self.note:
+            d["note"] = self.note
         return d
 
 
@@ -98,6 +103,10 @@ class LineItem:
     category: str | None = None         # presentation category (opex only)
     role: str = "item"                  # item | section_total | group_total | reported | header
     cells: dict[str, Cell] = field(default_factory=dict)
+    #: Set when the source left this total out (QuickBooks omits a section with no
+    #: activity). The row has no values, and a check against it is "not provided by the
+    #: source", never a pass or a failure.
+    omitted_by_source: str | None = None
 
     def value(self, period: str) -> float | None:
         cell = self.cells.get(period)
@@ -193,6 +202,9 @@ class Dataset:
     source_sha256: str
     income_statement: Sheet
     balance_sheet: Sheet | None = None
+    #: Warnings the reader raised about the source itself, as {code, message, affects}.
+    #: Validation reports each one. Empty for Excel.
+    source_warnings: list[dict] = field(default_factory=list)
 
     def period_keys(self) -> list[str]:
         return self.income_statement.period_keys()

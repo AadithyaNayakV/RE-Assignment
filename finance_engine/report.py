@@ -11,7 +11,8 @@ The report is a **draft for a human reviewer**, and says so. Rules it follows:
 
 from __future__ import annotations
 
-from finance_engine.formatting import (Formatter, check_count, na_with_reason,
+from finance_engine.formatting import (Formatter, check_count, check_result,
+                                       not_provided_note, source_name, na_with_reason,
                                        one_off_multiple_reason,
                                        significance_rule)
 
@@ -94,7 +95,7 @@ def _status(doc, guard_result) -> str:
         ("Reconciliation",
          "PASS" if recon.get("all_passed") else "**FAIL**",
          f"{check_count(recon, 'checks passed', 'checks failed')} across all periods "
-         f"(tolerance {fmt_tolerance(recon)})"),
+         f"(tolerance {fmt_tolerance(recon)}){not_provided_note(doc)}"),
         ("Data-quality errors",
          "none" if not errors else f"**{len(errors)}**",
          "; ".join(i.get("code", "") for i in errors) or "—"),
@@ -581,7 +582,7 @@ def _reconciliation(doc, fmt) -> str:
     ]
     for c in by_check:
         lines.append(
-            f"| {c.get('description')} | {'PASS' if c.get('passed') else '**FAIL**'} | "
+            f"| {c.get('description')} | {check_result(c, doc)} | "
             f"{c.get('periods_checked')} | {c.get('max_abs_difference'):.10f} |"
         )
     failures = recon.get("failures") or []
@@ -602,6 +603,11 @@ def _reconciliation(doc, fmt) -> str:
                       f"the configured section structure matches the workbook, within the "
                       f"checks listed above — not proof that every derived figure is "
                       f"correct."]
+    if recon.get("checks_not_provided"):
+        lines += ["", f"Not run: {recon.get('checks_not_provided')} check(s) compare against "
+                      f"a total {source_name(doc)} left out of its report, so there was "
+                      f"nothing to compare with. They are listed as not provided, never "
+                      f"counted as passed or failed."]
     return "\n".join(lines)
 
 

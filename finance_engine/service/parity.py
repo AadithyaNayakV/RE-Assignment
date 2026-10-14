@@ -65,10 +65,8 @@ ROUTES: list[dict] = [
      "cli": f"{FE} review status --client {{client}} {SCOPE}"},
     {"method": "GET", "path": "/api/review/log", "kind": "read",
      "cli": f"{FE} review log --client {{client}} {SCOPE}"},
-    {"method": "POST", "path": "/api/review/submit", "kind": "action",
-     "cli": f"{FE} review submit --client {{client}} {SCOPE} --by {{name}}"},
-    {"method": "POST", "path": "/api/review/approve", "kind": "action",
-     "cli": f"{FE} review approve --client {{client}} {SCOPE} --by {{name}}"},
+    {"method": "POST", "path": "/api/review/mark-reviewed", "kind": "action",
+     "cli": f"{FE} review mark-reviewed --client {{client}} {SCOPE} --by {{name}}"},
     {"method": "POST", "path": "/api/review/send-back", "kind": "action",
      "cli": f"{FE} review send-back --client {{client}} {SCOPE} --by {{name}} "
             f"--comment {{comment}}"},

@@ -2,8 +2,8 @@
 // every label comes from /api/charts, which reads metrics.json files; nothing is summed,
 // averaged, annualised or rounded here. A month missing from the source is a GAP (null:
 // the line breaks), never zero. A month that failed reconciliation gets a cross marker
-// and is listed under the chart. Colours come from CSS variables, and each series also
-// differs by dash and marker shape, so colour is never the only cue.
+// and is listed under the chart. Colours and the font come from the page's CSS, and each
+// series also differs by dash and marker shape, so colour is never the only cue.
 //
 // Chart.js chooses the axis tick values itself; those are scale marks, not figures.
 
@@ -37,15 +37,15 @@ export function chartCard(title, data, measures, opts) {
         period,
         ...series.map((s) => s.points[idx].display),
         series.map((s) => s.points[idx].status).filter((t) => t !== "ok")
-          .concat(failed.has(period) ? ["reconciliation failed"] : [])
+          .concat(failed.has(period) ? ["checks failed"] : [])
           .filter((t, k, all) => all.indexOf(t) === k).join("; ") || "ok",
-      ])));
+      ]), { numeric: series.map((s, k) => k + 1) }));
   const toggle = button("View as table", () => {
     const show = tableBox.hidden;
     tableBox.hidden = !show;
     toggle.setAttribute("aria-pressed", String(show));
     toggle.textContent = show ? "Hide table" : "View as table";
-  }, { "aria-pressed": "false", class: "secondary" });
+  }, { "aria-pressed": "false" });
 
   const notes = [
     h("p", { class: "chart-note", text: `${data.label}. Monthly values; nothing is annualised.` }),
@@ -54,7 +54,7 @@ export function chartCard(title, data, measures, opts) {
     data.gaps.length ? h("p", { class: "chart-note",
       text: `Gap (month missing from the source, shown as a break, never zero): ${data.gaps.join(", ")}` }) : null,
     data.reconciliation_failed.length ? h("p", { class: "chart-note bad-text",
-      text: `✗ Reconciliation failed (cross marker): ${data.reconciliation_failed.join(", ")}` }) : null,
+      text: `✗ Checks failed (cross marker): ${data.reconciliation_failed.join(", ")}` }) : null,
     series.map((s) => s.source).filter((v, k, all) => all.indexOf(v) === k)
       .map((src) => h("p", { class: "chart-note muted", text: `Read from: ${src}` })),
     options.extra || null,
@@ -71,8 +71,10 @@ export function chartCard(title, data, measures, opts) {
       return null;
     }
     const percent = series.every((s) => s.unit === "percent");
-    const text = cssVar("--text-muted");
-    const grid = cssVar("--grid");
+    const text = cssVar("--muted");
+    const grid = cssVar("--divider");
+    window.Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
+    window.Chart.defaults.font.size = 14;
     return new window.Chart(canvas, {
       type: "line",
       data: {
@@ -103,7 +105,7 @@ export function chartCard(title, data, measures, opts) {
                 const p = series[c.datasetIndex].points[c.dataIndex];
                 return `${series[c.datasetIndex].label}: ${p.display}`
                   + (p.status !== "ok" ? ` (${p.status})` : "")
-                  + (p.reconciliation_failed ? " — reconciliation failed" : "");
+                  + (p.reconciliation_failed ? " — checks failed" : "");
               },
             },
           },

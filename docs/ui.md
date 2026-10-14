@@ -85,8 +85,8 @@ replaced by `--scope year --year YYYY` or `--scope all`.
 | `POST /api/onboarding/{client}/validate` | `python -m finance_engine validate-config --client ID --draft --from edited.yaml` |
 | `POST /api/onboarding/{client}/approve` | `python -m finance_engine approve-config --client ID --by "Name"` |
 | `GET /api/review/status`, `/log`, `/version` | `python -m finance_engine review status` / `review log --client {client} --period P` |
-| `POST /api/review/submit`, `/approve`, `/send-back` | `python -m finance_engine review submit` / `approve` / `send-back --comment "..."` with `--client --period --by` |
-| `GET /api/review/queue` | `python -m finance_engine review queue` |
+| `POST /api/review/mark-reviewed`, `/send-back` | `python -m finance_engine review mark-reviewed` / `send-back --comment "..."` with `--client --period --by` |
+| `GET /api/review/queue` (the list and its `count`, polled every 30 s for the top bar) | `python -m finance_engine review queue` |
 | `GET /api/evals` | `python -m finance_engine list-evals` |
 | `POST /api/jobs/evals` | `python evals/run_engine_evals.py --compare` then `python evals/run_skill_evals.py --provider deterministic --compare` |
 | `GET /api/quickbooks/status` | `python -m finance_engine quickbooks-status` |
@@ -99,17 +99,34 @@ page shows the command and says to run it yourself.
 
 ## Pages
 
-- **Reports** (home): client, file ("all files" means the configured default; files are
-  never merged), scope (month, year, whole file) and period. Badges, each with text and an
-  icon as well as colour: reconciliation (all pass, or "K of M failed"), number check
-  (X/Y traced), guard result, provider and attempt, data left this machine, scope label
-  (for example "partial year, 8 of 12 months"), source SHA-256 (short), review status.
-  The report is rendered from `report.md`. A figure in the prose is a button that opens
-  its trace **only** when `finance_engine/trace_links.py` (engine code; the guard is
-  unchanged) finds exactly one metric holding the value the guard matched; an ambiguous
-  figure stays plain. Side tabs: Numbers, Warnings (cell-level warnings with sheet and
-  cell, the reconciliation failure table, filter by code, each with a trace), Charts,
-  Trace (sheet, cell, raw value, method), Review.
+The top bar holds the five pages and the theme switch (system, light or dark, remembered
+in the browser when storage is available); below 1000 px it folds into a Menu button.
+
+- **Reports** (home): company, file ("Default file" is the configured default; files are
+  never merged), scope (month, year, whole file) and period, in one row that wraps. For a
+  QuickBooks company the file list is **Snapshot**: each pull labelled by the engine as
+  "Pulled 14 Oct 2026, 11:15 – Jul 2026 to Sep 2026" (this machine's time; the months
+  are read from the snapshot itself, so never "?"), newest first, and any snapshot that
+  cannot be read in a disabled "Cannot be read" group at the bottom with a one-line
+  reason. With none chosen, the newest readable snapshot is used and one line says so;
+  `report` without `--file` does the same (`sources/selection.py`). Then
+  the status badges, most important first, each with a word and an icon as well as
+  colour, and a "?" with one sentence of help: **Checks** (reconciliation: all pass, or
+  "K of M failed"), **Number check** (the guard result and X/Y traced), **Written by**
+  (the commentary provider and its attempt), **Data left this machine**, **Review** (the
+  review status). A quieter line below gives the scope label (for example "partial year,
+  8 of 12 months") and the **File fingerprint** (the source SHA-256, short).
+  With no report yet, the page says so and shows "Generate a report"; once a report
+  exists, that panel folds into "Generate the report again" and its button is secondary,
+  because the next step is the review. The report is rendered from `report.md`. A figure
+  in the prose is a button that opens its trace **only** when
+  `finance_engine/trace_links.py` (engine code; the guard is unchanged) finds exactly one
+  metric holding the value the guard matched; an ambiguous figure stays plain. Side tabs:
+  Numbers, Warnings (data-quality issues, cell warnings with sheet and cell, and **Failed
+  checks**, the reconciliation failure table; filter by code), Charts, **Source cells**
+  (the trace: sheet, cell, raw value, method), and Review. The Review tab shows the status
+  on the tab itself ("Review – Ready for review") and starts with a one-line **Next
+  step**. See "Review flow" below.
 - **Charts**: revenue, gross profit and operating income; net income (as reported); the
   two margins. The first and last come from the whole-file `metrics.json` (`series`).
   **Net income is not in that series**, so it is read from each month's own
@@ -117,32 +134,95 @@ page shows the command and says to run it yourself.
   one is a gap labelled "not analysed", and the "Analyse those months" button runs
   `analyze` only for months that have no month file (an existing one is never rewritten,
   so no review decision is voided). A month missing from the source is a gap, never
-  zero; a month that failed reconciliation gets a cross marker and is listed; a partial
-  year is labelled and never annualised. Every chart has "View as table". Series differ
-  by colour, dash and marker shape.
+  zero; a month that failed reconciliation gets a cross marker and is listed as "checks
+  failed"; a partial year is labelled and never annualised. Every chart has "View as
+  table". Series differ by colour, dash and marker shape.
 - **Add company**: upload, review and edit the drafted YAML (errors link to their line),
-  Validate, Approve (name required), then generate with the cloud notice and "Keep data
-  on this machine". It ends on the Review tab.
-- **Review queue**: everything in review, across clients.
-- **Evals**: the 19 golden cases with their newest saved baseline result, and "Run free
-  evals" with a live log. No button for paid evals.
+  Validate, Approve config (name required, then a confirmation), then generate with the
+  cloud notice and "Keep data on this machine". It ends on the Review tab.
+- **Review queue**: every report Ready for review, across companies. The top bar shows
+  the count next to the page name and in the page title, refreshed every 30 seconds
+  without a reload.
+- **Evals**: the 19 golden cases ("Test cases") with their newest saved baseline result
+  (Level 2 "Template report" is the deterministic control), and "Run free evals" with a
+  live log. No button for paid evals.
 - **Sources and settings**: QuickBooks status (sandbox badge, names of missing
-  variables), "Pull from QuickBooks" with a date range and a confirm tick (read-only, the
-  same code as `pull-quickbooks`; the new snapshot then appears in the file list), the
-  provider chain read-only, and the theme (light, dark or system, remembered in the
-  browser when storage is available).
-- **Export**: download report.md and metrics.json; "Print / save as PDF" uses a print
-  stylesheet that keeps the badges and the report only.
+  variables), "Pull from QuickBooks" with a date range, a confirm tick and a confirmation
+  dialog (read-only, the same code as `pull-quickbooks`; the new snapshot then appears in
+  the file list), and the provider chain read-only ("Who writes the commentary").
+- **Export**: download report.md and metrics.json; "Print or save as PDF" uses a print
+  stylesheet that keeps the report only, black on white.
+
+### Labels and engine terms
+
+The pages use plain words; the engine, the CLI and these docs keep the engine terms.
+
+| On the page | Engine term |
+|---|---|
+| Checks, Failed checks | reconciliation, reconciliation failures |
+| Number check | guard (`guard.py`) |
+| Written by, Writer | commentary provider |
+| Source cells | trace (`source_rows`) |
+| File fingerprint | source SHA-256 |
+| Company | client (`client_id`) |
+| Template report | deterministic provider / control |
+| Ready for review, Changes requested, Reviewed | `ready_for_review`, `changes_requested`, `reviewed` |
+| Mark as reviewed | `review mark-reviewed` (`mark_reviewed` in the log) |
+| Snapshot (QuickBooks) | a saved `ProfitAndLoss` JSON in `data/clients/<id>/source/` |
+| 12-month total incomplete | TTM incomplete |
+
+### Look
+
+`ui/static/styles.css` keeps one font stack (plus monospace for cell references, file
+names, hashes and commands), four text sizes (14, 16, 20, 24 px), two weights (400, 600),
+no capitals by CSS, one accent colour and three status colours, all as variables for
+light and dark, and spacing on a 4 / 8 / 12 / 16 / 24 / 32 px scale.
+`tests/test_ui_style.py` enforces these, including WCAG contrast (4.5:1 text, 3:1
+control borders and icons) in both themes.
+
+## Review flow
+
+Three statuses: **Ready for review**, **Changes requested**, **Reviewed**.
+
+1. **Generating a report submits it.** `report` (and so the Generate button) appends a
+   `submit` entry by `system`, marked automatic, with the commentary provider as "written
+   by". The report is Ready for review at once and appears in the queue. There is no
+   Submit button.
+2. **The reviewer** types a name and either **Mark as reviewed** or **Send back** (a
+   comment is required). Both ask for a confirmation first. The word "approve" is used
+   only for a new company's config.
+3. **After Send back** the status is Changes requested. **Regenerate with this comment**
+   runs `report` again: a cloud writer receives the comment as reviewer notes (the page
+   first shows what would leave this machine); the deterministic template cannot follow
+   comments, and the page says so. The regenerated report is Ready for review again.
+4. **The same-person rule** (`config/review.yaml`, `require_different_reviewer`) is
+   **off** in this repo: the person who submitted a version may also mark it as reviewed.
+   Set it to `true` to turn it on. It then applies only when a person submitted or edited
+   the current version: a hand-edited report.md is submitted from the terminal
+   (`review submit --by NAME`), and that person cannot then mark it as reviewed. A version
+   `report` submitted can be marked by anyone.
+
+A report.md or metrics.json changed by hand after the last review step is **not in
+review** until someone submits that version from the terminal or regenerates it. A report
+made before automatic submission (no review log) is also not in review until it is
+regenerated, so old outputs do not flood the queue. Logs written before this flow say
+`approve`; they are read as "Marked as reviewed".
+
+| Status | Engine state | Terminal |
+|---|---|---|
+| Ready for review | `ready_for_review` | `report ...` (automatic), or `review submit --by NAME` for an edited version |
+| Changes requested | `changes_requested` | `review send-back --by NAME --comment "..."` |
+| Reviewed | `reviewed` | `review mark-reviewed --by NAME` |
+| Not in review | `not_in_review` | edited by hand, or made before automatic submission |
 
 ## Review records
 
 Review logs (`output/.../review/review_log.json`, with copies of each submitted report in
 `review/versions/`) and config approvals (`data/clients/<id>/config_approval.json`) are
 files on **this machine only**, in git-ignored folders. They are append-only and
-hash-chained, but nothing stops someone with file access from deleting them. By default
-the approver must be a different name from the submitter (`config/review.yaml`,
-`require_different_approver: true`); because names are self-declared, that is a nudge
-against approving your own work, **not a security control**.
+hash-chained, but nothing stops someone with file access from deleting them. Because
+names are self-declared, the same-person rule is a nudge against reviewing your own
+work, **not a security control**.
 
 ## [PLANNED]
 

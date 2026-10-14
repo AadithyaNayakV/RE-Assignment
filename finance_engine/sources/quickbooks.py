@@ -30,6 +30,16 @@ tests/fixtures/qb_pl_monthly.json):
 * **Other Income and Other Expenses** (below Net Operating Income) sit outside the three
   sections, so they are never folded into revenue or operating expenses. Net income as
   reported is Intuit's Net Income, which includes them.
+* **A section QuickBooks leaves out.** QuickBooks drops a whole group from the report when
+  nothing was posted to it in the range (a range with no cost of goods sold has no "Cost
+  of Goods Sold" header, rows or total). For the groups the client config lists under
+  `source.may_be_omitted`, the reader puts the section back where Intuit would have sent
+  it: its header, one line "<section> (left out by QuickBooks)" holding 0.00 for every
+  month (with a note in its trace), and its total row with no values, marked as not
+  provided. A reconciliation check against that total is listed as "not provided by
+  QuickBooks", never as a pass or a failure, and a warning says the section was counted
+  as 0. A left-out summary row (Gross Profit, Net Income...) gets no values at all:
+  Intuit's own totals are never filled in.
 """
 
 from __future__ import annotations
@@ -48,6 +58,10 @@ from finance_engine.sources.base import DataSource
 from finance_engine.sources.excel import apply_income_statement_structure
 
 SHEET_NAME = "ProfitAndLoss"
+
+#: Intuit's top-level row groups of a Profit and Loss report, in the order it sends them.
+GROUP_ORDER = ("Income", "COGS", "GrossProfit", "Expenses", "NetOperatingIncome",
+               "OtherIncome", "OtherExpenses", "NetOtherIncome", "NetIncome")
 
 
 class QuickBooksSnapshotSource(DataSource):
@@ -74,15 +88,59 @@ class QuickBooksSnapshotSource(DataSource):
         except (OSError, json.JSONDecodeError) as exc:
             raise LayoutError(f"{self.path.name} is not a readable QuickBooks snapshot: "
                               f"{' '.join(str(exc).split())[:160]}") from None
-        sheet = read_profit_and_loss(report, self.path.name, config)
+        warnings: list[dict] = []
+        sheet = read_profit_and_loss(report, self.path.name, config, warnings)
         apply_income_statement_structure(sheet, config)
         return Dataset(client_id=config.client_id, company_name=config.company_name,
                        currency=config.currency, source_type=self.source_type,
                        source_path=str(self.path), source_sha256=self.sha256(),
-                       income_statement=sheet)
+                       income_statement=sheet, source_warnings=warnings)
 
 
-def read_profit_and_loss(report: dict, name: str, config: ClientConfig) -> Sheet:
+def snapshot_header(path: Path) -> dict:
+    """What a snapshot says about itself, read even when its rows cannot be analysed:
+    the months it was asked for (`start`, `end` as YYYY-MM) and when it was pulled
+    (`pulled_at`, Intuit's report time, timezone-aware). Missing values are None."""
+    out = {"start": None, "end": None, "pulled_at": None}
+    try:
+        header = json.loads(Path(path).read_text(encoding="utf-8")).get("Header") or {}
+    except (OSError, ValueError, AttributeError):
+        header = {}
+    for key, name in (("start", "StartPeriod"), ("end", "EndPeriod")):
+        try:
+            out[key] = dt.date.fromisoformat(str(header.get(name)))
+        except ValueError:
+            pass
+    try:
+        when = dt.datetime.fromisoformat(str(header.get("Time")))
+        out["pulled_at"] = when if when.tzinfo else None
+    except ValueError:
+        pass
+    if out["pulled_at"] is None:                   # a file Intuit did not stamp
+        out["pulled_at"] = dt.datetime.fromtimestamp(Path(path).stat().st_mtime,
+                                                     dt.timezone.utc) \
+            if Path(path).exists() else None
+    return out
+
+
+def omitted_groups(report: dict, config: ClientConfig) -> list[tuple[str, str]]:
+    """(config key, Intuit group) for each group the config allows QuickBooks to leave
+    out and this report does leave out, in Intuit's order."""
+    allowed = (config.raw.get("source") or {}).get("may_be_omitted") or {}
+    known = {s["key"] for s in config.sections} | set(config.reported_lines)
+    for key, group in allowed.items():
+        if group not in GROUP_ORDER or key not in known:
+            raise LayoutError(f"config/clients/{config.client_id}.yaml: "
+                              f"source.may_be_omitted maps {key!r} to {group!r}; the key "
+                              f"must be a section or reported line and the value one of "
+                              f"{', '.join(GROUP_ORDER)}.")
+    present = {r.get("group") for r in (report.get("Rows") or {}).get("Row") or []}
+    return sorted(((k, g) for k, g in allowed.items() if g not in present),
+                  key=lambda kg: GROUP_ORDER.index(kg[1]))
+
+
+def read_profit_and_loss(report: dict, name: str, config: ClientConfig,
+                         warnings: list[dict] | None = None) -> Sheet:
     header = report.get("Header") or {}
     if header.get("ReportName") != "ProfitAndLoss":
         raise LayoutError(f"{name}: expected a QuickBooks ProfitAndLoss report, got "
@@ -186,7 +244,56 @@ def read_profit_and_loss(report: dict, name: str, config: ClientConfig) -> Sheet
                 else:
                     line(f"Total {': '.join(inner)}", summary, "subtotal")
 
-    walk(rows, [], top=True)
+    # ---- groups QuickBooks left out (only those the config allows) ----
+    pending = omitted_groups(report, config)
+    sections = {s["key"]: s for s in config.sections}
+    notes = warnings if warnings is not None else []
+
+    def put_back(key: str) -> None:
+        sec = sections.get(key)
+        if sec is not None:
+            told = (f"QuickBooks left out the {sec['header_label']} section for this "
+                    f"range; counted as 0")
+            line(sec["header_label"], [{}], "header")
+            counter[0] += 1
+            label = f"{sec['header_label']} (left out by QuickBooks)"
+            sheet.line_items.append(LineItem(
+                sheet=SHEET_NAME, row=counter[0], label=label, role="item",
+                cells={p.key: Cell(sheet=SHEET_NAME, row=counter[0],
+                                   column=get_column_letter(i + 1), label=label,
+                                   period=p.key, value=0.0, note=told + ".")
+                       for i, p in months}))
+            counter[0] += 1
+            sheet.line_items.append(LineItem(
+                sheet=SHEET_NAME, row=counter[0], label=sec["total_label"], role="item",
+                omitted_by_source=f"not provided by QuickBooks: the report has no "
+                                  f"{sec['total_label']} row for this range"))
+            notes.append({"code": "quickbooks_section_omitted", "message": told + ".",
+                          "affects": (f"{key}.",)})
+            return
+        label = config.reported_lines[key]
+        counter[0] += 1
+        sheet.line_items.append(LineItem(
+            sheet=SHEET_NAME, row=counter[0], label=label, role="item",
+            omitted_by_source=f"not provided by QuickBooks: the report has no {label} "
+                              f"row for this range"))
+        notes.append({"code": "quickbooks_row_omitted",
+                      "message": f"QuickBooks left out its {label} row for this range. It "
+                                 f"is not filled in: checks against it are listed as not "
+                                 f"provided by QuickBooks.",
+                      "affects": (key, f"{key}.")})
+
+    def put_back_before(group: str | None) -> None:
+        if group not in GROUP_ORDER:
+            return
+        while pending and GROUP_ORDER.index(pending[0][1]) < GROUP_ORDER.index(group):
+            put_back(pending.pop(0)[0])
+
+    for item in rows:
+        put_back_before(item.get("group"))
+        walk([item], [], top=True)
+    while pending:
+        put_back(pending.pop(0)[0])
     return sheet
 
 

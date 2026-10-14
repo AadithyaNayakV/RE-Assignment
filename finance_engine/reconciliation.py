@@ -11,6 +11,11 @@ Tolerance is absolute currency (default 0.01). It exists because the workbook's 
 results carry IEEE-754 noise — ABC's Total Income for Apr 2026 caches as
 204512.41999999998 against an exact item sum of 204512.42. Anything beyond a cent is
 treated as a real discrepancy.
+
+A check against a total the source did not provide (QuickBooks leaves a section with no
+activity out of its report) is neither a pass nor a failure: it is listed as "not provided
+by QuickBooks" and kept out of checks_run and checks_failed. Those keys only appear in
+metrics.json when such a check exists.
 """
 
 from __future__ import annotations
@@ -32,6 +37,8 @@ class CheckResult:
     passed: bool
     note: str = ""
     evidence: list[dict] = field(default_factory=list)
+    #: The source did not provide the total this check compares against.
+    not_provided: bool = False
 
     def to_dict(self) -> dict:
         d = {
@@ -47,6 +54,8 @@ class CheckResult:
             d["note"] = self.note
         if self.evidence:
             d["evidence"] = self.evidence
+        if self.not_provided:
+            d["not_provided"] = True
         return d
 
 
@@ -56,12 +65,21 @@ class ReconciliationReport:
     results: list[CheckResult] = field(default_factory=list)
 
     @property
+    def evaluated(self) -> list[CheckResult]:
+        """The checks that compared two values: everything but "not provided"."""
+        return [r for r in self.results if not r.not_provided]
+
+    @property
+    def not_provided(self) -> list[CheckResult]:
+        return [r for r in self.results if r.not_provided]
+
+    @property
     def passed(self) -> bool:
-        return all(r.passed for r in self.results)
+        return all(r.passed for r in self.evaluated)
 
     @property
     def failures(self) -> list[CheckResult]:
-        return [r for r in self.results if not r.passed]
+        return [r for r in self.evaluated if not r.passed]
 
     def by_key(self, key: str) -> list[CheckResult]:
         return [r for r in self.results if r.key == key]
@@ -77,6 +95,9 @@ class ReconciliationReport:
                         "periods_checked": 0, "periods_failed": [],
                         "max_abs_difference": 0.0}
             )
+            if r.not_provided:
+                entry.setdefault("periods_not_provided", []).append(r.period)
+                continue
             entry["periods_checked"] += 1
             if not r.passed:
                 entry["periods_failed"].append(r.period)
@@ -86,17 +107,22 @@ class ReconciliationReport:
                 )
         for entry in keys.values():
             entry["passed"] = not entry["periods_failed"]
-        return {
+        out = {
             "tolerance_abs": self.tolerance_abs,
             "all_passed": self.passed,
-            "checks_run": len(self.results),
+            "checks_run": len(self.evaluated),
             "checks_failed": len(self.failures),
             "by_check": list(keys.values()),
         }
+        if self.not_provided:
+            out["checks_not_provided"] = len(self.not_provided)
+        return out
 
     def to_dict(self) -> dict:
         d = self.summary()
         d["failures"] = [r.to_dict() for r in self.failures]
+        if self.not_provided:
+            d["not_provided"] = [r.to_dict() for r in self.not_provided]
         return d
 
 
@@ -167,6 +193,30 @@ def _record(report: ReconciliationReport, key: str, description: str, period: st
     )
 
 
+def _not_provided(report: ReconciliationReport, key: str, description: str, period: str,
+                  computed: float | None, row: LineItem) -> None:
+    """A check whose total the source left out: listed, never passed or failed."""
+    report.results.append(
+        CheckResult(key=key, description=description, period=period, computed=computed,
+                    reported=None, difference=None, passed=False,
+                    note=f"{row.label}: {row.omitted_by_source}.", not_provided=True,
+                    evidence=[{"sheet": row.sheet, "row": row.row, "label": row.label}]))
+
+
+def _total_value(sheet: Sheet, row: LineItem, section: str, period: str) -> float | None:
+    """A section's own total; for a section the source left out, the sum of its lines
+    (the reader's 0.00 line), since there is no total to read."""
+    if row.omitted_by_source:
+        return _sum_present(sheet.in_section(section), period)[0]
+    return row.value(period)
+
+
+def _omitted_note(*rows: LineItem) -> str:
+    left_out = [r.label for r in rows if r.omitted_by_source]
+    return (f". {' and '.join(left_out)} not provided by the source: that section was "
+            f"counted as 0" if left_out else "")
+
+
 def _section_check(report, sheet: Sheet, config: ClientConfig, section: str, key: str,
                    description: str, period: str, tol: float, grouped: bool) -> None:
     total_row = sheet.section_total(section)
@@ -178,6 +228,9 @@ def _section_check(report, sheet: Sheet, config: ClientConfig, section: str, key
     else:
         parts = sheet.in_section(section)
     computed, present, missing = _sum_present(parts, period)
+    if total_row.omitted_by_source:
+        _not_provided(report, key, description, period, computed, total_row)
+        return
     note = f"{present} row(s) summed" + (f", {missing} missing" if missing else "")
     _record(report, key, description, period, computed, total_row.value(period), tol,
             note=note,
@@ -209,11 +262,16 @@ def _gross_profit_check(report, sheet: Sheet, config: ClientConfig, period: str,
     cogs_total = sheet.section_total("cogs")
     if reported_row is None or rev_total is None or cogs_total is None:
         return
-    rev, cogs = rev_total.value(period), cogs_total.value(period)
+    rev = _total_value(sheet, rev_total, "revenue", period)
+    cogs = _total_value(sheet, cogs_total, "cogs", period)
     computed = None if rev is None or cogs is None else rev - cogs
+    if reported_row.omitted_by_source:
+        _not_provided(report, "gross_profit", description, period, computed, reported_row)
+        return
     _record(report, "gross_profit", description, period, computed,
             reported_row.value(period), tol,
-            note="Total Income minus Total COGS, both taken from the workbook's own totals",
+            note="Total Income minus Total COGS, both taken from the workbook's own totals"
+                 + _omitted_note(rev_total, cogs_total),
             evidence=[{"sheet": reported_row.sheet, "row": reported_row.row,
                        "label": reported_row.label}])
 
@@ -227,11 +285,15 @@ def _operating_income_check(report, sheet: Sheet, config: ClientConfig, period: 
     opex_total = sheet.section_total("opex")
     if reported_row is None or gp_row is None or opex_total is None:
         return
-    gp, opex = gp_row.value(period), opex_total.value(period)
+    gp, opex = gp_row.value(period), _total_value(sheet, opex_total, "opex", period)
     computed = None if gp is None or opex is None else gp - opex
+    if reported_row.omitted_by_source or gp_row.omitted_by_source:
+        _not_provided(report, "operating_income", description, period, computed,
+                      reported_row if reported_row.omitted_by_source else gp_row)
+        return
     _record(report, "operating_income", description, period, computed,
             reported_row.value(period), tol,
-            note="Gross Profit minus Total Operating Expenses",
+            note="Gross Profit minus Total Operating Expenses" + _omitted_note(opex_total),
             evidence=[{"sheet": reported_row.sheet, "row": reported_row.row,
                        "label": reported_row.label}])
 

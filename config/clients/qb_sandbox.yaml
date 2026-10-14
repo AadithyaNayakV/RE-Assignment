@@ -18,6 +18,18 @@ source:
   # No filename: the folder holds one snapshot per pull, and the engine reads the one that
   # holds the requested period (or stops and asks for --file when several do).
   type: quickbooks
+  # QuickBooks leaves a whole group out of the report when nothing was posted to it in the
+  # range (a range with no cost of goods sold has no "Cost of Goods Sold" group at all).
+  # Section or reported line -> Intuit's row group. A left-out section is read as 0 with a
+  # warning; a left-out total is never filled in, and checks against it are listed as
+  # "not provided by QuickBooks". A group not listed here still stops the run.
+  may_be_omitted:
+    revenue: Income
+    cogs: COGS
+    opex: Expenses
+    gross_profit: GrossProfit
+    operating_income: NetOperatingIncome
+    net_income: NetIncome
 
 # A snapshot read as a grid: row 1 holds the month headings, column A the labels and the
 # months run oldest first from column B. Required by the config loader; the QuickBooks

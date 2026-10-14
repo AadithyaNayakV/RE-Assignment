@@ -100,6 +100,30 @@ def significance_rule(thresholds: dict, symbol: str = "$") -> str:
     return f"{', or '.join(parts[:-1])}, or {parts[-1]}"
 
 
+def source_name(doc: dict) -> str:
+    """Who supplied the totals: "QuickBooks" for a QuickBooks snapshot, else "the source"."""
+    return "QuickBooks" if (doc.get("source") or {}).get("type") == "quickbooks" \
+        else "the source"
+
+
+def not_provided_note(doc: dict, prefix: str = "; ") -> str:
+    """"; 2 not provided by QuickBooks" when checks were listed as not provided, else "".
+
+    The count is stored in metrics.json (checks_not_provided), and only there when such a
+    check exists, so every other report reads exactly as before.
+    """
+    n = (doc.get("reconciliation") or {}).get("checks_not_provided")
+    return f"{prefix}{n} not provided by {source_name(doc)}" if n else ""
+
+
+def check_result(c: dict, doc: dict) -> str:
+    """One by_check row's result: PASS, **FAIL**, or "not provided by QuickBooks" when
+    every month of it compared against a total the source left out."""
+    if not c.get("periods_checked") and c.get("periods_not_provided"):
+        return f"not provided by {source_name(doc)}"
+    return "PASS" if c.get("passed") else "**FAIL**"
+
+
 def check_count(recon: dict, passed_word: str = "passed",
                 failed_word: str = "failed") -> str:
     """"60/60 passed" when every check passed; "4 of 55 failed" otherwise.

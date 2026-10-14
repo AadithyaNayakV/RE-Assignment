@@ -60,7 +60,7 @@ from finance_engine.brief import build_brief
 from finance_engine.commentary.base import ProviderUnavailable, get_provider
 from finance_engine.commentary.providers import ORCHESTRATED
 from finance_engine.config import ClientConfig, ConfigError, Settings
-from finance_engine.formatting import check_count
+from finance_engine.formatting import check_count, not_provided_note
 from finance_engine.guard import NumberGuard
 from finance_engine.metrics import build_metrics
 from finance_engine.model import LayoutError
@@ -206,18 +206,21 @@ def build_parser() -> argparse.ArgumentParser:
                                                     '(self-declared; there is no sign-in)')
     add_plain(p_appr)
 
-    p_rev = sub.add_parser("review", help="review workflow for one report: submit, approve, "
+    p_rev = sub.add_parser("review", help="review workflow for one report: mark-reviewed, "
                                           "send-back, status, log; queue lists everything "
-                                          "in review")
-    p_rev.add_argument("action", choices=["submit", "approve", "send-back", "status", "log",
-                                          "queue"])
+                                          "Ready for review. `report` submits a new report "
+                                          "automatically; submit is only for a report.md a "
+                                          "person edited")
+    p_rev.add_argument("action", choices=["mark-reviewed", "send-back", "status", "log",
+                                          "queue", "submit"])
     p_rev.add_argument("--client", default=None, help="client_id (all actions but queue)")
     p_rev.add_argument("--period", default=None, help="reporting month, YYYY-MM")
     p_rev.add_argument("--scope", choices=["month", "year", "all"], default="month")
     p_rev.add_argument("--year", type=int, default=None)
     p_rev.add_argument("--file", dest="workbook", default=None, metavar="NAME",
                        help="the workbook the report was run with --file NAME")
-    p_rev.add_argument("--by", default=None, help='your name (self-declared; no sign-in)')
+    p_rev.add_argument("--by", default=None, help='your name (self-declared; no sign-in); '
+                                                  'required for mark-reviewed and send-back')
     p_rev.add_argument("--comment", default=None, help="required for send-back")
     add_plain(p_rev)
 
@@ -366,7 +369,8 @@ def _span_lines(doc: dict) -> list[str]:
                                    else "")
     lines = [f"  metrics:        {len(doc['metrics'])}",
              f"  coverage:       {coverage}",
-             f"  reconciliation: {check_count(recon)} (tolerance {recon['tolerance_abs']})",
+             f"  reconciliation: {check_count(recon)} (tolerance {recon['tolerance_abs']})"
+             f"{not_provided_note(doc)}",
              f"  data quality:   {len(errors)} error(s), {len(warnings)} warning(s)"]
     if blocked:
         lines.append(f"  blocked:        {len(blocked)} metric(s) reported as n/a")
@@ -531,7 +535,7 @@ def _analyze(args) -> int:
                f"({doc['source']['periods_available'][0]}"
                f"..{doc['source']['periods_available'][-1]})")
     _say(args, f"  reconciliation: {check_count(recon)} "
-               f"(tolerance {recon['tolerance_abs']})")
+               f"(tolerance {recon['tolerance_abs']}){not_provided_note(doc)}")
     _say(args, f"  ttm window:     {doc['ttm']['window'][0]}..{doc['ttm']['window'][-1]} "
                f"({'complete' if doc['ttm']['complete'] else 'INCOMPLETE'})")
     _say(args, f"  data quality:   {len(errors)} error(s), {len(warnings)} warning(s)")
@@ -596,6 +600,7 @@ def _report(args) -> int:
         log_path = out / "commentary_log.json"
         log_path.write_text(json.dumps(outcome.log, indent=2, ensure_ascii=False),
                             encoding="utf-8")
+    review_state = _submit_for_review(out)
 
     recon = doc["reconciliation"]
     errors = [i for i in doc["data_quality_issues"] if i["severity"] == "error"]
@@ -607,7 +612,9 @@ def _report(args) -> int:
     _say(args, f"  provider:       {provider_id}")
     _say(args, f"  number check:   {'PASS' if guard.passed else 'REJECTED'} "
                f"({len(guard.supported)}/{guard.checked} numbers traced)")
-    _say(args, f"  reconciliation: {check_count(recon)}")
+    _say(args, f"  reconciliation: {check_count(recon)}{not_provided_note(doc)}")
+    if review_state:
+        _say(args, f"  review:         {review_state}")
     if _scope(args) == "month":
         _missing_period_hint(config, settings, root, choice, doc)
     else:
@@ -627,8 +634,21 @@ def _report(args) -> int:
             payload["commentary"] = outcome.summary()
         payload["number_check"] = {"passed": guard.passed, "checked": guard.checked,
                                    "supported": len(guard.supported)}
+        payload["review"] = review_state
         _emit_json({"command": "report", **payload})
     return code
+
+
+def _submit_for_review(out: Path) -> str | None:
+    """A new report is Ready for review: `report` submits it as `system`. A broken or
+    unreadable review log is reported and left alone; the report itself still stands."""
+    from finance_engine.review import ReviewError, status, submit_generated
+    try:
+        submit_generated(out)
+        return status(out).label
+    except ReviewError as exc:
+        print(f"warning: not put in review: {exc}", file=sys.stderr)
+        return None
 
 
 def _reviewer_notes(out: Path, quiet: bool = False) -> str | None:
@@ -945,10 +965,17 @@ def _list_files(args) -> int:
     lines = [f"{data['company_name']} ({args.client}): {len(data['files'])} file(s) in "
              f"{data['source_folder']}"]
     for f in data["files"]:
+        if "label" in f:                       # a QuickBooks snapshot, newest pull first
+            lines.append(f"  {f['label']}  {f['filename']}"
+                         f"{'  (default)' if f['default'] else ''}"
+                         + ("" if f["readable"] else f"  cannot be read: {f['reason']}"))
+            continue
         span = (f"{f['first_period']}..{f['last_period']}, {f['period_count']} month(s)"
                 if f["period_count"] else f.get("error") or "no months found")
         lines.append(f"  {f['filename']}  {span}  sha256 {str(f['sha256'])[:12]}"
                      f"{'  (default)' if f['default'] else ''}")
+    if data.get("default_note"):
+        lines.append(data["default_note"])
     return _done(args, "list-files", data, lines)
 
 
@@ -1016,9 +1043,9 @@ def _review(args) -> int:
     root = _root(args)
     if args.action == "queue":
         data = core.review_queue(root)
-        lines = [f"{len(data['in_review'])} report(s) in review:"]
+        lines = [f"{data['count']} report(s) ready for review:"]
         lines += [f"  {q['folder']}  submitted by {q['submitted_by']} at "
-                  f"{q['submitted_at_utc']}" for q in data["in_review"]]
+                  f"{q['submitted_at_utc']}" for q in data["ready_for_review"]]
         return _done(args, "review", {"action": "queue", **data}, lines)
     if not args.client:
         raise UsageError(f"review {args.action} needs --client.")
@@ -1033,14 +1060,14 @@ def _review(args) -> int:
         if args.action == "log" or data["last_entry"]:
             entries = data["log"] if args.action == "log" else data["log"][-1:]
             for e in entries:
-                lines.append(f"  {e['time_utc']}  {e['action']:<9}  {e['name']}"
+                lines.append(f"  {e['time_utc']}  {e['action']:<13}  {e['name']}"
                              + (f"  — {e['comment']}" if e.get("comment") else "")
                              + f"  (report {str(e.get('report_sha256'))[:12]}, "
                                f"provider {e.get('provider')})")
         if not data["log_intact"]:
             lines.append("  WARNING: the review log's hash chain is broken.")
         return _done(args, "review", {"action": args.action, **data}, lines)
-    action = {"submit": review.SUBMIT, "approve": review.APPROVE,
+    action = {"submit": review.SUBMIT, "mark-reviewed": review.MARK_REVIEWED,
               "send-back": review.SEND_BACK}[args.action]
     data = core.review_action(root, args.client, action, args.by, args.comment, **where)
     e = data["entry"]

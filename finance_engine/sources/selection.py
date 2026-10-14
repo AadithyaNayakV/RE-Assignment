@@ -16,6 +16,11 @@ How the file is chosen:
   one that contains the requested period (or year). Exactly one match is used and named on
   stderr; several matches stop the run and list them; no match stops the run and lists the
   periods each file covers.
+* A QuickBooks client (one snapshot per pull) with several snapshots and no `--file` — the
+  newest readable snapshot (by Intuit's report time), named on stderr in one line. When a
+  month or year is asked for, the newest readable snapshot that holds it; when none holds
+  it, the newest readable one, and the run then says the month is not in it. A snapshot
+  that cannot be read is never chosen.
 
 A *shared* folder (the synthetic clients all use `data/synthetic`) holds other clients'
 workbooks, so only the configured file is ever considered there.
@@ -63,6 +68,9 @@ class WorkbookInfo:
     path: Path
     periods: list[str] = field(default_factory=list)
     error: str | None = None
+    #: QuickBooks snapshots only: when it was pulled (timezone-aware). Never part of
+    #: `to_dict`, so metrics.json is unchanged.
+    pulled_at: object = None
 
     @property
     def span(self) -> str:
@@ -86,7 +94,7 @@ class WorkbookInfo:
 @dataclass
 class SourceChoice:
     path: Path
-    #: config | only | explicit | auto — how the file was chosen.
+    #: config | only | explicit | auto | newest — how the file was chosen.
     mode: str
     #: The file stem used in output paths. Set only for an explicit `--file`.
     output_key: str | None = None
@@ -99,7 +107,7 @@ class SourceChoice:
 
     @property
     def file_aware(self) -> bool:
-        return self.mode in ("explicit", "auto")
+        return self.mode in ("explicit", "auto", "newest")
 
     def periods_elsewhere(self) -> dict[str, list[str]]:
         """Period -> the other workbooks that hold it. Never used as data, only as a note."""
@@ -116,6 +124,8 @@ class SourceChoice:
         return {
             "mode": self.mode,
             "chosen_by": ("--file" if self.mode == "explicit" else
+                          "the newest readable QuickBooks snapshot (no --file)"
+                          if self.mode == "newest" else
                           "the only workbook in the folder containing the request"),
             "output_key": self.output_key,
             "other_workbooks": [i.to_dict() for i in self.siblings],
@@ -226,6 +236,8 @@ def choose(config: ClientConfig, settings: Settings, root: Path,
                                    if config.source_type == "quickbooks" else ""))
     if len(candidates) == 1 or not own:
         return SourceChoice(candidates[0], "only")
+    if config.source_type == "quickbooks":
+        return newest_snapshot(folder, candidates, config, want)
 
     infos = [read_periods(p, config) for p in candidates]
     if want is None:
@@ -246,6 +258,36 @@ def choose(config: ClientConfig, settings: Settings, root: Path,
         chosen.path, "auto", siblings=[i for i in infos if i is not chosen],
         note=(f"source: {chosen.filename} (the only workbook in {folder} that contains "
               f"{want.describe()})"))
+
+
+def snapshot_inventory(paths: list[Path], config: ClientConfig) -> list[WorkbookInfo]:
+    """QuickBooks snapshots with their months and pull time, newest pull first."""
+    from finance_engine.sources.quickbooks import snapshot_header
+    infos = []
+    for p in paths:
+        info = read_periods(p, config)
+        info.pulled_at = snapshot_header(p)["pulled_at"]
+        infos.append(info)
+    return sorted(infos, key=lambda i: (i.pulled_at.timestamp() if i.pulled_at else 0.0,
+                                        i.filename), reverse=True)
+
+
+def newest_snapshot(folder: Path, candidates: list[Path], config: ClientConfig,
+                    want: Want | None) -> SourceChoice:
+    """No --file for a QuickBooks client: the newest snapshot that can be read."""
+    infos = snapshot_inventory(candidates, config)
+    readable = [i for i in infos if not i.error]
+    if not readable:
+        raise SourceSelectionError(
+            f"None of the {len(infos)} QuickBooks snapshots in {folder} can be read: "
+            f"{_listing(infos)}. Pull a new one with pull-quickbooks.")
+    holding = [i for i in readable if want is None or want.matches(i.periods)]
+    chosen = (holding or readable)[0]
+    why = "the newest readable QuickBooks snapshot"
+    if want is not None and holding and chosen is not readable[0]:
+        why += f" that holds {want.describe()}"
+    return SourceChoice(chosen.path, "newest", siblings=[i for i in infos if i is not chosen],
+                        note=f"source: {chosen.filename} ({why}; no --file given)")
 
 
 def hint_for_missing_period(config: ClientConfig, settings: Settings, root: Path,

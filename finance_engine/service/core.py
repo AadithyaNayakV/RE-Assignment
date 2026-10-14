@@ -9,6 +9,7 @@ NAMES of missing variables only.
 
 from __future__ import annotations
 
+import datetime as dt
 import hashlib
 import json
 import re
@@ -97,22 +98,88 @@ def list_clients(root: Path) -> dict:
 
 
 def list_files(root: Path, client_id: str) -> dict:
-    """The client's source files with the months each holds, and which is the default."""
+    """The client's source files with the months each holds, and which is the default.
+
+    For a QuickBooks client each snapshot also gets the label the picker shows ("Pulled
+    14 Oct 2026, 11:15 – Jul 2026 to Sep 2026", local time), newest pull first, and an
+    unreadable one a one-line reason. The default is the newest readable snapshot."""
     from finance_engine.sources.selection import (SourceSelectionError, choose,
-                                                  source_folder, workbook_inventory)
+                                                  snapshot_inventory, source_folder,
+                                                  workbook_inventory)
     config, settings = _config(root, client_id)
     try:
         default = choose(config, settings, root, None, None).path.name
     except (SourceSelectionError, FileNotFoundError):
         default = None
+    quickbooks = config.source_type == "quickbooks"
+    inventory = workbook_inventory(config, settings, root)
+    if quickbooks:
+        inventory = snapshot_inventory([i.path for i in inventory], config)
     files = []
-    for info in workbook_inventory(config, settings, root):
-        files.append({**info.to_dict(), "sha256": _sha(info.path),
-                      "default": info.filename == default})
-    return {"client_id": client_id, "company_name": config.company_name,
-            "source_type": config.source_type,
-            "source_folder": _rel(source_folder(config, settings, root), root),
-            "default_file": default, "files": files}
+    for info in inventory:
+        entry = {**info.to_dict(), "sha256": _sha(info.path),
+                 "default": info.filename == default}
+        if quickbooks:
+            entry.update(snapshot_picker_entry(info))
+        files.append(entry)
+    out = {"client_id": client_id, "company_name": config.company_name,
+           "source_type": config.source_type,
+           "source_folder": _rel(source_folder(config, settings, root), root),
+           "default_file": default, "files": files}
+    if quickbooks:
+        chosen = next((f for f in files if f["default"]), None)
+        out["default_note"] = (f"No file chosen: using the newest readable snapshot, "
+                               f"{chosen['label']}." if chosen else
+                               "No snapshot can be read. Pull a new one in Sources and "
+                               "settings.")
+    return out
+
+
+def _month_label(day) -> str:
+    return f"{day:%b} {day.year}"
+
+
+def snapshot_picker_entry(info) -> dict:
+    """The picker's text for one QuickBooks snapshot, formatted here, never in the UI:
+    when it was pulled (this machine's local time) and the months it was asked for (read
+    from the snapshot itself, even when it cannot be analysed)."""
+    from finance_engine.model import Period
+    from finance_engine.sources.quickbooks import snapshot_header
+    head = snapshot_header(info.path)
+    first, last = head["start"], head["end"]
+    if info.periods:                              # the months actually read win
+        first = _date_of(Period.from_key(info.periods[0]))
+        last = _date_of(Period.from_key(info.periods[-1]))
+    if first and last:
+        months = (_month_label(first) if (first.year, first.month) == (last.year, last.month)
+                  else f"{_month_label(first)} to {_month_label(last)}")
+    else:
+        months = "months not stated in the file"
+    pulled = head["pulled_at"]
+    when = pulled.astimezone() if pulled else None
+    pulled_text = (f"Pulled {when.day} {when:%b} {when.year}, {when:%H:%M}" if when
+                   else "Pull time unknown")
+    entry = {"label": f"{pulled_text} – {months}", "months_label": months,
+             "pulled_at_utc": (pulled.astimezone(dt.timezone.utc).replace(microsecond=0)
+                               .isoformat() if pulled else None),
+             "readable": not info.error}
+    if info.error:
+        entry["reason"] = one_line_reason(info.error, info.filename)
+    return entry
+
+
+def _date_of(period):
+    return dt.date(period.year, period.month, 1)
+
+
+def one_line_reason(error: str, filename: str = "") -> str:
+    """The first sentence of an engine message, without the file and sheet prefix."""
+    text = " ".join(str(error).split())
+    for prefix in (f"{filename}: " if filename else None, "ProfitAndLoss: "):
+        if prefix and text.startswith(prefix):
+            text = text[len(prefix):]
+    sentence = text.split(". ")[0].rstrip(".")
+    return sentence if len(sentence) <= 140 else sentence[:137] + "..."
 
 
 def list_periods(root: Path, client_id: str, file: str | None = None) -> dict:
@@ -232,7 +299,7 @@ def failures_display(doc: dict) -> list[dict]:
 def get_report(root: Path, client_id: str, scope: str = "month",
                period: str | None = None, year=None, file: str | None = None) -> dict:
     from finance_engine.brief import build_brief
-    from finance_engine.formatting import check_count
+    from finance_engine.formatting import check_count, not_provided_note
 
     folder = report_dir(root, client_id, scope, period, year, file)
     metrics_path = folder / "metrics.json"
@@ -272,7 +339,7 @@ def get_report(root: Path, client_id: str, scope: str = "month",
             "reconciliation": {"all_passed": recon.get("all_passed"),
                                "checks_run": recon.get("checks_run"),
                                "checks_failed": recon.get("checks_failed"),
-                               "label": check_count(recon)},
+                               "label": check_count(recon) + not_provided_note(doc)},
             "number_check": number_check,
             "provider": provider,
             "scope_label": doc.get("period_label"),
@@ -315,12 +382,22 @@ def review_status(root: Path, client_id: str, scope: str = "month",
         log = review.read_log(folder)
     except review.ReviewError as exc:
         raise ServiceError(str(exc)) from None
+    writer = review.provider_of(folder)
+    log = [{**e, "action_label": review.ACTION_LABELS.get(e.get("action"), e.get("action"))}
+           for e in log]
     return {"folder": _rel(folder, root), **st.to_dict(), "log": log,
-            "versions": review.versions(folder)}
+            "versions": review.versions(folder), "writer": writer,
+            # The template cannot act on a send-back comment; a cloud writer gets it as
+            # reviewer notes when the report is regenerated without "Keep data local".
+            "writer_follows_comments": writer.get("provider") not in (None, "deterministic"),
+            "submitted_by_person": review.human_submitted(log),
+            "require_different_reviewer":
+                review.load_settings(root)["require_different_reviewer"]}
 
 
 def review_queue(root: Path) -> dict:
-    """Everything in_review, with the scope, period and file to reopen each report."""
+    """Everything Ready for review, with the scope, period and file to reopen each report,
+    and how many there are (the top bar shows the count)."""
     out_dir = _settings(root).output_dir
     entries = []
     for q in review.queue(out_dir):
@@ -334,7 +411,7 @@ def review_queue(root: Path) -> dict:
                              .read_text(encoding="utf-8"))
             file = (doc.get("source") or {}).get("filename")
         entries.append({**q, **where, "file": file})
-    return {"in_review": entries}
+    return {"ready_for_review": entries, "count": len(entries)}
 
 
 # ---- onboarding ---------------------------------------------------------------------

@@ -73,7 +73,7 @@ and `source ~/venvs/re-assignment/bin/activate`.
 | Year / whole file | `--scope year --year YYYY`, `--scope all` on the commands above |
 | Charts, "view as table" | `chart-data --client ID [--file NAME] [--year YYYY]` |
 | Add company: upload, validate, approve | `init-client --draft --file book.xlsx --client-id ID --name "Co"`, `validate-config --client ID --draft [--from edited.yaml]`, `approve-config --client ID --by "Name"` |
-| Review: submit, approve, send back, log, queue | `review submit`, `approve`, `send-back`, `status`, `log` with `--client ID --period P --by "Name"` (send-back also `--comment "..."`); `review queue` |
+| Review: a generated report is Ready for review; mark as reviewed, send back, log, queue | `review mark-reviewed`, `send-back`, `status`, `log` with `--client ID --period P --by "Name"` (send-back also `--comment "..."`); `review queue`; `review submit` only for a hand-edited report.md |
 | Evals panel, Run free evals | `list-evals`; `python evals/run_engine_evals.py --compare` and `python evals/run_skill_evals.py --provider deterministic --compare` |
 | QuickBooks status and pull | `quickbooks-status`; `pull-quickbooks --client qb_sandbox --start YYYY-MM --end YYYY-MM` |
 | Provider chain | `provider-status` |

@@ -1,6 +1,8 @@
-// The app shell: a hash router over five pages, and the theme switch.
+// The app shell: a hash router over five pages, the menu button on narrow screens, the
+// theme switch in the top bar, and the Review queue count (refreshed every 30 seconds).
 
 import { clear, box } from "./dom.js";
+import { getJSON } from "./api.js";
 import { redrawCharts } from "./charts.js";
 import { reportsPage } from "./pages/reports.js";
 import { addPage } from "./pages/add.js";
@@ -45,7 +47,9 @@ async function render() {
   renderCount += 1;
   const mine = renderCount;
   const { page, params } = route();
-  document.title = `${TITLES[page]} · Financial Trend Analysis`;
+  currentTitle = TITLES[page];
+  showTitle();
+  setMenu(false);
   for (const a of document.querySelectorAll("[data-nav]")) {
     if (a.dataset.nav === page) a.setAttribute("aria-current", "page");
     else a.removeAttribute("aria-current");
@@ -83,9 +87,66 @@ export function setTheme(choice) {
   redrawCharts();
 }
 
+// ---- the menu button (shown on narrow screens only, by CSS) ----
+
+const menuButton = document.querySelector(".menu-button");
+const navPanel = document.getElementById("nav-panel");
+
+function setMenu(open) {
+  menuButton.setAttribute("aria-expanded", String(open));
+  if (open) navPanel.setAttribute("data-open", "");
+  else navPanel.removeAttribute("data-open");
+}
+
+menuButton.addEventListener("click", () => {
+  setMenu(menuButton.getAttribute("aria-expanded") !== "true");
+});
+navPanel.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && menuButton.getAttribute("aria-expanded") === "true") {
+    setMenu(false);
+    menuButton.focus();
+  }
+});
+
+const themeSelect = document.getElementById("theme-select");
+themeSelect.value = currentTheme();
+themeSelect.addEventListener("change", (e) => setTheme(e.target.value));
+
 window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redrawCharts);
 window.addEventListener("hashchange", () => {
   render();
   document.getElementById("main").focus({ preventScroll: true });
 });
+
+// ---- the Review queue count in the top bar and the page title ----
+// The count is the engine's (`review queue`); the page only shows it.
+
+const QUEUE_EVERY_MS = 30000;
+const queueCount = document.getElementById("queue-count");
+const queueLink = document.querySelector('[data-nav="queue"]');
+let currentTitle = "";
+let readyCount = null;
+
+function showTitle() {
+  document.title = `${readyCount ? `(${readyCount}) ` : ""}${currentTitle} · Financial Trend Analysis`;
+}
+
+export async function refreshQueueCount() {
+  try {
+    const data = await getJSON("/api/review/queue");
+    if (typeof data.count !== "number") throw new Error("unexpected queue reply");
+    readyCount = data.count;
+    queueCount.textContent = String(data.count);
+    queueCount.hidden = false;
+    queueLink.setAttribute("aria-label", `Review queue, ${data.count} ready for review`);
+  } catch (e) {
+    readyCount = null;
+    queueCount.hidden = true;
+    queueLink.removeAttribute("aria-label");
+  }
+  showTitle();
+}
+
 render();
+refreshQueueCount();
+setInterval(refreshQueueCount, QUEUE_EVERY_MS);

@@ -46,8 +46,13 @@ calendar months `--start`..`--end`. The response is checked with the snapshot re
 **before** anything is written, so a range with no data, a non-monthly report or a wrong
 currency gives a clear message and leaves no file. The response is then saved byte for
 byte as `data/clients/qb_sandbox/source/qb_pl_<start>_<end>_<UTC time>.json`. A snapshot is
-never overwritten. When the folder holds several snapshots, the usual file rules apply
-(`--file`, or the one snapshot that contains the period); snapshots are never merged.
+never overwritten. When the folder holds several snapshots and no `--file` is given, the
+run reads the **newest readable snapshot** (by Intuit's report time; for a month or year,
+the newest readable one that holds it) and says so in one line on stderr. A snapshot that
+cannot be read is never chosen. Snapshots are never merged. `list-files --client
+qb_sandbox` and the UI's **Snapshot** list label each one "Pulled 14 Oct 2026, 11:15 – Jul
+2026 to Sep 2026" (local time), newest first, with a one-line reason for any that cannot
+be read.
 
 ### Credentials and token handling
 
@@ -94,6 +99,19 @@ of its code (GET only, tested), not because of the scope.
   activity, and its own totals count that blank as zero. This is the one place where the
   engine's "blank is not zero" rule does not apply, and the config's classification note
   says so.
+- **A section QuickBooks leaves out is read as 0.** When nothing was posted to a whole
+  group in the range, QuickBooks drops it from the report entirely: four sandbox pulls of
+  May to Jul 2026 had no "Cost of Goods Sold" header, rows or "Total Cost of Goods Sold",
+  and used to stop with "section 'cogs' header label 'Cost of Goods Sold' not found". For
+  the groups listed under `source.may_be_omitted` in `qb_sandbox.yaml` (Income, COGS,
+  Expenses, and the summary rows), the reader puts the section back where Intuit sends
+  it, with one line "<section> (left out by QuickBooks)" at 0.00 per month and the warning
+  `quickbooks_section_omitted` ("QuickBooks left out the Cost of Goods Sold section for this
+  range; counted as 0."). Intuit's absent total is never filled in: the check against it
+  is listed as **not provided by QuickBooks** (`checks_not_provided` in metrics.json), not
+  as a pass or a failure. A left-out summary row (Gross Profit, Net Income) gets no
+  values at all. Excel clients and `qb_sandbox_fixture` have no such mapping and behave
+  exactly as before.
 - Every section sum is reconciled against Intuit's own total, for every month.
 
 ### Verified

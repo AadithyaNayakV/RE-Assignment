@@ -143,10 +143,18 @@ def validate(dataset: Dataset, config: ClientConfig, period: str) -> ValidationR
     _check_units(report, dataset, config)
     _check_balance_sheet(report, dataset, period)
     _check_cells(report, sheet, config, period)
+    _check_source_warnings(report, dataset)
     return report
 
 
 # ---- individual checks -------------------------------------------------
+
+def _check_source_warnings(report, dataset: Dataset) -> None:
+    """What the reader said about the source itself (QuickBooks left a section out of
+    its report). Excel sources raise none."""
+    for w in dataset.source_warnings:
+        report.warn(w["code"], w["message"], tuple(w.get("affects") or (GLOBAL,)))
+
 
 def _check_requested_period(report, dataset: Dataset, period: str) -> None:
     available = dataset.period_keys()
@@ -597,6 +605,7 @@ def validate_span(dataset: Dataset, config: ClientConfig, months: list[str],
     if any(config.cell_checks.values()) and months:
         _run_cell_checks(report, sheet, config,
                          _SpanCellContext(sheet, config, months, affects_for))
+    _check_source_warnings(report, dataset)
     return report
 
 

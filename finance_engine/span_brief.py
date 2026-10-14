@@ -7,7 +7,7 @@ in metrics.json, formatted by Python, next to the metric name it came from. No a
 from __future__ import annotations
 
 from finance_engine.brief import _cell, _cell_signed, _issues, _notes, _reconciliation_failures
-from finance_engine.formatting import Formatter
+from finance_engine.formatting import Formatter, not_provided_note
 
 HEADLINE = [
     ("Total revenue", "revenue.total"),
@@ -82,7 +82,8 @@ def _status(doc) -> str:
                      f"{', '.join(cov.get('gaps') or []) or 'none'}")
     lines += [
         f"- Reconciliation: {'PASS' if recon.get('all_passed') else 'FAIL'} — "
-        f"{recon.get('checks_failed', 0)} of {recon.get('checks_run', 0)} checks failed",
+        f"{recon.get('checks_failed', 0)} of {recon.get('checks_run', 0)} checks failed"
+        f"{not_provided_note(doc)}",
         f"- Data-quality errors: {len(errors)}; warnings: {len(warnings)}; "
         f"blocked metrics: {len(blocked)}",
         "- Seasonality: " + ("assessed" if seasonality.get("assessed")

@@ -128,17 +128,17 @@ class TestLocalOnly:
             web.serve(root, "0.0.0.0", 8765)
 
     def test_post_needs_the_ui_header(self, c):
-        r = c.post("/api/review/submit", json={"client": "multi_co", "period": "2025-06",
+        r = c.post("/api/review/mark-reviewed", json={"client": "multi_co", "period": "2025-06",
                                                 "by": "A. Writer"})
         assert r.status_code == 403
 
     def test_cross_origin_post_is_refused(self, c):
-        r = c.post("/api/review/submit", headers={**UI, "Origin": "http://evil.example"},
+        r = c.post("/api/review/mark-reviewed", headers={**UI, "Origin": "http://evil.example"},
                    json={"client": "multi_co", "period": "2025-06", "by": "A. Writer"})
         assert r.status_code == 403
 
     def test_same_origin_post_is_accepted(self, c):
-        r = c.post("/api/review/submit", headers={**UI, "Origin": BASE},
+        r = c.post("/api/review/mark-reviewed", headers={**UI, "Origin": BASE},
                    json={"client": "multi_co", "period": "2025-06", "by": "A. Writer"})
         assert r.status_code == 200
 
@@ -259,20 +259,35 @@ class TestRoutes:
 class TestReviewRoutes:
     W = {"client": "multi_co", "period": "2025-06"}
 
-    def test_the_flow(self, c):
+    def test_the_flow(self, c, root):
         p = lambda action, **kw: c.post(f"/api/review/{action}", headers=UI,  # noqa: E731
                                         json={**self.W, **kw})
-        assert p("approve", by="B").status_code == 400            # not submitted
-        assert p("submit", by="A. Writer").status_code == 200
-        r = p("approve", by="a. writer")
-        assert r.status_code == 400 and "require_different_approver" in r.json()["error"]
+        status = lambda: c.get("/api/review/status?client=multi_co&period=2025-06").json()  # noqa: E731
+        st = status()                                     # the fixture generated it
+        assert st["state"] == "ready_for_review" and st["label"] == "ready for review"
+        assert st["log"][0]["name"] == "system" and st["log"][0]["action_label"] == "Submitted"
+        assert st["submitted_by_person"] is None and st["writer_follows_comments"] is False
+        assert st["require_different_reviewer"] is False    # the repo's config/review.yaml
+        queue = c.get("/api/review/queue").json()
+        assert queue["count"] == len(queue["ready_for_review"]) == 3     # month, year, all
+        for gone in ("submit", "approve"):                # no human submit, no approve
+            assert p(gone, by="A. Writer").status_code in (404, 405)
         assert p("send-back", by="B. Partner").status_code == 400  # no comment
         assert p("send-back", by="B. Partner", comment="Rent line?").status_code == 200
-        assert p("submit", by="A. Writer").status_code == 200
-        assert c.get("/api/review/queue").json()["in_review"][0]["period"] == "2025-06"
-        assert p("approve", by="B. Partner").status_code == 200
-        st = c.get("/api/review/status?client=multi_co&period=2025-06").json()
-        assert st["state"] == "approved" and len(st["log"]) == 4
+        assert status()["state"] == "changes_requested"
+        assert p("mark-reviewed", by="B. Partner").status_code == 400
+        job = c.post("/api/jobs/report", headers=UI,               # regenerate with it
+                     json={**self.W, "keep_data_local": True}).json()
+        assert _wait(c, job)["status"] == "succeeded"
+        st = status()
+        assert st["state"] == "ready_for_review" and st["last_entry"]["automatic"] is True
+        assert p("mark-reviewed", by="").status_code == 400         # a name is required
+        assert p("mark-reviewed", by="A. Writer").status_code == 200   # system submitted it
+        st = status()
+        assert st["state"] == "reviewed" and len(st["log"]) == 4
+        assert [e["action_label"] for e in st["log"]] == [
+            "Submitted", "Sent back", "Submitted", "Marked as reviewed"]
+        assert c.get("/api/review/queue").json()["count"] == 2
         v = c.get(f"/api/review/version?client=multi_co&period=2025-06"
                   f"&name={st['versions'][0]}").json()
         assert v["text"].startswith("# Multi Co")
@@ -440,7 +455,7 @@ const { renderMarkdown } = await import("__MODULE__");
 const root = renderMarkdown(__MD__, __LINKS__, () => {});
 const tags = []; const links = [];
 (function walk(n) { if (n instanceof E) { tags.push(n.tagName);
-  if (n.tagName === "BUTTON") links.push([n.textContent, n.attrs.title.replace("Trace ", "")]); }
+  if (n.tagName === "BUTTON") links.push([n.textContent, n.attrs.title.replace("Source cells: ", "")]); }
   n.childNodes.forEach(walk); })(root);
 console.log(JSON.stringify({ tags, links, text: root.textContent }));
 """

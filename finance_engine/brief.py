@@ -15,7 +15,7 @@ Two rules, the same as the rest of the engine:
 
 from __future__ import annotations
 
-from finance_engine.formatting import (Formatter, na_with_reason,
+from finance_engine.formatting import (Formatter, na_with_reason, not_provided_note,
                                        one_off_multiple_reason, significance_rule)
 
 HEADLINE = [
@@ -131,7 +131,8 @@ def _status(doc) -> str:
         # Both counts are stored in metrics.json, so a writer can copy this line and pass
         # the number check. The passed count ("56/60 passed") is derived, not stored.
         f"- Reconciliation: {'PASS' if recon.get('all_passed') else 'FAIL'} — "
-        f"{recon.get('checks_failed', 0)} of {recon.get('checks_run', 0)} checks failed",
+        f"{recon.get('checks_failed', 0)} of {recon.get('checks_run', 0)} checks failed"
+        f"{not_provided_note(doc)}",
         f"- Trailing twelve months: "
         f"{'complete' if ttm.get('complete') else 'INCOMPLETE — every TTM figure is n/a'}"
         f" (window {window[0]}..{window[-1]})",

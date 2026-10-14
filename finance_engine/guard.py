@@ -421,6 +421,7 @@ def collect_allowed_values(doc: dict) -> dict[str, set[float]]:
     add(CURRENCY_BUCKET, recon.get("tolerance_abs"))
     add(STRUCTURAL_BUCKET, recon.get("checks_run"))
     add(STRUCTURAL_BUCKET, recon.get("checks_failed"))
+    add(STRUCTURAL_BUCKET, recon.get("checks_not_provided"))
     for entry in recon.get("by_check", []):
         add(STRUCTURAL_BUCKET, entry.get("periods_checked"))
         add(CURRENCY_BUCKET, entry.get("max_abs_difference"))

@@ -10,7 +10,8 @@ Wording rules for this file: state what changed, never why. No "because", "due t
 
 from __future__ import annotations
 
-from finance_engine.formatting import Formatter
+from finance_engine.formatting import (Formatter, check_result, not_provided_note,
+                                       source_name)
 from finance_engine.report import (NOT_AVAILABLE_NOTE, _commentary, _data_quality,
                                    _limitations, fmt_tolerance)
 
@@ -110,7 +111,8 @@ def _status(doc, m, guard_result) -> str:
          (f"all {recon.get('checks_run', 0)} checks passed" if recon.get("all_passed")
           else f"{recon.get('checks_failed', 0)} of {recon.get('checks_run', 0)} checks "
                f"failed")
-         + f" in the months covered (tolerance {fmt_tolerance(recon)})"),
+         + f" in the months covered (tolerance {fmt_tolerance(recon)})"
+         + not_provided_note(doc)),
         ("Data-quality errors", "none" if not errors else f"**{len(errors)}**",
          "; ".join(i.get("code", "") for i in errors) or "—"),
         ("Data-quality warnings", "none" if not warnings else str(len(warnings)),
@@ -401,7 +403,7 @@ def _reconciliation(doc, fmt) -> str:
              f"{doc.get('currency')}).", "",
              "| Check | Result | Periods | Max difference |", "| --- | --- | --: | --: |"]
     for c in by_check:
-        lines.append(f"| {c.get('description')} | {'PASS' if c.get('passed') else '**FAIL**'} "
+        lines.append(f"| {c.get('description')} | {check_result(c, doc)} "
                      f"| {c.get('periods_checked')} | {c.get('max_abs_difference'):.10f} |")
     failures = recon.get("failures") or []
     if failures:
@@ -416,6 +418,10 @@ def _reconciliation(doc, fmt) -> str:
                       "until these differences are explained.**"]
     else:
         lines += ["", f"All {recon.get('checks_run')} checks passed in the months covered."]
+    if recon.get("checks_not_provided"):
+        lines += ["", f"Not run: {recon.get('checks_not_provided')} check(s) compare against "
+                      f"a total {source_name(doc)} left out of its report. They are listed "
+                      f"as not provided, never counted as passed or failed."]
     return "\n".join(lines)
 
 

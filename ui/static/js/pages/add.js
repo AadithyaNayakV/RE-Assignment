@@ -2,30 +2,33 @@
 // (a typed name is required), then generate the first report. Nothing goes live before
 // step 3; the terminal equivalent of each step is shown beside it.
 
-import { add, h, clear, box, loading, table, button, field, code } from "../dom.js";
+import { add, h, clear, box, errorBox, loading, table, button, field, code, confirmAction }
+  from "../dom.js";
 import { getJSON, postJSON, postForm } from "../api.js";
 import { generatePanel } from "./reports.js";
 import { go } from "../app.js";
 
-const STEPS = ["Upload", "Review the draft", "Approve", "Generate"];
+const STEPS = ["1. Upload", "2. Review the draft", "3. Approve", "4. Generate"];
 
 export async function addPage(view, params) {
-  add(view, h("h1", { text: "Add a company" }),
+  add(view, h("h1", { class: "page-title", text: "Add a company" }),
     h("p", { class: "hint", text: "The config is drafted from the workbook, checked by the real engine, and goes live only when a person approves it. The original workbook is never modified." }));
   const steps = h("ol", { class: "steps", "aria-label": "Progress" });
-  const stage = h("div", { class: "card" });
+  const stage = h("div", { class: "section" });
   add(view, steps, stage);
   const mark = (n) => {
     add(clear(steps), STEPS.map((s, k) => h("li", {
       class: k === n ? "current" : (k < n ? "done" : ""),
-      "aria-current": k === n ? "step" : null, text: s })));
+      "aria-current": k === n ? "step" : null }, s,
+      k < n ? [" ", h("span", { class: "step-done", "aria-hidden": "true", text: "✓" }),
+               h("span", { class: "visually-hidden", text: " (done)" })] : null)));
   };
   if (params.client) {
     try {
       const draft = await getJSON(`/api/onboarding/${encodeURIComponent(params.client)}/draft`);
       return reviewStep(stage, mark, draft);
     } catch (err) {
-      add(stage, box("warn", "No draft to resume", err.message));
+      add(stage, errorBox("No draft to resume", err.message, "warn"));
     }
   }
   uploadStep(stage, mark);
@@ -50,12 +53,12 @@ function uploadStep(stage, mark) {
     data.set("force", force.checked ? "true" : "false");
     data.set("file", file.files[0]);
     submit.disabled = true;
-    add(msg, loading("Uploading, detecting the layout and validating with the engine…"));
+    add(msg, loading("Uploading the workbook, finding its layout and checking it with the engine…"));
     try {
       const draft = await postForm("/api/onboarding/draft", data);
       reviewStep(stage, mark, draft);
     } catch (err) {
-      add(clear(msg), box("error", "The draft was not created", err.message));
+      add(clear(msg), errorBox("The draft was not created", err.message));
     } finally {
       submit.disabled = false;
     }
@@ -103,18 +106,20 @@ function reviewStep(stage, mark, draft) {
     editor.setSelectionRange(start, start + (lines[line - 1] || "").length);
   };
   const validate = button("Validate", async () => {
-    add(clear(result), loading("Validating with the real loader, reader and reconciliation…"));
+    validate.className = "primary";
+    add(clear(result), loading("Running checks: loading the config, reading the workbook, comparing totals…"));
     try {
       const v = await postJSON(`/api/onboarding/${encodeURIComponent(client)}/validate`,
         { yaml: editor.value });
       clear(result);
       if (v.ok) {
-        add(result, box("ok", "Valid", `analyze ${v.latest} reconciled ${v.checks}.`,
-          ...v.warnings.map((w) => `warning ${w.code}: ${w.message}`)),
+        validate.className = "secondary";
+        add(result, box("ok", "The draft passed every check", `Checks for ${v.latest}: ${v.checks}.`,
+          ...v.warnings.map((w) => `Warning ${w.code}: ${w.message}`)),
           button("Continue to approval", () => approveStep(stage, mark, client, v),
             { class: "primary" }));
       } else {
-        add(result, box("error", "Invalid: fix these, then validate again"),
+        add(result, box("error", "Not valid yet: fix these lines, then validate again"),
           h("ul", { class: "errors" }, v.errors.map((e) => h("li", {},
             e.line ? button(`Line ${e.line}`, () => goToLine(e.line), { class: "link" }) : null,
             e.context_line && e.context_line !== e.line
@@ -122,7 +127,7 @@ function reviewStep(stage, mark, draft) {
             ` ${e.message}`))));
       }
     } catch (err) {
-      add(clear(result), box("error", "Could not validate", err.message));
+      add(clear(result), errorBox("Could not validate", err.message));
     }
   }, { class: "primary" });
   add(clear(stage), h("h2", { text: `2. Review the draft for ${client}` }),
@@ -145,12 +150,17 @@ function approveStep(stage, mark, client, validation) {
       name.focus();
       return;
     }
+    const yes = await confirmAction("Approve this config?",
+      `It is checked again, copied to config/clients/${client}.yaml and used for every report from now on. Your name, the time and the file's fingerprint are recorded on this machine.`,
+      "Approve config");
+    if (!yes) return;
+    add(msg, loading("Approving: checking the draft again…"));
     try {
       const rec = await postJSON(`/api/onboarding/${encodeURIComponent(client)}/approve`,
         { by: name.value });
       generateStep(stage, mark, client, rec);
     } catch (err) {
-      add(msg, box("error", "Not approved", err.message));
+      add(clear(msg), errorBox("Not approved", err.message));
     }
   }, { class: "primary" });
   add(clear(stage), h("h2", { text: "3. Approve the config" }),

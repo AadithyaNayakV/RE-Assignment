@@ -1,9 +1,12 @@
 # Review workflow settings (finance_engine/review.py). Committed; holds no secret.
 #
 # Names are typed in and self-declared: there is no sign-in. The rule below is a nudge
-# against approving your own work, NOT a security control: anyone can type another name.
+# against reviewing your own work, NOT a security control: anyone can type another name.
 # Real sign-in is [PLANNED] for hosting.
 
-# true: `review approve` is refused when the approver's name matches the name on the
-# submission (compared ignoring case and extra spaces).
-require_different_approver: true
+# true: `review mark-reviewed` is refused when the reviewer's name matches the person who
+# submitted the current version (compared ignoring case and extra spaces). It applies only
+# when a person submitted or edited that version: a report that `report` generated and
+# submitted automatically (as "system") can be marked as reviewed by anyone.
+# false: the person who submitted a version may also mark it as reviewed.
+require_different_reviewer: false

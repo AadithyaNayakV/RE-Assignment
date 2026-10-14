@@ -100,7 +100,7 @@ class TestSameValuesAsTheFiles:
         assert f"| Commentary number check | {nc['result']} | {nc['detail']} |" in report_md
         assert got["badges"]["provider"]["provider"] == "deterministic"
         assert got["badges"]["provider"]["data_left_machine"] is False
-        assert got["badges"]["review"] == "draft"
+        assert got["badges"]["review"] == "ready for review"      # generated = submitted
 
     def test_show_report_json_is_the_service_result(self, root, capsys):
         main(["report", "--client", "multi_co", "--period", "2025-06", "--file", "h2.xlsx",
@@ -180,13 +180,19 @@ class TestReportJobs:
         assert main(["report", "--client", "multi_co", *cli_args, "--provider",
                      "deterministic", "--root", str(root)]) in (0, 2)
         capsys.readouterr()
+        # The review folder holds time-stamped copies, so it is compared by its status.
         a = sorted(p.relative_to(tmp_path / "out_job")
-                   for p in (tmp_path / "out_job").rglob("*.*"))
+                   for p in (tmp_path / "out_job").rglob("*.*") if "review" not in p.parts)
         b = sorted(p.relative_to(tmp_path / "out_cli")
-                   for p in (tmp_path / "out_cli").rglob("*.*"))
+                   for p in (tmp_path / "out_cli").rglob("*.*") if "review" not in p.parts)
         assert a == b and a
         for rel in a:
             assert _masked(tmp_path / "out_job" / rel) == _masked(tmp_path / "out_cli" / rel)
+        from finance_engine import review
+        for base in ("out_job", "out_cli"):
+            folder = (tmp_path / base / a[0]).parent
+            st = review.status(folder)
+            assert st.label == "ready for review" and st.last["name"] == "system"
 
     def test_keep_data_local_is_exactly_provider_deterministic(self):
         argv, shown = commands.report_command("multi_co", "all", keep_data_local=True)

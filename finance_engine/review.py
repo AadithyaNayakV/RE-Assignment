@@ -1,23 +1,38 @@
 """Review workflow for one report: files only, no database.
 
-    python -m finance_engine review submit    --client test_clean --period 2026-01 --by "A. Reviewer"
-    python -m finance_engine review approve   --client test_clean --period 2026-01 --by "B. Partner"
+    python -m finance_engine report --client test_clean --period 2026-01   # Ready for review
+    python -m finance_engine review mark-reviewed --client test_clean --period 2026-01 --by "B. Partner"
     python -m finance_engine review send-back --client test_clean --period 2026-01 --by "B. Partner" \
         --comment "Re-check the rent line"
     python -m finance_engine review status    --client test_clean --period 2026-01
     python -m finance_engine review log       --client test_clean --period 2026-01
-    python -m finance_engine review queue                      # everything in_review
+    python -m finance_engine review queue                      # everything Ready for review
+    python -m finance_engine review submit    --client test_clean --period 2026-01 --by "A. Writer"
+                                               # only for a report.md a person edited
 
-States: `draft`, `in_review`, `changes_requested`, `approved`. The log lives next to the
-report it is about, in `<report folder>/review/review_log.json`, and is append-only: each
-entry records the time (UTC), the self-declared name, the action, the comment, the SHA-256
-of report.md and metrics.json at that moment, and the commentary provider. Each entry also
-carries the SHA-256 of the entry before it, so an edited or deleted entry shows as a
-broken chain. A copy of report.md is kept under `review/versions/` at every submit.
+Statuses: **Ready for review** (`ready_for_review`), **Changes requested**
+(`changes_requested`), **Reviewed** (`reviewed`). Generating a report submits it
+automatically: `report` appends a `submit` entry by `system` (written by: the commentary
+provider), so a new report is Ready for review with no human step. A reviewer then marks
+it as reviewed (a name is required) or sends it back (a comment is required). After a
+send-back, regenerating the report (the comment reaches a cloud writer as reviewer notes)
+makes it Ready for review again.
 
-A decision is about the exact bytes it saw. If report.md or metrics.json changes after a
-submit or an approval, the status reads `draft (changed since approval)` (or `... since
-submission`) and the old decision does not carry over: the report must be submitted again.
+The log lives next to the report it is about, in `<report folder>/review/review_log.json`,
+and is append-only: each entry records the time (UTC), the name, the action, the comment,
+the SHA-256 of report.md and metrics.json at that moment, and the commentary provider.
+Each entry also carries the SHA-256 of the entry before it, so an edited or deleted entry
+shows as a broken chain. A copy of report.md is kept under `review/versions/` at every
+submit.
+
+A decision is about the exact bytes it saw. If report.md or metrics.json changes outside
+`report` (a person edits it), the status reads `not in review (changed since ...)` and the
+old decision does not carry over: whoever edited it submits that version with
+`review submit --by NAME`, or the report is regenerated. A report generated before
+automatic submission (no log) is also not in review until it is regenerated.
+
+Logs written before this flow say `approve` and `approved`; they are read as
+`mark_reviewed` and Reviewed.
 
 Names are typed in and self-declared. There is no sign-in; this runs on one machine.
 Real sign-in is [PLANNED] for hosting.
@@ -35,17 +50,28 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-DRAFT, IN_REVIEW, CHANGES_REQUESTED, APPROVED = ("draft", "in_review",
-                                                 "changes_requested", "approved")
-STATES = (DRAFT, IN_REVIEW, CHANGES_REQUESTED, APPROVED)
-SUBMIT, APPROVE, SEND_BACK = "submit", "approve", "send_back"
-ACTIONS = (SUBMIT, APPROVE, SEND_BACK)
+NOT_IN_REVIEW, READY, CHANGES_REQUESTED, REVIEWED = (
+    "not_in_review", "ready_for_review", "changes_requested", "reviewed")
+STATES = (NOT_IN_REVIEW, READY, CHANGES_REQUESTED, REVIEWED)
+#: What a person reads for each state.
+LABELS = {NOT_IN_REVIEW: "not in review", READY: "ready for review",
+          CHANGES_REQUESTED: "changes requested", REVIEWED: "reviewed"}
+SUBMIT, MARK_REVIEWED, SEND_BACK = "submit", "mark_reviewed", "send_back"
+ACTIONS = (SUBMIT, MARK_REVIEWED, SEND_BACK)
+#: The action older logs recorded for "mark as reviewed"; read, never written.
+_LEGACY_MARK_REVIEWED = "approve"
+#: The name on the automatic submission `report` makes. Not accepted from a person.
+SYSTEM = "system"
+#: What a person reads for each logged action (older logs included).
+ACTION_LABELS = {SUBMIT: "Submitted", MARK_REVIEWED: "Marked as reviewed",
+                 _LEGACY_MARK_REVIEWED: "Marked as reviewed", SEND_BACK: "Sent back"}
 
 #: The state each action leads to.
-_AFTER = {SUBMIT: IN_REVIEW, APPROVE: APPROVED, SEND_BACK: CHANGES_REQUESTED}
+_AFTER = {SUBMIT: READY, MARK_REVIEWED: REVIEWED, _LEGACY_MARK_REVIEWED: REVIEWED,
+          SEND_BACK: CHANGES_REQUESTED}
 #: Which (effective) states an action may start from.
-_FROM = {SUBMIT: (DRAFT, CHANGES_REQUESTED), APPROVE: (IN_REVIEW,),
-         SEND_BACK: (IN_REVIEW,)}
+_FROM = {SUBMIT: (NOT_IN_REVIEW, CHANGES_REQUESTED), MARK_REVIEWED: (READY,),
+         SEND_BACK: (READY,)}
 
 LOG_NAME = "review_log.json"
 MAX_NAME = 80
@@ -61,7 +87,9 @@ class ReviewError(Exception):
 
 
 SETTINGS_FILE = "config/review.yaml"
-DEFAULT_SETTINGS = {"require_different_approver": True}
+DEFAULT_SETTINGS = {"require_different_reviewer": True}
+#: The earlier name of the setting, still read.
+_LEGACY_SETTINGS = {"require_different_approver": "require_different_reviewer"}
 
 
 def load_settings(root: Path) -> dict:
@@ -73,6 +101,7 @@ def load_settings(root: Path) -> dict:
         raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
         if not isinstance(raw, dict):
             raise ReviewError(f"{SETTINGS_FILE} must hold a YAML mapping.")
+        raw = {_LEGACY_SETTINGS.get(k, k): v for k, v in raw.items()}
         unknown = set(raw) - set(DEFAULT_SETTINGS)
         if unknown:
             raise ReviewError(f"{SETTINGS_FILE}: unknown setting(s) {sorted(unknown)}.")
@@ -82,8 +111,8 @@ def load_settings(root: Path) -> dict:
 
 @dataclass
 class Status:
-    state: str              # draft | in_review | changes_requested | approved
-    label: str              # what a person reads, e.g. "draft (changed since approval)"
+    state: str              # ready_for_review | changes_requested | reviewed | not_in_review
+    label: str              # what a person reads, e.g. "ready for review"
     changed: bool           # report.md or metrics.json differs from the last decision
     last: dict | None       # the last log entry
     report_sha256: str | None
@@ -161,19 +190,18 @@ def status(report_dir: Path) -> Status:
     metrics_sha = _sha(report_dir / "metrics.json")
     intact = chain_intact(entries)
     if not entries:
-        return Status(DRAFT, DRAFT, False, None, report_sha, metrics_sha, intact, 0)
+        return Status(NOT_IN_REVIEW, LABELS[NOT_IN_REVIEW], False, None, report_sha,
+                      metrics_sha, intact, 0)
     last = entries[-1]
     recorded = _AFTER[last["action"]]
     changed = (last.get("report_sha256") != report_sha
                or last.get("metrics_sha256") != metrics_sha)
     if not changed:
-        state, label = recorded, recorded
-    elif recorded == APPROVED:
-        state, label = DRAFT, "draft (changed since approval)"
-    elif recorded == IN_REVIEW:
-        state, label = DRAFT, "draft (changed since submission)"
-    else:                                      # sent back, then regenerated: a new draft
-        state, label = DRAFT, "draft (changed since send-back)"
+        state, label = recorded, LABELS[recorded]
+    else:                                      # edited outside `report`: not in review
+        since = {REVIEWED: "it was reviewed", READY: "it was submitted",
+                 CHANGES_REQUESTED: "the send-back"}[recorded]
+        state, label = NOT_IN_REVIEW, f"{LABELS[NOT_IN_REVIEW]} (changed since {since})"
     if not intact:
         label += " — WARNING: review log chain is broken"
     return Status(state, label, changed, last, report_sha, metrics_sha, intact,
@@ -197,7 +225,32 @@ def clean_name(name: str | None) -> str:
                           "self-declared; there is no sign-in.")
     if len(text) > MAX_NAME or _CONTROL.search(text):
         raise ReviewError(f"--by must be a plain name of at most {MAX_NAME} characters.")
+    if text.casefold() == SYSTEM:
+        raise ReviewError(f"{SYSTEM!r} is the name on automatic submissions; type your "
+                          f"own name.")
     return text
+
+
+def current_submission(entries: list[dict]) -> dict:
+    """The submit entry for the version now in review ({} when there is none)."""
+    return next((e for e in reversed(entries) if e.get("action") == SUBMIT), {})
+
+
+def human_submitted(entries: list[dict]) -> str | None:
+    """The person who submitted (and so edited or answered for) the current version, or
+    None when `report` submitted it automatically."""
+    sub = current_submission(entries)
+    return None if not sub or sub.get("automatic") else sub.get("name")
+
+
+def submit_generated(report_dir: Path, now: dt.datetime | None = None) -> dict | None:
+    """Called by `report` right after it writes report.md: the new version is Ready for
+    review, submitted by `system`. Returns the entry, or None when this exact version is
+    already Ready for review."""
+    current = status(report_dir)
+    if current.state not in _FROM[SUBMIT]:        # this exact version is already in review
+        return None
+    return act(report_dir, SUBMIT, SYSTEM, now=now, automatic=True)
 
 
 def clean_comment(comment: str | None) -> str:
@@ -210,16 +263,19 @@ def clean_comment(comment: str | None) -> str:
 
 
 def act(report_dir: Path, action: str, name: str, comment: str | None = None,
-        now: dt.datetime | None = None, settings: dict | None = None) -> dict:
+        now: dt.datetime | None = None, settings: dict | None = None,
+        automatic: bool = False) -> dict:
     """Append one decision to the log and return the new entry. Refusals raise.
 
-    `settings` is `load_settings(root)`; without it the defaults apply.
+    `settings` is `load_settings(root)`; without it the defaults apply. `automatic` is
+    only for `submit_generated` (the name is then `system`).
     """
-    settings = {**DEFAULT_SETTINGS, **(settings or {})}
+    settings = {**DEFAULT_SETTINGS, **{_LEGACY_SETTINGS.get(k, k): v
+                                       for k, v in (settings or {}).items()}}
     report_dir = Path(report_dir)
     if action not in ACTIONS:
         raise ReviewError(f"Unknown review action {action!r}; use one of {ACTIONS}.")
-    who = clean_name(name)
+    who = SYSTEM if automatic else clean_name(name)
     text = clean_comment(comment)
     if action == SEND_BACK and not text:
         raise ReviewError("send-back needs a non-empty --comment saying what to change.")
@@ -232,23 +288,25 @@ def act(report_dir: Path, action: str, name: str, comment: str | None = None,
                           f"chain is broken). Restore it; no new decision was recorded.")
     current = status(report_dir)
     if current.state not in _FROM[action]:
-        allowed = " or ".join(_FROM[action])
+        allowed = " or ".join(LABELS[s] for s in _FROM[action])
         verb = action.replace("_", "-")
         raise ReviewError(f"Cannot {verb}: the report is {current.label}; {verb} needs "
                           f"{allowed}.")
-    if action == APPROVE and settings["require_different_approver"]:
-        submitted = next((e for e in reversed(entries) if e.get("action") == SUBMIT), {})
-        if submitted.get("name", "").casefold() == who.casefold():
+    if action == MARK_REVIEWED and settings["require_different_reviewer"]:
+        # Only a person who submitted (or edited) this version is held to it; a version
+        # `report` submitted automatically can be marked by anyone.
+        submitter = human_submitted(entries)
+        if submitter and submitter.casefold() == who.casefold():
             raise ReviewError(
-                f"Cannot approve: {who} submitted this report, and {SETTINGS_FILE} sets "
-                f"require_different_approver: true. Ask someone else to approve, or "
-                f"change that setting. (Names are self-declared; this is a nudge, not a "
-                f"security control.)")
+                f"Cannot mark as reviewed: {who} submitted this version, and "
+                f"{SETTINGS_FILE} sets require_different_reviewer: true. Ask someone else "
+                f"to review it, or change that setting. (Names are self-declared; this is "
+                f"a nudge, not a security control.)")
     when = (now or dt.datetime.now(dt.timezone.utc)).astimezone(dt.timezone.utc)
     entry = {
         "time_utc": when.replace(microsecond=0).isoformat(),
         "name": who,
-        "name_is_self_declared": True,
+        "name_is_self_declared": not automatic,
         "action": action,
         "comment": text,
         "report_sha256": current.report_sha256,
@@ -256,6 +314,8 @@ def act(report_dir: Path, action: str, name: str, comment: str | None = None,
         **{k: v for k, v in provider_of(report_dir).items()},
         "prev_entry_sha256": _entry_sha(entries[-1]) if entries else None,
     }
+    if automatic:
+        entry["automatic"] = True
     folder = review_dir(report_dir)
     if action == SUBMIT:
         versions = folder / "versions"
@@ -303,18 +363,19 @@ def report_dirs(output_dir: Path) -> list[Path]:
 
 
 def queue(output_dir: Path) -> list[dict]:
-    """Every report whose status is in_review, across clients."""
+    """Every report that is Ready for review, across clients."""
     out = []
     for folder in report_dirs(output_dir):
         try:
             st = status(folder)
         except ReviewError:
             continue
-        if st.state == IN_REVIEW:
+        if st.state == READY:
             rel = folder.relative_to(output_dir).parts
             out.append({"client_id": rel[0], "folder": "/".join(rel),
                         "file_key": rel[1] if len(rel) == 3 else None, "leaf": rel[-1],
                         "submitted_by": st.last.get("name"),
+                        "automatic": bool(st.last.get("automatic")),
                         "submitted_at_utc": st.last.get("time_utc"),
                         "provider": st.last.get("provider")})
     return out

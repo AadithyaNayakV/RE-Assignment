@@ -52,7 +52,7 @@ Data source (Excel workbook, or a saved QuickBooks sandbox snapshot)
 | `.claude/skills/monthly-financial-analysis/` | The skill: Claude Code writes the commentary from the brief, then runs the guard |
 | `evals/` | 19 golden cases, Level 1 (engine) and Level 2 (report) runners, baselines. See `evals/grading.md` |
 | `finance_engine/onboarding.py` | `init-client --draft`, `validate-config`, `approve-config`: a new config goes live only after a named person approves it |
-| `finance_engine/review.py`, `config/review.yaml` | Review workflow (draft, in_review, changes_requested, approved), files only; `review/review_log.json` beside each report |
+| `finance_engine/review.py`, `config/review.yaml` | Review workflow (Ready for review on generation, Changes requested, Reviewed), files only; `review/review_log.json` beside each report |
 | `finance_engine/trace_links.py` | Which figures in a report's prose map to exactly one metric (for click-to-trace); engine code, the guard is unchanged |
 | `finance_engine/service/` | Service layer shared by the new CLI commands and the web app: reads, jobs, uploads, the route-to-CLI parity table. No money maths |
 | `finance_engine/web/`, `ui/` | The local web app (`serve`, 127.0.0.1 only, no sign-in): FastAPI routes; plain HTML/CSS/JS modules; Chart.js vendored in `ui/static/vendor/`. See `docs/ui.md` |
@@ -111,9 +111,9 @@ python -m finance_engine report  --client qb_sandbox_fixture --period 2026-09   
 python -m finance_engine init-client --draft --file book.xlsx --client-id acme_ltd --name "Acme Ltd"
 python -m finance_engine validate-config --client acme_ltd --draft
 python -m finance_engine approve-config  --client acme_ltd --by "A. Reviewer"
-python -m finance_engine review submit   --client test_clean --period 2026-01 --by "A. Writer"
-python -m finance_engine review approve  --client test_clean --period 2026-01 --by "B. Partner"
-python -m finance_engine review queue
+python -m finance_engine review mark-reviewed --client test_clean --period 2026-01 --by "B. Partner"
+python -m finance_engine review send-back --client test_clean --period 2026-01 --by "B. Partner" --comment "..."
+python -m finance_engine review queue        # `report` puts each new report here itself
 python -m finance_engine list-clients | list-files --client ID | show-report --client ID --period P
 python -m finance_engine chart-data --client test_clean | list-evals | provider-status | quickbooks-status
 python -m finance_engine serve                       # http://127.0.0.1:8765, local only
