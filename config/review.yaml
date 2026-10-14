@@ -1,0 +1,9 @@
+# Review workflow settings (finance_engine/review.py). Committed; holds no secret.
+#
+# Names are typed in and self-declared: there is no sign-in. The rule below is a nudge
+# against approving your own work, NOT a security control: anyone can type another name.
+# Real sign-in is [PLANNED] for hosting.
+
+# true: `review approve` is refused when the approver's name matches the name on the
+# submission (compared ignoring case and extra spaces).
+require_different_approver: true

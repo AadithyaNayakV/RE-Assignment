@@ -100,10 +100,11 @@ class TestStateMachine:
     ])
     def test_refused_transitions_write_nothing(self, folder, steps, refused):
         for step in steps:
-            review.act(folder, step, "A. Person", "a comment")
+            review.act(folder, step, "A. Writer" if step == review.SUBMIT
+                       else "B. Partner", "a comment")
         before = review.read_log(folder)
         with pytest.raises(ReviewError, match="Cannot"):
-            review.act(folder, refused, "A. Person", "a comment")
+            review.act(folder, refused, "C. Third", "a comment")
         assert review.read_log(folder) == before
 
     @pytest.mark.parametrize("comment", [None, "", "   \n  "])
@@ -184,6 +185,53 @@ class TestHashes:
         assert "chain is broken" in review.status(folder).label
         with pytest.raises(ReviewError, match="hash chain is broken"):
             review.act(folder, review.SUBMIT, "A. Writer")
+
+
+class TestDifferentApprover:
+    def test_the_submitter_cannot_approve_by_default(self, folder):
+        review.act(folder, review.SUBMIT, "A. Writer")
+        with pytest.raises(ReviewError, match="require_different_approver: true"):
+            review.act(folder, review.APPROVE, "  a.   WRITER ")
+        assert review.status(folder).state == "in_review"
+        review.act(folder, review.APPROVE, "B. Partner")
+        assert review.status(folder).state == "approved"
+
+    def test_the_setting_can_be_turned_off(self, folder):
+        review.act(folder, review.SUBMIT, "A. Writer")
+        review.act(folder, review.APPROVE, "A. Writer",
+                   settings={"require_different_approver": False})
+        assert review.status(folder).state == "approved"
+
+    def test_the_rule_reads_the_latest_submission(self, folder):
+        review.act(folder, review.SUBMIT, "A. Writer")
+        review.act(folder, review.SEND_BACK, "B. Partner", "fix it")
+        review.act(folder, review.SUBMIT, "B. Partner")
+        with pytest.raises(ReviewError, match="B. Partner submitted"):
+            review.act(folder, review.APPROVE, "B. Partner")
+        review.act(folder, review.APPROVE, "A. Writer")
+
+    def test_config_file(self, root, folder, capsys):
+        assert review.load_settings(root) == {"require_different_approver": True}
+        (root / "config" / "review.yaml").write_text(
+            "require_different_approver: false\n", encoding="utf-8")
+        assert review.load_settings(root) == {"require_different_approver": False}
+        args = ["--client", "multi_co", "--period", PERIOD, "--root", str(root)]
+        assert main(["review", "submit", "--by", "A. Writer", *args]) == EXIT_OK
+        assert main(["review", "approve", "--by", "A. Writer", *args]) == EXIT_OK
+        (root / "config" / "review.yaml").write_text("bogus: true\n", encoding="utf-8")
+        with pytest.raises(ReviewError, match="unknown setting"):
+            review.load_settings(root)
+
+    def test_the_repo_default_is_on(self):
+        from tests.test_service_layer import ROOT
+        assert review.load_settings(ROOT)["require_different_approver"] is True
+
+    def test_cli_refusal_names_the_setting(self, root, folder, capsys):
+        args = ["--client", "multi_co", "--period", PERIOD, "--root", str(root)]
+        main(["review", "submit", "--by", "A. Writer", *args])
+        assert main(["review", "approve", "--by", "A. Writer", *args]) == EXIT_USAGE
+        assert "config/review.yaml sets require_different_approver: true" in \
+            capsys.readouterr().err
 
 
 class TestQueueAndScopes:

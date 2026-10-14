@@ -78,6 +78,38 @@ Say plainly which is a backup. Files are in `demo_backup/` (see its README).
 - Be ready to say what is not built: the stretch goal, hosting, authentication and tenant
   isolation, and the Ollama and paid-API providers.
 
+## The web UI demo (Phase 5D)
+
+Start it: `python -m finance_engine serve`, open `http://127.0.0.1:8765`. The full click
+path is `docs/ui_walkthrough.md`; the route-to-command table is `docs/ui.md`. Say up
+front: local only, no sign-in, reviewer names are self-declared, the UI never calculates.
+
+| # | Step | In the UI | Terminal equivalent | Time |
+|---|---|---|---|---|
+| 1 | New company from scratch | **Add company**: id `demo_co`, name, upload a synthetic workbook (a copy of `data/clients/test_clean/source/test_clean.xlsx`); show the detected rows and "65/65 passed"; break `date_order` in the YAML and **Validate** to show the line-numbered error; fix it, **Validate**, **Approve config** with your name | `init-client --draft --file book.xlsx --client-id demo_co --name "Demo Co"`, `validate-config --client demo_co --draft`, `approve-config --client demo_co --by "Name"` | 4 min |
+| 2 | Report | Step 4 of the wizard: show the cloud notice (untick, read it, tick again), **Generate report** | `report --client demo_co --period 2026-01 --provider deterministic` | 1 min |
+| 3 | Badges and trace | Read the badge row; click an underlined figure in the Summary to open its source cell | `show-report --client demo_co --period 2026-01` | 2 min |
+| 4 | Review | **Review** tab: submit as yourself; try to approve as yourself (refused, names `config/review.yaml`); send back with a comment as a second name; resubmit; approve as the second name; show the log and a stored version | `review submit / send-back / approve / log --client demo_co --period 2026-01 --by ...` | 3 min |
+| 5 | Warnings and charts | Switch to *Test Errors Co*, 2025-12, **Warnings** (cell F20, the failure table); then a whole-file **Charts** view with **View as table** | `brief --client test_errors --period 2025-12`, `chart-data --client test_clean` | 2 min |
+
+Clean up after: delete `config/clients/demo_co.yaml`, `data/clients/demo_co/` and
+`output/clients/demo_co/`. If the browser misbehaves, every step works from the terminal
+column above.
+
+## Six likely live modifications
+
+Each names the exact file to change and the commands to rehearse it. Revert with
+`git checkout <file>` (and delete any new file or output folder).
+
+| # | Modification | File to change | Rehearse with |
+|---|---|---|---|
+| 1 | A new metric (for example opex as % of revenue) | `finance_engine/metrics.py` (emit it after `operating_margin_pct` with an existing method), `finance_engine/brief.py` (`HEADLINE` row), `evals/tools/build_expected.py` (expected value), `.claude/skills/monthly-financial-analysis/reference/metric_definitions.md` | `python evals/tools/build_expected.py 02`, `python evals/run_engine_evals.py 02`; then in the UI, Numbers tab: filter by the new name |
+| 2 | A threshold change | `config/clients/<id>.yaml`, `thresholds:` (for example `significant_mom_min_abs`) | `python -m finance_engine analyze --client abc_inc --period 2026-06`, `python -m finance_engine brief --client abc_inc --period 2026-06`, `python evals/run_engine_evals.py 01` |
+| 3 | A new client | none by hand: upload in **Add company**, or `init-client --draft` | `python -m finance_engine init-client --draft --file book.xlsx --client-id new_co --name "New Co"`, `validate-config --client new_co --draft`, `approve-config --client new_co --by "Name"`, `report --client new_co --period YYYY-MM` |
+| 4 | A changed mapping (a line moved to another opex category, or a section anchor) | `config/clients/<id>.yaml` (`opex_categories[].match_contains`, or `income_statement.sections[]`), or edit the draft YAML in the wizard and **Validate** | `python -m finance_engine validate-config --client <id>`, then `report --client <id> --period YYYY-MM`; a broken anchor shows as a reconciliation failure, never a silent change |
+| 5 | A new data-quality check | `finance_engine/validation.py` (add the check, emitting a warning with a `code` and, for a cell, `cells`), `finance_engine/config.py` (`CELL_CHECKS_DEFAULT` if it is a cell check), a test in `tests/test_cell_checks.py` | `python -m pytest -q tests/test_cell_checks.py`, `python -m finance_engine report --client test_errors --period 2025-12`; in the UI, Warnings tab: filter by the new code |
+| 6 | A wording rule (a banned causal phrase) | `finance_engine/wording.py` (the `CAUSAL_WORDS` pattern; the evals share it), and `finance_engine/commentary/writer_prompt.md` if the providers should be told | `python -m pytest -q tests/test_report_wording.py tests/test_eval_checks.py`, `python evals/run_skill_evals.py --provider deterministic` (free) |
+
 ## The live modification rehearsal
 
 Each was done once for real on 2026-10-11, then reverted with Git. Revert with

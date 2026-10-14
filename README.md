@@ -14,7 +14,7 @@ The brief (`docs/Build Exercise - AI Solutions Builder.pdf`) asks for four thing
 | 1 | **The working connection**: QuickBooks sandbox to Claude | `.mcp.json` (config), `.claude/settings.json` (read-only permission rules), `quickbooks-online-mcp-server/` (Intuit's official server), `docs/quickbooks_setup.md` (both paths, choice, rejected options, credentials, team hosting), `tests/integration/test_quickbooks_mcp.py`, `scripts/preflight_check.py`. Also a direct read-only reader for the CLI: `pull-quickbooks`, `finance_engine/sources/quickbooks_api.py`, `tests/test_quickbooks.py`, `scripts/qb_smoke.py` | Working against the sandbox, local only |
 | 2 | **The skill file(s)** | `.claude/skills/monthly-financial-analysis/` (`SKILL.md` and `reference/`), backed by `finance_engine/` and `config/clients/*.yaml` | Working |
 | 3 | **The eval cases and grading approach** | `evals/cases/` (19 cases), `evals/grading.md`, `evals/run_engine_evals.py`, `evals/run_skill_evals.py`, `evals/baseline/`, `evals/CHANGELOG.md`, `evals/evaluation_report.md` | Working |
-| 4 | **The one-page architecture note** | `docs/architecture.md` (hosting plan: `docs/future_hosting.md`) | Written |
+| 4 | **The one-page architecture note** | `docs/architecture_one_page.md` (about 450 words); detail in `docs/architecture.md`, hosting plan in `docs/future_hosting.md` | Written |
 
 Also: `docs/requirements_checklist.md` (every requirement with evidence and status),
 `docs/decisions.md` (why each choice), `docs/demo_checklist.md` and
@@ -22,6 +22,62 @@ Also: `docs/requirements_checklist.md` (every requirement with evidence and stat
 
 **Not done:** the brief's *stretch goal* (loading the workbook into the sandbox and running
 the skill through the live connection). Nothing is deployed anywhere.
+
+## Setup from scratch
+
+Windows PowerShell shown; on macOS or Linux use `python3 -m venv ~/venvs/re-assignment`
+and `source ~/venvs/re-assignment/bin/activate`.
+
+1. **Make a virtual environment OUTSIDE OneDrive** (OneDrive syncs and locks thousands of
+   small files in a venv, which breaks installs and slows everything):
+
+   ```powershell
+   py -3.12 -m venv C:\venvs\re-assignment
+   C:\venvs\re-assignment\Scripts\Activate.ps1
+   python -c "import sys; print(sys.prefix)"     # must print C:\venvs\re-assignment
+   ```
+
+2. **Install** the engine's requirements, and the optional ones for cloud commentary and
+   the web UI:
+
+   ```powershell
+   python -m pip install -r requirements.txt
+   python -m pip install -r requirements-optional.txt   # google-genai, anthropic, fastapi, uvicorn, python-multipart
+   ```
+
+3. **Settings:** `copy .env.example .env` (placeholders only; never commit `.env`). The
+   engine needs no key. Keys are only for the optional Gemini / Claude API commentary and
+   the QuickBooks reader (see their sections below).
+
+4. **Test data:** `python scripts/make_test_workbooks.py` (the synthetic test clients;
+   the tests also build them when missing). Put the supplied ABC workbook at
+   `data/clients/abc_inc/source/ABC Inc - Financial Statements.xlsx` if you have it.
+
+5. **Run the tests:** `python -m pytest -q` (UI tests skip if fastapi is not installed),
+   then `python evals/run_engine_evals.py --compare` (free).
+
+6. **Run the CLI:** `python -m finance_engine report --client test_clean --period 2026-01`.
+
+7. **Run the UI:** `python -m finance_engine serve`, open `http://127.0.0.1:8765`.
+   Local only (it refuses any other host), **no sign-in**: reviewer names are typed in and
+   self-declared. Check it end to end with `python scripts/ui_smoke.py`. A guided click
+   path: `docs/ui_walkthrough.md`.
+
+**Every UI action has a terminal equivalent** (full table: `docs/ui.md`):
+
+| In the UI | In the terminal (`python -m finance_engine ...`) |
+|---|---|
+| Choose client, file, period | `list-clients`, `list-files --client ID`, `list-periods --client ID [--file NAME]` |
+| See a report, its badges and figures | `show-report --client ID --period P [--file NAME]`, `brief ...` |
+| Generate (Keep data on this machine) | `report --client ID --period P --provider deterministic` (unticked: `--provider auto`) |
+| Year / whole file | `--scope year --year YYYY`, `--scope all` on the commands above |
+| Charts, "view as table" | `chart-data --client ID [--file NAME] [--year YYYY]` |
+| Add company: upload, validate, approve | `init-client --draft --file book.xlsx --client-id ID --name "Co"`, `validate-config --client ID --draft [--from edited.yaml]`, `approve-config --client ID --by "Name"` |
+| Review: submit, approve, send back, log, queue | `review submit`, `approve`, `send-back`, `status`, `log` with `--client ID --period P --by "Name"` (send-back also `--comment "..."`); `review queue` |
+| Evals panel, Run free evals | `list-evals`; `python evals/run_engine_evals.py --compare` and `python evals/run_skill_evals.py --provider deterministic --compare` |
+| QuickBooks status and pull | `quickbooks-status`; `pull-quickbooks --client qb_sandbox --start YYYY-MM --end YYYY-MM` |
+| Provider chain | `provider-status` |
+| Download report.md / metrics.json | the paths `show-report` prints |
 
 ## Prerequisites
 

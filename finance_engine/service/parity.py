@@ -34,6 +34,12 @@ ROUTES: list[dict] = [
      "cli": f"{FE} show-report --client {{client}} {SCOPE} {FILE}"},
     {"method": "GET", "path": "/api/export/metrics.json", "kind": "read",
      "cli": f"{FE} show-report --client {{client}} {SCOPE} {FILE}"},
+    {"method": "GET", "path": "/api/charts", "kind": "read",
+     "cli": f"{FE} chart-data --client {{client}} {FILE} --json"},
+    {"method": "POST", "path": "/api/jobs/analyze-months", "kind": "action",
+     "cli": f"{FE} analyze --client {{client}} --period {{period}} {FILE}"},
+    {"method": "GET", "path": "/api/cloud-notice", "kind": "read",
+     "cli": f"{FE} provider-status"},
     {"method": "POST", "path": "/api/jobs/report", "kind": "action",
      "cli": f"{FE} report --client {{client}} {SCOPE} {FILE} --provider deterministic"},
     {"method": "POST", "path": "/api/jobs/analyze", "kind": "action",
@@ -66,6 +72,8 @@ ROUTES: list[dict] = [
     {"method": "POST", "path": "/api/review/send-back", "kind": "action",
      "cli": f"{FE} review send-back --client {{client}} {SCOPE} --by {{name}} "
             f"--comment {{comment}}"},
+    {"method": "GET", "path": "/api/review/version", "kind": "read",
+     "cli": f"{FE} review log --client {{client}} {SCOPE}"},
     {"method": "GET", "path": "/api/review/queue", "kind": "read",
      "cli": f"{FE} review queue"},
     # ---- evals (free only: there is no route for the paid skill evals)

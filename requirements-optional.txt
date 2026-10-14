@@ -3,3 +3,11 @@
 #   pip install -r requirements-optional.txt
 google-genai>=1.0
 anthropic>=1.0
+
+# Optional: only for the local web app (`python -m finance_engine serve`). The engine,
+# the CLI and every non-UI test run without these; UI tests skip when they are missing.
+# Their own dependencies (starlette, click, ...) are resolved by pip. The tests also use
+# httpx (FastAPI's TestClient), which google-genai and anthropic already bring in.
+fastapi==0.143.0
+uvicorn==0.54.0
+python-multipart==0.0.32

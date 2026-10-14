@@ -229,6 +229,14 @@ def build_parser() -> argparse.ArgumentParser:
     add_plain(sub.add_parser("quickbooks-status", help="the read-only QuickBooks sandbox "
                                                        "reader: configured yes/no and the "
                                                        "names of missing variables"))
+    p_chart = sub.add_parser("chart-data", help="the monthly series the UI charts, as a "
+                                                "table, read from the engine's files")
+    p_chart.add_argument("--client", required=True, help="client_id, e.g. test_clean")
+    p_chart.add_argument("--file", dest="workbook", default=None, metavar="NAME",
+                         help="the workbook the whole-file report was run with")
+    p_chart.add_argument("--year", type=int, default=None,
+                         help="only this calendar year's months")
+    add_plain(p_chart)
     p_serve = sub.add_parser("serve", help="start the local web app on 127.0.0.1")
     p_serve.add_argument("--host", default="127.0.0.1",
                          help="must be 127.0.0.1: the app is local only")
@@ -242,7 +250,7 @@ def build_parser() -> argparse.ArgumentParser:
 #: Commands that take no period and are dispatched before scope checks.
 _PLAIN = ("init-client", "pull-quickbooks", "list-clients", "list-files", "validate-config",
           "approve-config", "review", "list-evals", "provider-status", "quickbooks-status",
-          "serve")
+          "chart-data", "serve")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -876,7 +884,8 @@ def _plain_command(args) -> int:
                 "validate-config": _validate_config, "approve-config": _approve_config,
                 "review": _review, "list-evals": _list_evals,
                 "provider-status": _provider_status,
-                "quickbooks-status": _quickbooks_status, "serve": _serve}
+                "quickbooks-status": _quickbooks_status, "chart-data": _chart_data,
+                "serve": _serve}
     return handlers[args.command](args)
 
 
@@ -1084,6 +1093,23 @@ def _quickbooks_status(args) -> int:
     if data["missing_variables"]:
         lines.append(f"  missing variables: {', '.join(data['missing_variables'])}")
     return _done(args, "quickbooks-status", data, lines)
+
+
+def _chart_data(args) -> int:
+    from finance_engine.service.core import chart_data
+    data = chart_data(_root(args), args.client, args.workbook, args.year)
+    lines = [f"{args.client}: {data['label']} (monthly; never annualised)"]
+    if data["gaps"]:
+        lines.append(f"  gaps (missing from the source): {', '.join(data['gaps'])}")
+    if data["reconciliation_failed"]:
+        lines.append(f"  reconciliation failed in: "
+                     f"{', '.join(data['reconciliation_failed'])}")
+    for s in data["series"]:
+        lines.append(f"  {s['label']}  [{s['source']}]")
+        for pt in s["points"]:
+            mark = "  RECONCILIATION FAILED" if pt["reconciliation_failed"] else ""
+            lines.append(f"    {pt['period']}  {pt['display']:>16}  {pt['status']}{mark}")
+    return _done(args, "chart-data", data, lines)
 
 
 LOOPBACK = "127.0.0.1"

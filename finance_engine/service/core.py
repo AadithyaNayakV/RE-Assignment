@@ -20,6 +20,7 @@ from finance_engine import onboarding, review
 from finance_engine.config import ClientConfig, ConfigError, Settings
 from finance_engine.service import commands
 from finance_engine.service.commands import CommandError
+from finance_engine.trace_links import prose_links
 
 
 class ServiceError(Exception):
@@ -183,6 +184,51 @@ def cell_warnings(doc: dict) -> list[dict]:
     return out
 
 
+_CHANGE = (".mom_abs", ".mom_pct", ".mom_pts", ".yoy_abs", ".yoy_pct", ".yoy_pts",
+           ".start_to_end_abs", ".start_to_end_pct", ".start_to_end_pts")
+
+
+def display(value, unit: str, name: str = "", symbol: str = "$") -> str:
+    """A metric value as the engine's formatting writes it. Python formats every figure
+    the UI shows; the browser only places these strings."""
+    from finance_engine import formatting as f
+    if value is None:
+        return f.NA
+    change = name.endswith(_CHANGE)
+    if unit == "currency":
+        return f.signed_money(value, symbol) if change else f.money(value, symbol)
+    if unit == "percent":
+        return f.signed_percent(value) if change else f.percent(value)
+    if unit == "percentage_points":
+        return f.points(value)
+    return f"{value:,g}"
+
+
+def metric_display(doc: dict) -> dict:
+    """name -> {display, reason}: the value as text, and why it is n/a when it is."""
+    from finance_engine.formatting import reason
+    symbol = doc.get("currency_symbol", "$")
+    out = {}
+    for m in doc.get("metrics", []):
+        out[m["name"]] = {
+            "display": display(m.get("value"), m.get("unit"), m["name"], symbol),
+            "reported_display": (display(m["reported_value"], m.get("unit"), "", symbol)
+                                 if m.get("reported_value") is not None else None),
+            "reason": reason(m.get("unavailable_reason")) if m.get("value") is None
+            else ""}
+    return out
+
+
+def failures_display(doc: dict) -> list[dict]:
+    """The reconciliation failures with their amounts as the engine formats them."""
+    from finance_engine.formatting import money, signed_money
+    symbol = doc.get("currency_symbol", "$")
+    return [{**f, "computed_display": money(f.get("computed"), symbol),
+             "reported_display": money(f.get("reported"), symbol),
+             "difference_display": signed_money(f.get("difference"), symbol)}
+            for f in (doc.get("reconciliation") or {}).get("failures") or []]
+
+
 def get_report(root: Path, client_id: str, scope: str = "month",
                period: str | None = None, year=None, file: str | None = None) -> dict:
     from finance_engine.brief import build_brief
@@ -235,8 +281,10 @@ def get_report(root: Path, client_id: str, scope: str = "month",
         },
         "status_rows": rows,
         "metrics_doc": doc,
+        "metric_display": metric_display(doc),
+        "prose_links": prose_links(report_md, doc) if report_md else [],
         "cell_warnings": cell_warnings(doc),
-        "reconciliation_failures": recon.get("failures") or [],
+        "reconciliation_failures": failures_display(doc),
         "brief": build_brief(doc),
         "report_md": report_md,
         "commentary_log": commentary_log,
@@ -252,7 +300,8 @@ def review_action(root: Path, client_id: str, action: str, by: str,
                   period: str | None = None, year=None, file: str | None = None) -> dict:
     folder = report_dir(root, client_id, scope, period, year, file)
     try:
-        entry = review.act(folder, action, by, comment)
+        entry = review.act(folder, action, by, comment,
+                           settings=review.load_settings(root))
     except review.ReviewError as exc:
         raise ServiceError(str(exc)) from None
     return {"entry": entry, "status": review.status(folder).to_dict()}
@@ -271,7 +320,21 @@ def review_status(root: Path, client_id: str, scope: str = "month",
 
 
 def review_queue(root: Path) -> dict:
-    return {"in_review": review.queue(_settings(root).output_dir)}
+    """Everything in_review, with the scope, period and file to reopen each report."""
+    out_dir = _settings(root).output_dir
+    entries = []
+    for q in review.queue(out_dir):
+        leaf = q["leaf"]
+        where = ({"scope": "all"} if leaf == "all" else
+                 {"scope": "year", "year": leaf[5:]} if leaf.startswith("year-") else
+                 {"scope": "month", "period": leaf})
+        file = None
+        if q["file_key"]:
+            doc = json.loads((out_dir / q["folder"] / "metrics.json")
+                             .read_text(encoding="utf-8"))
+            file = (doc.get("source") or {}).get("filename")
+        entries.append({**q, **where, "file": file})
+    return {"in_review": entries}
 
 
 # ---- onboarding ---------------------------------------------------------------------
@@ -408,23 +471,177 @@ def make_redactor(root: Path):
     return lambda text: redact(text, values)
 
 
-def cloud_notice(root: Path, keep_data_local: bool) -> dict:
-    """What leaves this machine for a report run, said before the run."""
+def cloud_notice(root: Path, keep_data_local: bool, client_id: str | None = None,
+                 scope: str = "month", period: str | None = None, year=None,
+                 file: str | None = None) -> dict:
+    """What leaves this machine for a report run, said before the run.
+
+    With a report named, it also says whether the last send-back comment would go to the
+    writer as reviewer notes (it does on a cloud run; "Keep data on this machine" avoids
+    it, because the template takes no notes).
+    """
+    notes = None
+    if client_id:
+        try:
+            notes = review.last_send_back(report_dir(root, client_id, scope, period,
+                                                     year, file))
+        except (review.ReviewError, CommandError):
+            notes = None
+    notes_line = ("The last send-back comment"
+                  + (f" (by {notes['name']})" if notes else "")
+                  + " is sent too, as reviewer notes for the writer."
+                  if notes else
+                  "If the last review action on this report was a send-back, its comment "
+                  "is sent too, as reviewer notes for the writer.")
     if keep_data_local:
         return {"keep_data_local": True, "provider_flag": "--provider deterministic",
-                "leaves_machine": False,
+                "leaves_machine": False, "reviewer_notes_pending": bool(notes),
+                "reviewer_notes_sent": False,
                 "text": "Nothing leaves this machine: the deterministic template writes "
-                        "the commentary."}
+                        "the commentary. Reviewer notes are not sent (the template does "
+                        "not take them; they stay beside the draft in the review log)."}
     status = provider_status(root)
     could = [p["provider"] for p in status["providers"]
              if p["cloud"] and p["configured"]]
     return {"keep_data_local": False, "provider_flag": "--provider auto",
             "leaves_machine": bool(could), "cloud_providers_that_may_run": could,
-            "text": ("If a cloud provider runs, only the compact brief is sent "
-                     f"(to: {', '.join(could)}). The workbook and metrics.json never "
-                     "leave this machine." if could else
+            "reviewer_notes_pending": bool(notes),
+            "reviewer_notes_sent": bool(could and notes),
+            "text": ("If a cloud provider runs, the compact brief is sent "
+                     f"(to: {', '.join(could)}). {notes_line} The workbook and "
+                     "metrics.json never leave this machine. Tick \"Keep data on this "
+                     "machine\" to send nothing." if could else
                      "No cloud provider is configured, so the deterministic template "
                      "will write the commentary and nothing leaves this machine.")}
+
+
+# ---- charts: read, never computed ------------------------------------------------------
+
+def chart_data(root: Path, client_id: str, file: str | None = None, year=None) -> dict:
+    """Monthly series for the charts, read from the engine's own files.
+
+    Revenue, gross profit, operating income and the margins come from the whole-file
+    metrics.json (`series`), which the engine builds from each month's figures. Net
+    income by month is not in that series, so it is READ from each month's own
+    metrics.json (`net_income.reported`) when one exists for the same source file
+    (same SHA-256); a month without one is a gap marked "not analysed". Months missing
+    from the source are gaps (never zero). Every value comes with the engine's display
+    string; nothing is summed, averaged, annualised or rounded here.
+    """
+    commands.check_client(client_id)
+    if file:
+        commands.check_file_name(file)
+    folder = report_dir(root, client_id, "all", file=file)
+    path = folder / "metrics.json"
+    if not path.exists():
+        what = commands.finance("report", ("--client", client_id), ("--scope", "all"),
+                                *([("--file", file)] if file else []))[1]
+        raise ServiceError(f"Charts read the whole-file report, which has not been run "
+                           f"for these settings. Run: {what}")
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    symbol = doc.get("currency_symbol", "$")
+    cov = doc.get("coverage") or {}
+    gaps = list(cov.get("gaps") or [])
+    periods = sorted(set(doc["series"]["periods"]) | set(gaps))   # calendar order
+    label, year_status = doc.get("period_label"), None
+    if year is not None:
+        y = f"{commands.check_year(year):04d}-"
+        periods = [p for p in periods if p.startswith(y)]
+        entry = next((e for e in doc.get("years") or [] if f"{e.get('year')}-" == y), None)
+        year_status = entry.get("status") if entry else "absent"
+        label = (f"{year}: {entry.get('label')}" if entry
+                 else f"{year}: no months in this file")
+    failed = sorted({f["period"] for f in (doc.get("reconciliation") or {})
+                     .get("failures") or [] if f.get("period")})
+    sha = (doc.get("source") or {}).get("sha256")
+
+    def point(p, value, status_text, metric):
+        unit_value = value
+        return {"period": p, "value": unit_value, "metric": metric,
+                "status": status_text, "reconciliation_failed": p in failed}
+
+    series = []
+    for m in doc["series"]["measures"]:
+        if m["measure"] not in ("revenue.total", "gross_profit", "operating_income",
+                                "gross_margin_pct", "operating_margin_pct"):
+            continue
+        by_period = {pt["period"]: pt for pt in m["points"]}
+        points = []
+        for p in periods:
+            pt = by_period.get(p)
+            name = f"monthly.{p}.{m['measure']}"
+            if pt is None:
+                points.append({**point(p, None, "gap: month missing from the source",
+                                       None), "display": "n/a"})
+            else:
+                from finance_engine.formatting import reason
+                text = ("ok" if pt["value"] is not None else
+                        f"n/a: {reason(pt.get('unavailable_reason'))}")
+                points.append({**point(p, pt["value"], text, name),
+                               "display": display(pt["value"], m["unit"], "", symbol)})
+        series.append({"measure": m["measure"], "label": m["label"], "unit": m["unit"],
+                       "source": "whole-file metrics.json (series)", "points": points})
+
+    net, base = [], report_dir(root, client_id, "all", file=file).parent
+    for p in periods:
+        month = base / p / "metrics.json"
+        value, text, name = None, "not analysed: no month report for this source", None
+        if p in gaps:
+            text = "gap: month missing from the source"
+        elif month.exists():
+            mdoc = json.loads(month.read_text(encoding="utf-8"))
+            if (mdoc.get("source") or {}).get("sha256") != sha:
+                text = "not used: that month report read a different source file"
+            else:
+                m = next((x for x in mdoc.get("metrics", [])
+                          if x["name"] == "net_income.reported"), None)
+                if m is None:
+                    text = "n/a: the source has no reported net income line"
+                else:
+                    from finance_engine.formatting import reason
+                    value, name = m.get("value"), "net_income.reported"
+                    text = ("ok" if value is not None else
+                            f"n/a: {reason(m.get('unavailable_reason'))}")
+        net.append({**point(p, value, text, name),
+                    "display": display(value, "currency", "", symbol)})
+    series.append({"measure": "net_income.reported", "label": "Net income (as reported)",
+                   "unit": "currency",
+                   "source": "each month's own metrics.json (net_income.reported)",
+                   "points": net})
+    missing_months = [pt["period"] for pt in net
+                      if pt["status"].startswith("not analysed")]
+    return {"client_id": client_id, "file": file, "year": year, "label": label,
+            "periods": periods, "gaps": [p for p in gaps if p in periods],
+            "reconciliation_failed": [p for p in failed if p in periods],
+            "year_status": year_status, "partial_year": year_status == "partial",
+            "never_annualised": True, "currency_symbol": symbol,
+            "source_sha256": sha, "series": series,
+            "net_income_months_not_analysed": missing_months}
+
+
+def start_analyze_months(jobs, root: Path, client_id: str, file: str | None = None):
+    """`analyze` for each month of the file that has no month metrics.json yet, so the
+    net income chart can read them. Existing month files are never rewritten (that would
+    change their hashes and void a review decision)."""
+    data = chart_data(root, client_id, file)
+    todo = data["net_income_months_not_analysed"]
+    if not todo:
+        raise ServiceError("Every month already has a month report for this source.")
+    pairs = [commands.report_command(client_id, "month", p, None, file, True, "analyze")
+             for p in todo]
+    return jobs.start_commands(client_id, f"analyze {len(todo)} month(s) {client_id}",
+                               [a for a, _ in pairs], [s for _, s in pairs], timeout=1800)
+
+
+def review_version(root: Path, client_id: str, name: str, scope: str = "month",
+                   period: str | None = None, year=None, file: str | None = None) -> dict:
+    """One stored copy of report.md from review/versions/, by its listed name."""
+    folder = report_dir(root, client_id, scope, period, year, file)
+    if name not in review.versions(folder):
+        raise ServiceError(f"No stored version {name!r} for this report.")
+    path = review.review_dir(folder) / "versions" / name
+    return {"name": name, "path": _rel(path, root),
+            "text": path.read_text(encoding="utf-8")}
 
 
 def start_report(jobs, root: Path, client_id: str, scope: str = "month",
@@ -475,6 +692,8 @@ def list_evals(root: Path) -> dict:
     base_dir = Path(root) / "evals" / "baseline"
 
     def newest(label: str) -> tuple[str | None, dict]:
+        if not base_dir.exists():
+            return None, {}
         found = sorted(p for p in base_dir.glob(f"{label}_*.json")
                        if not (label == "skill" and p.name.startswith("skill_deterministic")))
         if not found:
@@ -483,7 +702,9 @@ def list_evals(root: Path) -> dict:
 
     baselines = {k: newest(k) for k in ("engine", "skill_deterministic", "skill")}
     cases = []
-    for d in sorted(p for p in cases_dir.iterdir() if (p / "case.yaml").exists()):
+    case_dirs = sorted(p for p in cases_dir.iterdir() if (p / "case.yaml").exists()) \
+        if cases_dir.exists() else []
+    for d in case_dirs:
         case = yaml.safe_load((d / "case.yaml").read_text(encoding="utf-8")) or {}
         row = {"id": d.name, "title": case.get("title"), "synthetic": case.get("synthetic"),
                "client_id": (case.get("input") or {}).get("client_id")}

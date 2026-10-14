@@ -1,0 +1,25 @@
+/* Print / Save as PDF: the report and its status badges only, black on white. */
+@page { margin: 16mm; }
+
+:root, :root[data-theme="dark"] {
+  --bg: #ffffff; --surface: #ffffff; --surface-2: #f2f2f2; --text: #000000;
+  --text-muted: #333333; --border: #999999; --accent: #000000;
+}
+
+body { background: #ffffff !important; color: #000000 !important; font-size: 11pt; }
+
+.site-header, .skip-link, .controls, .generate, .side, .export, .no-print, nav,
+button, .tabs, details, h1 { display: none !important; }
+
+main { max-width: none; padding: 0; }
+.card { border: none; padding: 0; margin: 0; }
+.report-layout { display: block; }
+.badges { margin-bottom: 8pt; }
+.badge { border: 1px solid #000; background: none !important; color: #000 !important; }
+.figure-link { display: inline !important; border: none; color: #000; padding: 0; }
+.table-wrap { overflow: visible; border: none; }
+table { font-size: 9pt; page-break-inside: auto; }
+tr { page-break-inside: avoid; }
+th { background: #eeeeee !important; }
+.md h2, .md h3 { page-break-after: avoid; }
+a { color: #000; text-decoration: none; }

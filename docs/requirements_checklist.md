@@ -50,6 +50,23 @@ evidence in the right-hand column.
 | Hosting choices | PASS | §4, `docs/future_hosting.md` | Local now; hosting plan marked PLANNED. |
 | What changes at ten clients; keeping data separate | PARTIAL | §5, §6 | Separation by `client_id` paths, per-client token store, an eval isolation check. **No access control, audit or tenant isolation exists**; the note says so. |
 | Implemented vs planned marked | PASS | `docs/architecture.md` | Every row tagged NOW or PLANNED. |
+| Fits on one page | PASS | `docs/architecture_one_page.md` | About 450 words: files, skills, memory, hosting, ten-client separation; each PLANNED part marked. |
+
+## Phase 5D: review workflow, terminal parity and a local web UI
+
+Not in the brief; added for the reviewer's workflow. Each row is built and tested unless
+it says PLANNED.
+
+| Requirement | Status | Where | Evidence |
+|---|---|---|---|
+| Service layer, no money maths | PASS | `finance_engine/service/` | `tests/test_service_layer.py`: the service returns the same values as the files (metrics.json, report.md, list-periods) for month, year and whole file, with and without `--file`. |
+| Every UI action works from the terminal | PASS | `finance_engine/service/parity.py`, new commands in `cli.py` | `tests/test_web_app.py::TestParity` fails on a route without a CLI row (or a row without a route); `tests/test_service_layer.py::TestParity` parses every row with the real CLI parser. |
+| A new config goes live only after approval | PASS | `finance_engine/onboarding.py` | `init-client --draft`, `validate-config` (line numbers for YAML and loader errors), `approve-config` (re-validates, SHA-256, who and when; refuses an unchanged failed draft): `tests/test_onboarding_approval.py`. |
+| Review workflow, hash-bound decisions | PASS | `finance_engine/review.py`, `config/review.yaml` | States, refused transitions, send-back needs a comment, a changed report.md or metrics.json voids the decision, a hash-chained append-only log, the approver must differ from the submitter by default (a nudge; names are self-declared): `tests/test_review_workflow.py`. |
+| Reviewer notes to the commentary writer | PARTIAL | `commentary/orchestrator.py` | The last send-back comment reaches the cloud providers (`--provider auto`) and the footer says so; the deterministic template takes none. The guard and golden outputs are unchanged. For the Claude Code skill: PLANNED. |
+| Local web UI | PASS (local) | `finance_engine/web/app.py`, `ui/`, `docs/ui.md` | 127.0.0.1 only, Host and Origin checks, a UI header on every write, only `ui/` served, no secret in any response, uploads checked (type, 25 MB, zip bomb, path): `tests/test_web_app.py`. `scripts/ui_smoke.py` requests every route. |
+| The UI never calculates | PASS (best effort) | `ui/static/js/`, `finance_engine/trace_links.py` | Figures are engine-formatted strings; prose links come from engine code that links only an unambiguous metric; charts read the engine's series and month files. A JS scan for arithmetic is a best-effort test, not a proof. |
+| Sign-in, durable shared review storage, hosting | PLANNED | `docs/ui.md`, `docs/architecture_one_page.md` | Not built. Review records are files on this machine. |
 
 ## Ground rules and live readout
 
@@ -64,7 +81,7 @@ evidence in the right-hand column.
 
 | Check | Result |
 |---|---|
-| Tests | `python -m pytest -q`: **650 passed, 3 skipped** (the skips are opt-in QuickBooks tiers). Mutation subset: 18 passed. |
+| Tests | `python -m pytest -q`: **650 passed, 3 skipped** (the skips are opt-in QuickBooks tiers). Mutation subset: 18 passed. On 2026-10-13, after Phase 5D: **1187 passed, 3 skipped**; mutation 18 passed; engine evals 19/19; deterministic Level 2 18 passed, 1 skipped; every month, year and whole-file output byte-identical to the previous commit; `scripts/ui_smoke.py` 47/47. |
 | Engine evals | 13/13; compare with baseline: no change. |
 | Skill eval, ABC | 46/46 after the review fixes (13 turns, 92 s). |
 | Preflight | 13 passed, 0 failed, 0 skipped. |

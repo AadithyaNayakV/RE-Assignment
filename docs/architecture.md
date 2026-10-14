@@ -7,7 +7,7 @@ documented, not built. Nothing here is deployed anywhere; everything runs on one
 
 | Piece | Role | |
 |---|---|---|
-| `finance_engine/` | Python. Reads the workbook, validates, **calculates every number**, reconciles to the workbook's own totals, writes `metrics.json`. No AI ever produces or changes a number; AI only writes commentary text, through the providers, and that text must pass the guard. No web server. Reads a workbook or a saved QuickBooks sandbox snapshot (`sources/quickbooks.py`); `pull-quickbooks` fetches that snapshot read-only (`sources/quickbooks_api.py`: GETs plus the token refresh, sandbox host only, its own token store). | NOW |
+| `finance_engine/` | Python. Reads the workbook, validates, **calculates every number**, reconciles to the workbook's own totals, writes `metrics.json`. No AI ever produces or changes a number; AI only writes commentary text, through the providers, and that text must pass the guard. Reads a workbook or a saved QuickBooks sandbox snapshot (`sources/quickbooks.py`); `pull-quickbooks` fetches that snapshot read-only (`sources/quickbooks_api.py`: GETs plus the token refresh, sandbox host only, its own token store). | NOW |
 | `metrics.json` | The only contract between stages (`docs/metrics_schema.md`). Every metric carries its method, source cells and warnings. | NOW |
 | `.claude/skills/monthly-financial-analysis/` | The instructions Claude Code follows: `SKILL.md` (10 steps) plus `reference/` (metric definitions, report template, reviewer checklist). Claude writes the commentary; it never calculates. | NOW |
 | `finance_engine/guard.py` | Rejects any figure in the text that is not in `metrics.json`, and any direction word that contradicts a change's sign. Runs on every provider's output. | NOW |
@@ -15,6 +15,8 @@ documented, not built. Nothing here is deployed anywhere; everything runs on one
 | `config/clients/<id>.yaml` | One company = one file: sheet layout, section anchors, categories, thresholds, expected-negative lines. `init-client` drafts it from a workbook and validates it with the engine before writing it; anything it is unsure of is listed for a person to decide. | NOW |
 | Scopes and files | `--scope month` (default), `year` and `all` (`finance_engine/spans.py`, built from one month's figures at a time); `--file` picks one workbook when a client's folder holds several (`sources/selection.py`). Files are never combined. Every command has `--json` for a UI. | NOW |
 | `evals/` | 19 golden cases; Level 1 (engine) and Level 2 (report) runners; baselines; regression demo. | NOW |
+| Local web UI (`finance_engine/web/`, `finance_engine/service/`, `ui/`) | `serve` on 127.0.0.1 only, no sign-in. Reports with badges and click-to-trace, warnings, charts, review workflow, add-company wizard, free evals, read-only QuickBooks pull. Every route has a CLI equivalent; the UI never calculates. `docs/ui.md`, one-page view: `docs/architecture_one_page.md`. | NOW |
+| Review workflow and config approval | `review submit/approve/send-back`, `init-client --draft` then `approve-config`. Files on this machine only, names self-declared; the approver must differ from the submitter by default (a nudge, not security). Sign-in and durable storage: PLANNED. | NOW |
 | `.mcp.json`, `.claude/settings.json` | The QuickBooks MCP connection and its read-only permission rules. | NOW |
 | Per-client reviewer notes (memory) | A file per client (for example `config/clients/<id>.notes.md`) where a reviewer records what they confirmed: known credits, expected one-offs, causes they supplied. The skill would read it so the next month's questions skip what is already answered. Not built: today no reviewer input is kept between runs. | PLANNED |
 
@@ -51,8 +53,9 @@ redacted from every message. Both paths and why: `docs/quickbooks_setup.md`.
 
 ## 4. Hosting
 
-**Now:** everything local. **Later [PLANNED]:** the engine behind a small FastAPI service
-(`/health`, `/analyze`); commentary by a local Ollama model or a paid API, chosen by
+**Now:** everything local; the web UI is a FastAPI app bound to 127.0.0.1 with no
+sign-in. **Later [PLANNED]:** the same app behind HTTPS and the firm's SSO with per-user
+roles, review records in durable shared storage, and a `/health` endpoint; commentary by a local Ollama model or a paid API, chosen by
 `LLM_PROVIDER` with no rewrite; the MCP server hosted over HTTPS behind the firm's SSO for
 the team; secrets in a secret manager, not a file. Sketch: `docs/future_hosting.md`.
 

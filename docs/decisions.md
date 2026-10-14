@@ -107,3 +107,32 @@ can explain every one as my own.
 - **Rejected:** analysing the live response directly (not reproducible); reusing the MCP
   server's token (rotation conflicts); production access (out of scope; refused in code).
 - **Not done:** loading the ABC workbook into the sandbox; a secrets manager (planned).
+
+## 9. The local UI: FastAPI, plain JS modules, vendored Chart.js (Phase 5D)
+- **Chose:** a FastAPI app (`finance_engine/web/app.py`) of thin routes over a service
+  layer (`finance_engine/service/`) that the new CLI commands also use; a front end of
+  plain HTML, CSS and ES modules in `ui/` with no framework and no build step; Chart.js
+  4.5.1 vendored in `ui/static/vendor/` with its licence and SHA-256.
+- **Why FastAPI:** Python already owns every number, so the server must be Python and
+  must call the same engine and service code as the terminal. FastAPI gives typed
+  routes, a TestClient for testing every route in-process, and uvicorn for a local
+  server, in three pinned packages (fastapi, uvicorn, python-multipart for uploads).
+  Starlette's StaticFiles refuses path traversal; the app adds loopback-only, Host and
+  Origin checks, a required `X-Finance-UI` header on writes, a strict CSP, and a
+  redactor on every JSON body.
+- **Why no framework or build step:** the UI only places strings the engine formatted;
+  it needs no state library. No npm install, no bundler, nothing to audit or rebuild,
+  and a reviewer can read every file. DOM nodes are built with `textContent`, never
+  `innerHTML`, so workbook text cannot become markup.
+- **Why vendored Chart.js:** one file, MIT, widely used, accessible enough with a
+  "view as table" toggle; no CDN, so the app works offline and loads nothing from
+  outside 127.0.0.1. Upgrades are a deliberate file replacement checked by a hash test.
+- **The rule that did not change:** the UI never calculates. Charts plot values copied
+  from `metrics.json`; tooltips and tables show the engine's own display strings. A test
+  scans the JS for arithmetic (best effort, not a proof).
+- **Rejected:** React or another SPA framework (a build chain for no gain); a server
+  that renders HTML templates (a second place where figures could be formatted);
+  Streamlit or similar (runs arbitrary Python per widget, hard to lock to loopback and
+  to keep from calculating); a CDN for Chart.js (outside calls, version drift).
+- **Not built:** sign-in, durable shared storage for review records, hosting. Marked
+  [PLANNED] in `docs/ui.md`.

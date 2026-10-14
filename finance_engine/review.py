@@ -60,6 +60,26 @@ class ReviewError(Exception):
     """A refused review action. Nothing was written."""
 
 
+SETTINGS_FILE = "config/review.yaml"
+DEFAULT_SETTINGS = {"require_different_approver": True}
+
+
+def load_settings(root: Path) -> dict:
+    """`config/review.yaml`, over the defaults. A missing file keeps the defaults."""
+    import yaml
+    path = Path(root) / SETTINGS_FILE
+    settings = dict(DEFAULT_SETTINGS)
+    if path.exists():
+        raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        if not isinstance(raw, dict):
+            raise ReviewError(f"{SETTINGS_FILE} must hold a YAML mapping.")
+        unknown = set(raw) - set(DEFAULT_SETTINGS)
+        if unknown:
+            raise ReviewError(f"{SETTINGS_FILE}: unknown setting(s) {sorted(unknown)}.")
+        settings.update({k: bool(v) for k, v in raw.items()})
+    return settings
+
+
 @dataclass
 class Status:
     state: str              # draft | in_review | changes_requested | approved
@@ -190,8 +210,12 @@ def clean_comment(comment: str | None) -> str:
 
 
 def act(report_dir: Path, action: str, name: str, comment: str | None = None,
-        now: dt.datetime | None = None) -> dict:
-    """Append one decision to the log and return the new entry. Refusals raise."""
+        now: dt.datetime | None = None, settings: dict | None = None) -> dict:
+    """Append one decision to the log and return the new entry. Refusals raise.
+
+    `settings` is `load_settings(root)`; without it the defaults apply.
+    """
+    settings = {**DEFAULT_SETTINGS, **(settings or {})}
     report_dir = Path(report_dir)
     if action not in ACTIONS:
         raise ReviewError(f"Unknown review action {action!r}; use one of {ACTIONS}.")
@@ -212,6 +236,14 @@ def act(report_dir: Path, action: str, name: str, comment: str | None = None,
         verb = action.replace("_", "-")
         raise ReviewError(f"Cannot {verb}: the report is {current.label}; {verb} needs "
                           f"{allowed}.")
+    if action == APPROVE and settings["require_different_approver"]:
+        submitted = next((e for e in reversed(entries) if e.get("action") == SUBMIT), {})
+        if submitted.get("name", "").casefold() == who.casefold():
+            raise ReviewError(
+                f"Cannot approve: {who} submitted this report, and {SETTINGS_FILE} sets "
+                f"require_different_approver: true. Ask someone else to approve, or "
+                f"change that setting. (Names are self-declared; this is a nudge, not a "
+                f"security control.)")
     when = (now or dt.datetime.now(dt.timezone.utc)).astimezone(dt.timezone.utc)
     entry = {
         "time_utc": when.replace(microsecond=0).isoformat(),

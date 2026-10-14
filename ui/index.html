@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Financial Trend Analysis</title>
+  <meta name="color-scheme" content="light dark">
+  <!-- Sets the saved theme before the first paint, so there is no flash. -->
+  <script src="/static/theme-init.js"></script>
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="/static/print.css" media="print">
+  <link rel="icon" href="data:,">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <span class="brand-name">Financial Trend Analysis</span>
+        <span class="brand-note">Draft reports for a human reviewer</span>
+      </div>
+      <nav aria-label="Main">
+        <ul class="nav">
+          <li><a href="#/reports" data-nav="reports">Reports</a></li>
+          <li><a href="#/add" data-nav="add">Add company</a></li>
+          <li><a href="#/queue" data-nav="queue">Review queue</a></li>
+          <li><a href="#/evals" data-nav="evals">Evals</a></li>
+          <li><a href="#/settings" data-nav="settings">Sources &amp; settings</a></li>
+        </ul>
+      </nav>
+    </div>
+    <p class="local-banner">Runs on this machine only (127.0.0.1). No sign-in: reviewer
+      names are typed in and self-declared. Python calculates every number; this page
+      only shows them.</p>
+  </header>
+  <main id="main" tabindex="-1">
+    <noscript><p class="box box-error">This app needs JavaScript. Every action also works
+      in the terminal: see docs/ui.md.</p></noscript>
+    <div id="view" aria-live="polite"></div>
+  </main>
+  <script src="/static/vendor/chart.umd.min.js"></script>
+  <script type="module" src="/static/js/app.js"></script>
+</body>
+</html>

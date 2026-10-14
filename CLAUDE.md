@@ -11,6 +11,13 @@ receive only `metrics.json` or the compact brief built from it, and may *describ
 numbers. A provider must never calculate, estimate, or invent a figure.
 `guard.py` enforces this by checking every number in commentary text against `metrics.json`.
 
+**The web UI never calculates either.** The browser and the web layer
+(`finance_engine/web/`, `finance_engine/service/`, `ui/`) do no sums, differences,
+percentages, rounding or comparing of money values. They show values copied from
+`metrics.json` and strings the engine formatted. If the UI needs a number the files do
+not hold, the engine must produce it; the UI must not compute it. Every web route has a
+CLI equivalent, listed in `finance_engine/service/parity.py` (a test enforces both).
+
 ## Pipeline
 
 ```
@@ -44,13 +51,19 @@ Data source (Excel workbook, or a saved QuickBooks sandbox snapshot)
 | `finance_engine/init_client.py` | `init-client`: drafts and validates a new client's YAML from its workbook |
 | `.claude/skills/monthly-financial-analysis/` | The skill: Claude Code writes the commentary from the brief, then runs the guard |
 | `evals/` | 19 golden cases, Level 1 (engine) and Level 2 (report) runners, baselines. See `evals/grading.md` |
+| `finance_engine/onboarding.py` | `init-client --draft`, `validate-config`, `approve-config`: a new config goes live only after a named person approves it |
+| `finance_engine/review.py`, `config/review.yaml` | Review workflow (draft, in_review, changes_requested, approved), files only; `review/review_log.json` beside each report |
+| `finance_engine/trace_links.py` | Which figures in a report's prose map to exactly one metric (for click-to-trace); engine code, the guard is unchanged |
+| `finance_engine/service/` | Service layer shared by the new CLI commands and the web app: reads, jobs, uploads, the route-to-CLI parity table. No money maths |
+| `finance_engine/web/`, `ui/` | The local web app (`serve`, 127.0.0.1 only, no sign-in): FastAPI routes; plain HTML/CSS/JS modules; Chart.js vendored in `ui/static/vendor/`. See `docs/ui.md` |
 
 ## Boundaries
 
 - **No AI ever produces or changes a number.** Reading, validation, calculation,
   reconciliation, the brief and every table are plain Python. AI only writes commentary
   text, through the providers in `finance_engine/commentary/`, and that text must pass
-  the guard. `finance_engine` has no web server.
+  the guard. The only web server is the optional local UI (`finance_engine/web/`,
+  started by `serve`); the engine never imports it.
 - QuickBooks is read **read-only, sandbox only**: `sources/quickbooks_api.py` makes GETs
   plus the OAuth token refresh, nothing else, with its own token store
   (`.secrets/quickbooks_reader_token.json`), never the MCP server's. The engine analyses a
@@ -62,6 +75,10 @@ Data source (Excel workbook, or a saved QuickBooks sandbox snapshot)
   `claude-api` is **opt-in and paid** (billed separately from Claude Pro; `enabled: false`
   by default in `config/providers.yaml`). Never assume an API key exists: a missing key
   skips the provider. **The deterministic report is always the final fallback.**
+- The web UI is local only: it binds 127.0.0.1, refuses other hosts and cross-origin
+  writes, serves only `ui/`, and never returns a secret value. There is no sign-in:
+  reviewer names are self-declared. Review logs and approvals are files on this machine
+  (git-ignored). Sign-in and durable storage are [PLANNED].
 
 ## Rules for calculations
 
@@ -91,10 +108,20 @@ python -m finance_engine analyze --client test_multi --period 2025-06 --file tes
 python -m finance_engine init-client --file book.xlsx --client-id acme_ltd --name "Acme Ltd"
 python -m finance_engine pull-quickbooks --client qb_sandbox --start 2025-10 --end 2026-10
 python -m finance_engine report  --client qb_sandbox_fixture --period 2026-09   # case 19's snapshot
+python -m finance_engine init-client --draft --file book.xlsx --client-id acme_ltd --name "Acme Ltd"
+python -m finance_engine validate-config --client acme_ltd --draft
+python -m finance_engine approve-config  --client acme_ltd --by "A. Reviewer"
+python -m finance_engine review submit   --client test_clean --period 2026-01 --by "A. Writer"
+python -m finance_engine review approve  --client test_clean --period 2026-01 --by "B. Partner"
+python -m finance_engine review queue
+python -m finance_engine list-clients | list-files --client ID | show-report --client ID --period P
+python -m finance_engine chart-data --client test_clean | list-evals | provider-status | quickbooks-status
+python -m finance_engine serve                       # http://127.0.0.1:8765, local only
 # every command above also takes --json (one result on stdout; notes on stderr)
 python -m pytest -q          # full test suite
 python -m pytest -q -m mutation   # mutation check (expects injected faults to be caught)
 python evals/run_engine_evals.py --compare            # Level 1, free; run on every change
 python evals/run_skill_evals.py --provider deterministic   # Level 2 control, free
 python evals/run_skill_evals.py 04                    # Level 2 via Claude Code (Pro usage)
+python scripts/ui_smoke.py                            # start the web app, hit every route, stop
 ```
