@@ -25,16 +25,18 @@ one of them would eventually fail with `invalid_grant`. The reader therefore has
 Intuit development app, its own refresh token and its own token file. It never reads or
 writes `quickbooks-online-mcp-server/.env`.
 
-**Stretch goal: built, not yet applied.** `scripts/load_workbook_to_sandbox.py` loads the
+**Stretch goal: applied on 2026-10-15.** `scripts/load_workbook_to_sandbox.py` loads the
 ABC workbook as one journal entry per month into "RE - " accounts (dry run by default,
-offline). **Why writes go through a reviewed script and not through Claude:** a script
+offline). A person ran `--apply` on 2026-10-15: 84 accounts and 18 journal entries.
+`pull-quickbooks --client qb_sandbox_abc` read them back, and `round-trip` matched all 18
+months (558 figures, money to the cent). **Why writes go through a reviewed script and not through Claude:** a script
 is code a person can read, test (`tests/test_sandbox_loader.py`, fake server) and run on
 purpose. It is idempotent, sandbox-only, logged, and can be undone entry by entry. A
 model with write tools could post a wrong figure into the books with nobody reviewing
 it. So the MCP write tools stay denied, and the only write path is this script, which a
 person runs with `--apply`. The original note follows.
 
-**Previously not done.** Loading the ABC workbook into the sandbox was not
+**Previously not done (note as of 2026-10-11).** Loading the ABC workbook into the sandbox was not
 attempted. The sandbox holds Intuit's sample company, so everything read from it is test
 data, not evidence about a client.
 
@@ -444,13 +446,15 @@ safe to commit — it's now also portable across machines since it has no absolu
 
 ### Boundaries kept
 
-- `finance_engine/` was not modified. The Excel path is untouched and still the only data
-  source this engine reads.
+- `finance_engine/` was not modified. The Excel path is untouched and was then (Phase 2)
+  the only data source this engine read.
 - This MCP connection is for Claude Code only, run locally, sandbox only.
 - A future hosted app would read QuickBooks via `finance_engine/sources/quickbooks.py`
   implementing the existing `DataSource` interface — not built in Phase 2; built for the
   sandbox in Phase 5C (Path 2 above).
-- Loading the Excel data into the sandbox (the optional stretch goal) was not done.
+- Loading the Excel data into the sandbox (the optional stretch goal) was not done in
+  Phase 2. It was done on 2026-10-15 with `scripts/load_workbook_to_sandbox.py` (see the
+  top of this file).
 
 ### Open issues
 

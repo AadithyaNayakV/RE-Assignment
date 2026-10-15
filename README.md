@@ -20,17 +20,28 @@ Also: `docs/requirements_checklist.md` (every requirement with evidence and stat
 `docs/decisions.md` (why each choice), `docs/demo_checklist.md` and
 `docs/live_demo_runbook.md` (the live readout).
 
-**Stretch goal: built, not yet applied.** `scripts/load_workbook_to_sandbox.py` loads the
-workbook into the sandbox (a person runs `--apply`; Claude never writes), `pull-quickbooks
---client qb_sandbox_abc` reads it back, `round-trip` compares every month with the workbook,
-and the skill has a section for that run. Offline, the round trip matches all 18 months
-(golden case 20, on a simulated snapshot); no real load has been made yet. Nothing is
+**Stretch goal: applied on 2026-10-15.** `scripts/load_workbook_to_sandbox.py` loaded the
+ABC workbook into the sandbox (a person ran `--apply`; Claude never writes),
+`pull-quickbooks --client qb_sandbox_abc` read it back, and `round-trip` matched all 18
+months (2025-01 to 2026-06) to the cent. Golden case 20 checks the same round trip offline,
+on a simulated snapshot. The skill has a section for that run. Steps:
+[Load the workbook into the sandbox](#load-the-workbook-into-the-sandbox). Nothing is
 deployed anywhere.
+
+## Prerequisites
+
+- Python 3.10 or newer (the clean install below was checked on 3.12.10)
+- Node.js 18 or newer and npm (QuickBooks MCP server only)
+- Claude Code, signed in on a Pro plan (the skill; no API key is used)
+- The supplied ABC workbook, for the ABC cases (it is client data and not in the repo)
 
 ## Setup from scratch
 
-Windows PowerShell shown; on macOS or Linux use `python3 -m venv ~/venvs/re-assignment`
-and `source ~/venvs/re-assignment/bin/activate`.
+Clone with `git clone --recurse-submodules <repo-url>`; a zip download does not include
+the QuickBooks server (`quickbooks-online-mcp-server/` is a git submodule).
+
+Windows PowerShell shown; on macOS or Linux use `python3 -m venv ~/venvs/re-assignment`,
+`source ~/venvs/re-assignment/bin/activate` and `cp` instead of `copy`.
 
 1. **Make a virtual environment OUTSIDE OneDrive** (OneDrive syncs and locks thousands of
    small files in a venv, which breaks installs and slows everything):
@@ -50,18 +61,31 @@ and `source ~/venvs/re-assignment/bin/activate`.
    ```
 
 3. **Settings:** `copy .env.example .env` (placeholders only; never commit `.env`). The
-   engine needs no key. Keys are only for the optional Gemini / Claude API commentary and
-   the QuickBooks reader (see their sections below).
+   engine needs no key and no secret; the defaults work as they are
+   (`LLM_PROVIDER=deterministic`, `FINANCE_CONFIG_DIR`, `FINANCE_DATA_DIR`,
+   `FINANCE_OUTPUT_DIR`). Keys are only for the optional Gemini / Claude API commentary
+   and the QuickBooks reader (see their sections below).
 
-4. **Test data:** `python scripts/make_test_workbooks.py` (the synthetic test clients;
-   the tests also build them when missing). Put the supplied ABC workbook at
-   `data/clients/abc_inc/source/ABC Inc - Financial Statements.xlsx` if you have it.
+4. **Test data:**
+   - `python scripts/make_test_workbooks.py` builds the synthetic manual-test clients
+     (test_clean, test_errors, test_multi; git-ignored, and the tests also build them when
+     missing).
+   - The 10 synthetic scenario workbooks in `data/synthetic/` are already committed;
+     `python scripts/generate_synthetic.py` regenerates them, their configs and expected
+     values. Everything either script makes is labelled SYNTHETIC and says nothing about a
+     real client.
+   - Put the supplied ABC workbook at
+     `data/clients/abc_inc/source/ABC Inc - Financial Statements.xlsx` if you have it. The
+     engine opens it read-only and never modifies it. Without it, the ABC cases report
+     SKIP, never PASS.
 
 5. **Run the tests:** `python -m pytest -q` (UI tests skip if fastapi is not installed),
    then `python evals/run_engine_evals.py --compare` (free).
 
    Clean install checked on 2026-10-15 with Python 3.12.10 on Windows: a new venv outside
-   the repo, steps 1, 2 and 5 exactly as written; 1292 passed, 3 skipped; engine evals 20/20.
+   the repo, steps 1, 2 and 5 exactly as written. Current suite (2026-10-15): 1307 passed,
+   3 skipped (the skips are the opt-in live QuickBooks tests; a web-app test also skips,
+   making 1306 and 4, when Python cannot find Node.js); engine evals 20/20.
 
 6. **Run the CLI:** `python -m finance_engine report --client test_clean --period 2026-01`.
 
@@ -85,42 +109,6 @@ and `source ~/venvs/re-assignment/bin/activate`.
 | QuickBooks status and pull | `quickbooks-status`; `pull-quickbooks --client qb_sandbox --start YYYY-MM --end YYYY-MM` |
 | Provider chain | `provider-status` |
 | Download report.md / metrics.json | the paths `show-report` prints |
-
-## Prerequisites
-
-- Python 3.10 or newer
-- Node.js 18 or newer and npm (QuickBooks MCP server only)
-- Claude Code, signed in on a Pro plan (the skill; no API key is used)
-- The supplied ABC workbook, for the ABC cases (it is client data and not in the repo)
-
-## Install
-
-```bash
-pip install -r requirements.txt
-```
-
-Put the supplied workbook at
-`data/clients/abc_inc/source/ABC Inc - Financial Statements.xlsx`. The engine opens it
-read-only and never modifies it. Without it, the ABC cases report SKIP, never PASS.
-
-## Generate the 10 synthetic workbooks
-
-They are already committed. To regenerate them, their configs and expected values:
-
-```bash
-python scripts/generate_synthetic.py
-```
-
-Everything it makes is labelled SYNTHETIC and says nothing about a real client.
-
-## Environment variables
-
-```bash
-cp .env.example .env      # placeholders only; never commit .env
-```
-
-`finance_engine` needs no key and no secret. Defaults work as they are:
-`LLM_PROVIDER=deterministic`, `FINANCE_CONFIG_DIR`, `FINANCE_DATA_DIR`, `FINANCE_OUTPUT_DIR`.
 
 ## Run the engine
 
@@ -160,8 +148,8 @@ total per calendar year and the first-to-last-month change. When a client's fold
 several workbooks, `--file NAME` picks one (outputs go to
 `output/clients/<client>/<file-stem>/...`); without it the engine uses the config's
 `source.filename`, or, if the config names none, the one workbook holding the requested
-period, and stops if more than one does. Files are never combined. Every command takes
-`--json` for one machine-readable result on stdout.
+period, and stops if more than one does. Files are never combined. Every command except
+`serve` takes `--json` for one machine-readable result on stdout.
 
 **`--file` or `--workbook`?** Both name the workbook to read. `analyze`, `report`,
 `brief` and `list-periods` accept either. `check-commentary` accepts only `--workbook`,
@@ -169,8 +157,7 @@ because its `--file` was already the commentary being checked, and that meaning 
 
 ```bash
 python -m finance_engine analyze --client test_multi --period 2025-06 --file test_multi_second_half.xlsx
-python -m finance_engine check-commentary --client test_multi --period 2025-06 \
-    --workbook test_multi_second_half.xlsx --file report.md
+python -m finance_engine check-commentary --client test_multi --period 2025-06 --workbook test_multi_second_half.xlsx --file report.md
 ```
 
 ### A new client from a workbook
@@ -207,10 +194,10 @@ drafted exactly as before.
 
 ## Commentary from Gemini or the Claude API (optional, no Claude Code needed)
 
-`report` can have the commentary written by a cloud model instead of the template:
+`report` can have the commentary written by a cloud model instead of the template. It
+needs `requirements-optional.txt` (setup step 2):
 
 ```bash
-pip install -r requirements-optional.txt          # google-genai, anthropic (optional)
 python -m finance_engine report --client test_clean --period 2026-01 --provider auto
 python -m finance_engine report --client test_clean --period 2026-01 --provider gemini
 ```
@@ -274,18 +261,18 @@ Anthropic's server-side refusal fallback is off (`refusal_fallback: false`), so 
 skips to the next provider. `commentary_log.json` records the model that actually
 answered each attempt. `allow_cloud: false` in the same file stops every cloud provider at once.
 
-## The skill
+## Run it in Claude Code
 
-Project skills in `.claude/skills/` load automatically when Claude Code starts in this
-folder. Check it is visible and use it:
+Start Claude Code in this folder; project skills in `.claude/skills/` load automatically
+(`/skills` lists `monthly-financial-analysis`). Then type one of:
 
-```text
-/skills                                        # lists monthly-financial-analysis
-Analyse ABC Inc for June 2026                  # or: /monthly-financial-analysis abc_inc 2026-06
-```
+| Prompt | What happens |
+|---|---|
+| `Analyse ABC Inc for June 2026` | The skill runs `analyze`, reads the `brief`, writes `output/clients/abc_inc/2026-06/report.md` and must pass `check-commentary` before finishing. Same as `/monthly-financial-analysis abc_inc 2026-06`. Needs the ABC workbook. |
+| `Show me last month's profit and loss from QuickBooks` | Claude calls the QuickBooks MCP server's read-only tools against the sandbox and shows what Intuit returns. The engine is not involved, so these are not verified figures. |
+| `analyse qb_sandbox_abc for 2026-06` | The same skill steps as the first prompt, on the saved snapshot of the ABC workbook loaded into the sandbox (no live QuickBooks call). |
 
-Claude runs `analyze`, reads the `brief`, writes `report.md`, and must pass
-`check-commentary` before finishing. It stops cleanly on an unknown client or bad period.
+The skill stops cleanly on an unknown client or bad period.
 No Claude available? `python -m finance_engine report ...` writes a labelled, guarded
 report with no AI.
 
@@ -295,7 +282,7 @@ report with no AI.
 python -m pytest -q                                    # full suite
 python -m pytest -q -m mutation                        # injected faults must be caught
 python evals/run_engine_evals.py --compare             # Level 1, free, run on every change
-python evals/run_skill_evals.py --provider deterministic   # Level 2 control, free
+python evals/run_skill_evals.py --provider deterministic --compare   # Level 2 control, free
 python evals/run_skill_evals.py 04                     # Level 2, one case via Claude (Pro usage)
 python evals/regression_demo.py both                   # prove a deliberate break is caught
 ```
@@ -305,21 +292,27 @@ How grading works, thresholds and the rubric: `evals/grading.md`. Real results:
 
 ## QuickBooks MCP setup and check
 
-The server is Intuit's official repo, cloned into `quickbooks-online-mcp-server/`.
+The server is Intuit's official repo, a git submodule at `quickbooks-online-mcp-server/`,
+pinned to commit `31a1dd5`.
 
-```bash
-git clone https://github.com/intuit/quickbooks-online-mcp-server.git quickbooks-online-mcp-server
-cd quickbooks-online-mcp-server && git checkout 31a1dd5 && npm install && npm run build
+```powershell
+git submodule update --init quickbooks-online-mcp-server   # only if cloned without --recurse-submodules
+cd quickbooks-online-mcp-server
+npm install
+npm run build
 npm run auth        # browser OAuth; the server writes its own git-ignored .env
+cd ..
 ```
 
 The OAuth app's redirect URI must be `http://localhost:8000/callback`. Then, from the repo
 root, approve the `quickbooks` server once via `/mcp` in Claude Code. Check everything:
 
-```bash
+```powershell
 python scripts/preflight_check.py          # ~80 s; see docs/live_demo_runbook.md
-QBO_INTEGRATION=1 QBO_LIVE=1 python -m pytest tests/integration -v   # opt-in live tests
+$env:QBO_INTEGRATION=1; $env:QBO_LIVE=1; python -m pytest tests/integration -v   # opt-in live tests
 ```
+
+(bash: `QBO_INTEGRATION=1 QBO_LIVE=1 python -m pytest tests/integration -v`.)
 
 Claude can only call read tools; every create/update/delete tool is denied.
 
@@ -334,8 +327,7 @@ Set `QBO_CLIENT_ID`, `QBO_CLIENT_SECRET`, `QBO_REFRESH_TOKEN`, `QBO_REALM_ID` an
 ```bash
 python -m finance_engine pull-quickbooks --client qb_sandbox --start 2025-10 --end 2026-10
 python -m finance_engine report --client qb_sandbox --period 2026-09 --file <snapshot>.json
-python -m finance_engine report --client qb_sandbox --period 2026-09 \
-    --source quickbooks --start 2025-10 --end 2026-10      # pull, then analyse that pull
+python -m finance_engine report --client qb_sandbox --period 2026-09 --source quickbooks --start 2025-10 --end 2026-10   # pull, then analyse
 python scripts/qb_smoke.py                                  # by hand: one refresh, one GET
 ```
 
@@ -344,6 +336,29 @@ every message. Other Income and Other Expenses stay outside revenue and operatin
 expenses; a blank QuickBooks cell is read as 0, as Intuit's own totals do. Details,
 re-authorising and the mapping: `docs/quickbooks_setup.md`. Case 19 runs on a scrubbed
 copy of a real pull (`tests/fixtures/qb_pl_monthly.json`, client `qb_sandbox_fixture`).
+
+## Load the workbook into the sandbox
+
+The stretch goal. `scripts/load_workbook_to_sandbox.py` is the only code that writes to
+QuickBooks: sandbox only, one journal entry per month, logged in the git-ignored
+`data/clients/qb_sandbox_abc/load_log.json`. **A person runs `--apply` and `--undo`; Claude
+never does.** It uses the same `QBO_*` settings and token as `pull-quickbooks`, and needs
+the ABC workbook at `data/clients/abc_inc/source/` (client data, not in the repo).
+
+```powershell
+python scripts/load_workbook_to_sandbox.py           # 1. dry run: offline, prints the plan
+python scripts/load_workbook_to_sandbox.py --apply   # 2. by a person: writes to the sandbox
+python -m finance_engine pull-quickbooks --client qb_sandbox_abc --start 2025-01 --end 2026-06   # 3. read it back
+python -m finance_engine round-trip --excel-client abc_inc --qb-client qb_sandbox_abc       # 4. compare every month
+python scripts/load_workbook_to_sandbox.py --undo    # by a person, when done: deletes the logged journal entries (type DELETE)
+```
+
+`round-trip` reads saved files only (the workbook and the newest snapshot) and prints
+`RESULT: all 18 months match` when nothing was lost. `--apply` is safe to re-run: existing
+accounts are reused and months already posted are skipped. `--undo` deletes only the
+journal entries in the log; QuickBooks cannot delete accounts, so the "RE - ..." accounts
+stay. If a command that talks to QuickBooks stops with `getaddrinfo failed`, that is a
+dropped network or DNS lookup: run the same command again.
 
 ## Troubleshooting
 
@@ -355,7 +370,7 @@ copy of a real pull (`tests/fixtures/qb_pl_monthly.json`, client `qb_sandbox_fix
 | `init-client` wrote a `.draft.yaml` | Validation failed; the problems are listed at the top of the draft. |
 | ABC cases say SKIP | The workbook is not at `data/clients/abc_inc/source/`. |
 | `check-commentary` says REJECTED | A figure is not in `metrics.json`, or a direction word contradicts its change. The output names the line. |
-| QuickBooks `401` / `invalid_grant` | Token lapsed: `cd quickbooks-online-mcp-server && npm run auth`. |
+| QuickBooks `401` / `invalid_grant` | Token lapsed: run `npm run auth` inside `quickbooks-online-mcp-server/`. |
 | `pull-quickbooks`: "The token refresh was refused" | The reader's own token lapsed: re-authorise its Intuit app and update `QBO_REFRESH_TOKEN` (`docs/quickbooks_setup.md`, "Re-authorising"). |
 | `QuickBooks has no Profit and Loss data between ...` | The sandbox has no activity in that range; nothing was saved. Pick another range. |
 | `quickbooks` missing in `/mcp` | Run `npm run build` there, then approve the server once. |
@@ -371,12 +386,16 @@ copy of a real pull (`tests/fixtures/qb_pl_monthly.json`, client `qb_sandbox_fix
 - **Local only.** No authentication, authorization, TLS or tenant isolation. Clients are
   separated by path and convention. Not production-ready (`docs/future_hosting.md`).
 - **The skill needs a Pro session.** The suite has 20 cases. A full Claude run of the first
-  13 cost about $4 to $5 API-equivalent; cases 14 to 17 have not been run through Claude
-  (18 to 20 are graded on the template report or have no commentary step). See
-  `evals/README.md`: no Claude-written report has passed the current checks yet.
-- **Sandbox only.** The QuickBooks data is Intuit's sample data, not evidence about a client.
+  13 (2026-10-11) cost about $4 to $5 API-equivalent; cases 14 to 17 have not been run through Claude
+  (18 to 20 are graded on the template report or have no commentary step). After the
+  causal-word fix, case 01 passed the skill eval through Claude with 47/47 checks
+  (2026-10-15); the other Claude cases have not been re-run against the current checks.
+- **Sandbox only.** The QuickBooks company is Intuit's sandbox sample company; `qb_sandbox`
+  and case 19 read its sample data, which is not evidence about a client. `qb_sandbox_abc`
+  reads back the ABC workbook loaded there, so its snapshots hold ABC figures (git-ignored).
 - **QuickBooks: sandbox Profit and Loss only.** The direct reader pulls one report, from
   the sandbox only; production, the balance sheet and other reports are not read. A
   blank QuickBooks cell is read as 0 (Intuit's convention), unlike a blank workbook cell.
-- **Stretch goal: not yet applied to the real sandbox.** The loader, the read-back and the
-  round trip are built and tested offline; `--apply` has not been run.
+- **Stretch goal: applied to the sandbox.** `--apply` was run on 2026-10-15 and the
+  round trip matched all 18 months. Only revenue, COGS and operating-expense lines are loaded
+  (nothing below operating income).

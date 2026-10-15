@@ -11,7 +11,7 @@ python scripts/preflight_check.py            # about 80 s, uses about $0.05 of P
 python scripts/preflight_check.py --no-claude-call   # same, zero Pro usage
 ```
 
-It checks, with real results: dependencies and the full test suite (650 passed, 3 skipped on 2026-10-11); the ABC
+It checks, with real results: dependencies and the full test suite (650 passed, 3 skipped on 2026-10-11; 1307 passed, 3 skipped on 2026-10-15); the ABC
 workbook hash before and after the engine runs; `analyze` and `report` timing; a live
 read-only QuickBooks call returning the sandbox company name; and that Claude Code sees the
 QuickBooks server and the skill. Exit 0 and the word `READY` means go.
@@ -31,7 +31,7 @@ redirect URI. Allow 5 minutes. Do not leave this to the last minute.
 | 4 | Different layout | `python -m finance_engine report --client company_h_zero_negative_values --period 2026-06` | 1 min |
 | 5 | Missing data, one-off | `python -m finance_engine report --client company_g_missing_data --period 2026-06` then `... --client company_f_one_time_expense --period 2025-11` | 2 min |
 | 6 | Guard rejects | `python -m finance_engine check-commentary --client abc_inc --period 2026-06 --file bad.md` (prepare `bad.md` with `Legal Expenses were $41,234.56.`) | 1 min |
-| 6b | No-AI fallback | `python -m finance_engine report --client abc_inc --period 2026-06 --provider ollama` | 1 min |
+| 6b | No-AI fallback | Set `allow_cloud: false` in `config/providers.yaml`, run `python -m finance_engine report --client abc_inc --period 2026-06 --provider auto`, show stderr and the report's last line, then `git checkout config/providers.yaml` (details: `docs/demo_checklist.md` 6b) | 1 min |
 | 7 | QuickBooks tools | `/mcp` in Claude Code, open `quickbooks`; or `claude mcp list` | 1 min |
 | 8 | Live sandbox read | `Use the quickbooks tools to get the company info` | 1 min |
 | 9 | Evals | `python evals/run_engine_evals.py --compare`, then `python evals/run_skill_evals.py 04` | 3 min |
@@ -44,6 +44,11 @@ overwrites `report.md` with the template version.
 If asked about years, the whole file or several workbooks: `python -m finance_engine report
 --client test_clean --scope year --year 2025` (or `--scope all`), and
 `python -m finance_engine list-periods --client test_multi`.
+
+If asked about the stretch goal: `python -m finance_engine round-trip --excel-client abc_inc
+--qb-client qb_sandbox_abc`. It is offline (the workbook and the saved snapshot) and on
+2026-10-15 printed "all 18 months match (558 figures, money to the cent)". The load itself
+was run by a person; do not run `--apply` live.
 
 **`--file` or `--workbook`?** Both name the workbook to read. `analyze`, `report`,
 `brief` and `list-periods` accept either. `check-commentary` accepts only `--workbook`,
@@ -61,22 +66,23 @@ Say plainly which is a backup. Files are in `demo_backup/` (see its README).
 
 | Failure | Backup | What it really is |
 |---|---|---|
-| Claude is slow, or the Pro limit is reached | `demo_backup/abc_inc_2026-06_claude_skill_report.md` | A **saved** report the skill wrote earlier in the 46/46 eval run. Not live. |
+| Claude is slow, or the Pro limit is reached | `demo_backup/abc_inc_2026-06_claude_skill_report.md` | A **saved** report the skill wrote earlier in the 46/46 eval run (2026-10-11). Not live. |
 | Same, and you want a live run anyway | `python -m finance_engine report --client abc_inc --period 2026-06` | A **live** run of the no-AI template. It is the fallback, not the skill. |
 | Sandbox or token is down | `demo_backup/quickbooks_sandbox_get_company_info_SAVED.md` | **Saved** output, not a live call. |
-| Evals are slow or fail | `demo_backup/eval_results_*.json` | **Saved** results. The Level 2 file is the re-graded 13/13 (cases 01 to 13; the suite now has 20); the first grading was 12/13. |
+| Evals are slow or fail | `demo_backup/eval_results_*.json` | **Saved** results. The Level 2 file is the re-graded 13/13 (2026-10-11, cases 01 to 13; the suite now has 20); the first grading was 12/13. |
 
 ## Tips
 
 - **Do not spend Pro usage the day before or the morning of the call.** The full skill run cost
-  about $4 to $5 API-equivalent for 13 cases (the suite now has 20), and I hit the session
+  about $4 to $5 API-equivalent for 13 cases on 2026-10-11 (the suite now has 20), and I hit the session
   limit once while building. Run at most `run_skill_evals.py 04` during the demo.
 - Close other apps and browser tabs. Keep the terminal font large.
 - **Never show `.env` or `quickbooks-online-mcp-server/.env` on screen.** Do not `cat` them,
   do not open them in the editor, and keep the editor sidebar collapsed on that folder.
   Never paste a token into chat. Turn on screen-share only after the terminal is clear.
-- Be ready to say what is not built: the stretch goal, hosting, authentication and tenant
-  isolation, and the Ollama and paid-API providers.
+- Be ready to say what is not built: hosting, authentication and tenant isolation, and the
+  Ollama provider. The Claude API provider is built but off by default and paid. The
+  stretch goal is built and was applied by a person (2026-10-15).
 
 ## The web UI demo (Phase 5D)
 

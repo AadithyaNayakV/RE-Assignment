@@ -16,7 +16,7 @@ documented, not built. Nothing here is deployed anywhere; everything runs on one
 | Scopes and files | `--scope month` (default), `year` and `all` (`finance_engine/spans.py`, built from one month's figures at a time); `--file` picks one workbook when a client's folder holds several (`sources/selection.py`). Files are never combined. Every command has `--json` for a UI. | NOW |
 | `evals/` | 20 golden cases; Level 1 (engine) and Level 2 (report) runners; baselines; regression demo. | NOW |
 | Local web UI (`finance_engine/web/`, `finance_engine/service/`, `ui/`) | `serve` on 127.0.0.1 only, no sign-in. Reports with badges and click-to-trace, warnings, charts, review workflow, add-company wizard, free evals, read-only QuickBooks pull. Every route has a CLI equivalent; the UI never calculates. `docs/ui.md`, one-page view: `docs/architecture_one_page.md`. | NOW |
-| Review workflow and config approval | `review submit/approve/send-back`, `init-client --draft` then `approve-config`. Files on this machine only, names self-declared; the approver must differ from the submitter by default (a nudge, not security). Sign-in and durable storage: PLANNED. | NOW |
+| Review workflow and config approval | `review mark-reviewed/send-back` (`submit` only for a hand-edited report), `init-client --draft` then `approve-config`. Files on this machine only, names self-declared; the reviewer must differ from the submitter by default (a nudge, not security). Sign-in and durable storage: PLANNED. | NOW |
 | `.mcp.json`, `.claude/settings.json` | The QuickBooks MCP connection and its read-only permission rules. | NOW |
 | Per-client reviewer notes (memory) | A file per client (for example `config/clients/<id>.notes.md`) where a reviewer records what they confirmed: known credits, expected one-offs, causes they supplied. The skill would read it so the next month's questions skip what is already answered. Not built: today no reviewer input is kept between runs. | PLANNED |
 
@@ -51,6 +51,11 @@ host only, its own Intuit app and token file (`.secrets/`, git-ignored), never t
 server's: Intuit rotates refresh tokens, so two programs cannot share one. Secrets are
 redacted from every message. Both paths and why: `docs/quickbooks_setup.md`.
 
+**Sandbox loader [NOW, sandbox only, run by a person].** `scripts/load_workbook_to_sandbox.py`
+is the only code that writes to QuickBooks: one journal entry per month, dry run by
+default, logged and undoable. A person ran `--apply` on 2026-10-15 (84 accounts, 18 journal
+entries); `pull-quickbooks` read it back and `round-trip` matched all 18 months.
+
 ## 4. Hosting
 
 **Now:** everything local; the web UI is a FastAPI app bound to 127.0.0.1 with no
@@ -83,8 +88,9 @@ manager entry per client. **Today nothing enforces who may read which client's f
    reconciled by a person. This is the real scaling cost, not compute.
 2. **Token management.** Ten refresh tokens that rotate and expire; one lapsed token
    silently takes a client offline.
-3. **Pro usage limits.** One skill run costs about $0.30 to $0.50 API-equivalent and a full
-   Claude eval about $4 to $5 when the suite had 13 cases; it now has 20, and a full run of
+3. **Pro usage limits.** One skill run costs about $0.30 to $0.52 API-equivalent (case 01 on
+   2026-10-15: $0.50 and $0.52) and a full Claude eval about $4 to $5 when the suite had 13
+   cases (2026-10-11); it now has 20, and a full run of
    all 20 has not been priced. We hit the session limit once during this build.
 4. **Reviewer load.** The report is a draft. Ten drafts a month are ten human reviews.
 5. **Guard blind spots.** It proves a number exists, not that it sits in the right sentence.

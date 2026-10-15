@@ -1,0 +1,3307 @@
+{
+  "kind": "skill",
+  "run_id": "2026-10-15T13-17-22Z",
+  "date_utc": "2026-10-15T13:18:05+00:00",
+  "git_commit": "72095b6",
+  "git_dirty": true,
+  "baseline_label": "skill_deterministic",
+  "provider": "deterministic",
+  "summary": {
+    "passed": 18,
+    "failed": 0,
+    "skipped": 2,
+    "total": 20
+  },
+  "cases": {
+    "01_abc_inc_2026_06": {
+      "status": "pass",
+      "checks": [
+        {
+          "id": "report_command",
+          "passed": true,
+          "detail": "exit 0: "
+        },
+        {
+          "id": "guard",
+          "passed": true,
+          "detail": "318/318 numbers traced"
+        },
+        {
+          "id": "section:data_quality",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:revenue",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:margins",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:operating_expenses",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:month_over_month",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:ttm",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:significant_movements",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:one_offs",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:limitations",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:reviewer_checklist",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "issue_shown_early:negative_opex_line",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "issue_shown_early:ttm_includes_possible_one_offs",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "draft_label",
+          "passed": true,
+          "detail": "the first 25 lines must say this is a draft"
+        },
+        {
+          "id": "provider_label",
+          "passed": true,
+          "detail": "must say it was written by deterministic"
+        },
+        {
+          "id": "reviewer_checklist",
+          "passed": true,
+          "detail": "6 unchecked item(s) under the heading"
+        },
+        {
+          "id": "causal_language_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "causal_words_outside_questions",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_vocabulary_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "seasonality_not_asserted",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "one_offs_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_label_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "direction_amounts_unsigned",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "impossible_values",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "client_isolation",
+          "passed": true,
+          "detail": "mentions other clients: []"
+        },
+        {
+          "id": "no_credentials",
+          "passed": true,
+          "detail": "credential-like text found"
+        },
+        {
+          "id": "figure:revenue.total",
+          "passed": true,
+          "detail": "found '$195,898.16'"
+        },
+        {
+          "id": "figure:revenue.total.mom_abs",
+          "passed": true,
+          "detail": "found '$12,452.80'"
+        },
+        {
+          "id": "figure:gross_margin_pct",
+          "passed": true,
+          "detail": "found '70.2%'"
+        },
+        {
+          "id": "figure:opex.total",
+          "passed": true,
+          "detail": "found '$468,181.80'"
+        },
+        {
+          "id": "figure:operating_income",
+          "passed": true,
+          "detail": "found '$330,756.08'"
+        },
+        {
+          "id": "figure:revenue.total.ttm",
+          "passed": true,
+          "detail": "found '$2,303,975.51'"
+        },
+        {
+          "id": "figure:opex.line.events_conferences.mom_abs",
+          "passed": true,
+          "detail": "found '$17,970.67'"
+        },
+        {
+          "id": "flag:events_flagged",
+          "passed": true,
+          "detail": "The largest movement, Events & Conferences, is reported."
+        },
+        {
+          "id": "flag:bad_debts_sign_change",
+          "passed": true,
+          "detail": "Bad Debts is described as swinging from a charge to a credit, not as a % saving."
+        },
+        {
+          "id": "flag:ttm_not_run_rate",
+          "passed": true,
+          "detail": "The large TTM-window items are named and the affected TTM figures are said not to be a run rate."
+        },
+        {
+          "id": "flag:ttm_run_rate_warning",
+          "passed": true,
+          "detail": "Says the affected TTM figures are not a run rate."
+        },
+        {
+          "id": "flag:classification_note",
+          "passed": true,
+          "detail": "The workbook's operating income equals its net income because interest and tax sit inside opex."
+        },
+        {
+          "id": "forbidden:bad_debts_as_saving",
+          "passed": true,
+          "detail": "A sign change must not be read as a percentage cost saving. "
+        }
+      ],
+      "values": {
+        "guard": "318/318 numbers traced",
+        "report_chars": 18792
+      }
+    },
+    "02_normal_growth": {
+      "status": "pass",
+      "checks": [
+        {
+          "id": "report_command",
+          "passed": true,
+          "detail": "exit 0: "
+        },
+        {
+          "id": "guard",
+          "passed": true,
+          "detail": "151/151 numbers traced"
+        },
+        {
+          "id": "section:data_quality",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:revenue",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:margins",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:operating_expenses",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:month_over_month",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:ttm",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:significant_movements",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:one_offs",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:limitations",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:reviewer_checklist",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "issue_shown_early:no_balance_sheet",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "draft_label",
+          "passed": true,
+          "detail": "the first 25 lines must say this is a draft"
+        },
+        {
+          "id": "provider_label",
+          "passed": true,
+          "detail": "must say it was written by deterministic"
+        },
+        {
+          "id": "reviewer_checklist",
+          "passed": true,
+          "detail": "6 unchecked item(s) under the heading"
+        },
+        {
+          "id": "causal_language_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "causal_words_outside_questions",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_vocabulary_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "seasonality_not_asserted",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "one_offs_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_label_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "direction_amounts_unsigned",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "impossible_values",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "client_isolation",
+          "passed": true,
+          "detail": "mentions other clients: []"
+        },
+        {
+          "id": "no_credentials",
+          "passed": true,
+          "detail": "credential-like text found"
+        },
+        {
+          "id": "figure:revenue.total",
+          "passed": true,
+          "detail": "found '$185,600.00'"
+        },
+        {
+          "id": "figure:revenue.total.mom_abs",
+          "passed": true,
+          "detail": "found '$2,800.00'"
+        },
+        {
+          "id": "figure:gross_margin_pct",
+          "passed": true,
+          "detail": "found '82.2%'"
+        },
+        {
+          "id": "figure:opex.total",
+          "passed": true,
+          "detail": "found '$79,004.00'"
+        },
+        {
+          "id": "figure:revenue.total.ttm",
+          "passed": true,
+          "detail": "found '$2,042,400.00'"
+        },
+        {
+          "id": "flag:revenue_rose",
+          "passed": true,
+          "detail": "States that revenue rose."
+        },
+        {
+          "id": "flag:nothing_significant",
+          "passed": true,
+          "detail": "Says no line met the significance test."
+        },
+        {
+          "id": "forbidden:invented_decline",
+          "passed": true,
+          "detail": "Total revenue did not fall. "
+        }
+      ],
+      "values": {
+        "guard": "151/151 numbers traced",
+        "report_chars": 9995
+      }
+    },
+    "03_revenue_decline": {
+      "status": "pass",
+      "checks": [
+        {
+          "id": "report_command",
+          "passed": true,
+          "detail": "exit 0: "
+        },
+        {
+          "id": "guard",
+          "passed": true,
+          "detail": "144/144 numbers traced"
+        },
+        {
+          "id": "section:data_quality",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:revenue",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:margins",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:operating_expenses",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:month_over_month",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:ttm",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:significant_movements",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:one_offs",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:limitations",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:reviewer_checklist",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "issue_shown_early:no_balance_sheet",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "draft_label",
+          "passed": true,
+          "detail": "the first 25 lines must say this is a draft"
+        },
+        {
+          "id": "provider_label",
+          "passed": true,
+          "detail": "must say it was written by deterministic"
+        },
+        {
+          "id": "reviewer_checklist",
+          "passed": true,
+          "detail": "6 unchecked item(s) under the heading"
+        },
+        {
+          "id": "causal_language_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "causal_words_outside_questions",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_vocabulary_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "seasonality_not_asserted",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "one_offs_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_label_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "direction_amounts_unsigned",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "impossible_values",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "client_isolation",
+          "passed": true,
+          "detail": "mentions other clients: []"
+        },
+        {
+          "id": "no_credentials",
+          "passed": true,
+          "detail": "credential-like text found"
+        },
+        {
+          "id": "figure:revenue.total",
+          "passed": true,
+          "detail": "found '$129,850.00'"
+        },
+        {
+          "id": "figure:revenue.total.mom_abs",
+          "passed": true,
+          "detail": "found '$7,950.00'"
+        },
+        {
+          "id": "figure:revenue.total.mom_pct",
+          "passed": true,
+          "detail": "found '5.8%'"
+        },
+        {
+          "id": "figure:revenue.total.yoy_abs",
+          "passed": true,
+          "detail": "found '$86,400.00'"
+        },
+        {
+          "id": "flag:decline_reported",
+          "passed": true,
+          "detail": "States that revenue fell."
+        },
+        {
+          "id": "forbidden:revenue_described_as_growing",
+          "passed": true,
+          "detail": "Total revenue fell month over month; it must not be described as growing. "
+        },
+        {
+          "id": "forbidden:invented_churn",
+          "passed": true,
+          "detail": "No cause of the decline is in the data. "
+        }
+      ],
+      "values": {
+        "guard": "144/144 numbers traced",
+        "report_chars": 9939
+      }
+    },
+    "04_expense_spike": {
+      "status": "pass",
+      "checks": [
+        {
+          "id": "report_command",
+          "passed": true,
+          "detail": "exit 0: "
+        },
+        {
+          "id": "guard",
+          "passed": true,
+          "detail": "178/178 numbers traced"
+        },
+        {
+          "id": "section:data_quality",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:revenue",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:margins",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:operating_expenses",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:month_over_month",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:ttm",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:significant_movements",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:one_offs",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:limitations",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:reviewer_checklist",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "issue_shown_early:no_balance_sheet",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "issue_shown_early:ttm_includes_possible_one_offs",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "draft_label",
+          "passed": true,
+          "detail": "the first 25 lines must say this is a draft"
+        },
+        {
+          "id": "provider_label",
+          "passed": true,
+          "detail": "must say it was written by deterministic"
+        },
+        {
+          "id": "reviewer_checklist",
+          "passed": true,
+          "detail": "7 unchecked item(s) under the heading"
+        },
+        {
+          "id": "causal_language_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "causal_words_outside_questions",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_vocabulary_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "seasonality_not_asserted",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "one_offs_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_label_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "direction_amounts_unsigned",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "impossible_values",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "client_isolation",
+          "passed": true,
+          "detail": "mentions other clients: []"
+        },
+        {
+          "id": "no_credentials",
+          "passed": true,
+          "detail": "credential-like text found"
+        },
+        {
+          "id": "figure:opex.line.legal_expenses",
+          "passed": true,
+          "detail": "found '$36,000.00'"
+        },
+        {
+          "id": "figure:opex.line.legal_expenses.mom_abs",
+          "passed": true,
+          "detail": "found '$34,000.00'"
+        },
+        {
+          "id": "figure:opex.total",
+          "passed": true,
+          "detail": "found '$116,850.00'"
+        },
+        {
+          "id": "figure:operating_income",
+          "passed": true,
+          "detail": "found '$91,870.00'"
+        },
+        {
+          "id": "flag:legal_flagged",
+          "passed": true,
+          "detail": "Legal Expenses is reported as a significant movement."
+        },
+        {
+          "id": "flag:cause_left_to_reviewer",
+          "passed": true,
+          "detail": "The reviewer is asked to confirm the cause."
+        },
+        {
+          "id": "forbidden:invented_legal_cause",
+          "passed": true,
+          "detail": "No lawsuit, dispute or settlement is recorded in the data. "
+        },
+        {
+          "id": "forbidden:direction_wrong",
+          "passed": true,
+          "detail": "Legal Expenses rose. "
+        }
+      ],
+      "values": {
+        "guard": "178/178 numbers traced",
+        "report_chars": 13214
+      }
+    },
+    "05_margin_decline": {
+      "status": "pass",
+      "checks": [
+        {
+          "id": "report_command",
+          "passed": true,
+          "detail": "exit 0: "
+        },
+        {
+          "id": "guard",
+          "passed": true,
+          "detail": "137/137 numbers traced"
+        },
+        {
+          "id": "section:data_quality",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:revenue",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:margins",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:operating_expenses",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:month_over_month",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:ttm",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:significant_movements",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:one_offs",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:limitations",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:reviewer_checklist",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "issue_shown_early:no_balance_sheet",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "draft_label",
+          "passed": true,
+          "detail": "the first 25 lines must say this is a draft"
+        },
+        {
+          "id": "provider_label",
+          "passed": true,
+          "detail": "must say it was written by deterministic"
+        },
+        {
+          "id": "reviewer_checklist",
+          "passed": true,
+          "detail": "6 unchecked item(s) under the heading"
+        },
+        {
+          "id": "causal_language_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "causal_words_outside_questions",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_vocabulary_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "seasonality_not_asserted",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "one_offs_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_label_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "direction_amounts_unsigned",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "impossible_values",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "client_isolation",
+          "passed": true,
+          "detail": "mentions other clients: []"
+        },
+        {
+          "id": "no_credentials",
+          "passed": true,
+          "detail": "credential-like text found"
+        },
+        {
+          "id": "figure:gross_margin_pct",
+          "passed": true,
+          "detail": "found '22.6%'"
+        },
+        {
+          "id": "figure:gross_margin_pct.mom_pts",
+          "passed": true,
+          "detail": "found '1.6 pts'"
+        },
+        {
+          "id": "figure:gross_profit.mom_abs",
+          "passed": true,
+          "detail": "found '$3,350.00'"
+        },
+        {
+          "id": "figure:cogs.total",
+          "passed": true,
+          "detail": "found '$174,450.00'"
+        },
+        {
+          "id": "flag:margin_decline_reported",
+          "passed": true,
+          "detail": "States that gross margin fell."
+        },
+        {
+          "id": "flag:margin_in_points",
+          "passed": true,
+          "detail": "Margin change is expressed in points."
+        },
+        {
+          "id": "forbidden:margin_described_as_improving",
+          "passed": true,
+          "detail": "Gross margin fell; it must not be described as improving. "
+        }
+      ],
+      "values": {
+        "guard": "137/137 numbers traced",
+        "report_chars": 9741
+      }
+    },
+    "06_missing_months": {
+      "status": "pass",
+      "checks": [
+        {
+          "id": "report_command",
+          "passed": true,
+          "detail": "exit 2: "
+        },
+        {
+          "id": "guard",
+          "passed": true,
+          "detail": "138/138 numbers traced"
+        },
+        {
+          "id": "section:data_quality",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:revenue",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:margins",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:operating_expenses",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:month_over_month",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:ttm",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:significant_movements",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:one_offs",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:limitations",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:reviewer_checklist",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "issue_shown_early:missing_months",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "issue_shown_early:ttm_window_incomplete",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "issue_shown_early:no_balance_sheet",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "issue_shown_early:blank_cell",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "draft_label",
+          "passed": true,
+          "detail": "the first 25 lines must say this is a draft"
+        },
+        {
+          "id": "provider_label",
+          "passed": true,
+          "detail": "must say it was written by deterministic"
+        },
+        {
+          "id": "reviewer_checklist",
+          "passed": true,
+          "detail": "8 unchecked item(s) under the heading"
+        },
+        {
+          "id": "causal_language_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "causal_words_outside_questions",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_vocabulary_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "seasonality_not_asserted",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "one_offs_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_label_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "direction_amounts_unsigned",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "ttm_incomplete_no_figures",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "ttm_incomplete_stated",
+          "passed": true,
+          "detail": "must say TTM is not available"
+        },
+        {
+          "id": "impossible_values",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "client_isolation",
+          "passed": true,
+          "detail": "mentions other clients: []"
+        },
+        {
+          "id": "no_credentials",
+          "passed": true,
+          "detail": "credential-like text found"
+        },
+        {
+          "id": "figure:revenue.total",
+          "passed": true,
+          "detail": "found '$150,200.00'"
+        },
+        {
+          "id": "figure:opex.total",
+          "passed": true,
+          "detail": "found '$49,780.00'"
+        },
+        {
+          "id": "flag:missing_months_named",
+          "passed": true,
+          "detail": "Names both missing months."
+        },
+        {
+          "id": "forbidden:eleven_month_ttm",
+          "passed": true,
+          "detail": "No 11-month total presented as annual, YTD or TTM. "
+        }
+      ],
+      "values": {
+        "guard": "138/138 numbers traced",
+        "report_chars": 11208
+      }
+    },
+    "07_zero_negative_bases": {
+      "status": "pass",
+      "checks": [
+        {
+          "id": "report_command",
+          "passed": true,
+          "detail": "exit 0: "
+        },
+        {
+          "id": "guard",
+          "passed": true,
+          "detail": "161/161 numbers traced"
+        },
+        {
+          "id": "section:data_quality",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:revenue",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:margins",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:operating_expenses",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:month_over_month",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:ttm",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:significant_movements",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:one_offs",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:limitations",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:reviewer_checklist",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "issue_shown_early:negative_revenue_line",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "issue_shown_early:negative_opex_line",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "issue_shown_early:no_balance_sheet",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "draft_label",
+          "passed": true,
+          "detail": "the first 25 lines must say this is a draft"
+        },
+        {
+          "id": "provider_label",
+          "passed": true,
+          "detail": "must say it was written by deterministic"
+        },
+        {
+          "id": "reviewer_checklist",
+          "passed": true,
+          "detail": "6 unchecked item(s) under the heading"
+        },
+        {
+          "id": "causal_language_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "causal_words_outside_questions",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_vocabulary_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "seasonality_not_asserted",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "one_offs_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_label_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "direction_amounts_unsigned",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "impossible_values",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "client_isolation",
+          "passed": true,
+          "detail": "mentions other clients: []"
+        },
+        {
+          "id": "no_credentials",
+          "passed": true,
+          "detail": "credential-like text found"
+        },
+        {
+          "id": "figure:revenue.total",
+          "passed": true,
+          "detail": "found '$114,050.00'"
+        },
+        {
+          "id": "figure:revenue.stream.refunds_and_credits",
+          "passed": true,
+          "detail": "found '$1,450.00'"
+        },
+        {
+          "id": "figure:opex.line.bad_debts",
+          "passed": true,
+          "detail": "found '$2,200.00'"
+        },
+        {
+          "id": "flag:zero_base_na",
+          "passed": true,
+          "detail": "A zero-base % change is shown as n/a with the reason."
+        },
+        {
+          "id": "flag:negative_kept",
+          "passed": true,
+          "detail": "Negative lines are reported with their sign, not as income."
+        },
+        {
+          "id": "forbidden:infinite_pct",
+          "passed": true,
+          "detail": "No infinite or divide-by-zero percentage. "
+        },
+        {
+          "id": "forbidden:refunds_as_income",
+          "passed": true,
+          "detail": "Refunds and Credits must not be described as income growth. "
+        }
+      ],
+      "values": {
+        "guard": "161/161 numbers traced",
+        "report_chars": 11704
+      }
+    },
+    "08_seasonal_business": {
+      "status": "pass",
+      "checks": [
+        {
+          "id": "report_command",
+          "passed": true,
+          "detail": "exit 0: "
+        },
+        {
+          "id": "guard",
+          "passed": true,
+          "detail": "189/189 numbers traced"
+        },
+        {
+          "id": "section:data_quality",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:revenue",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:margins",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:operating_expenses",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:month_over_month",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:ttm",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:significant_movements",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:one_offs",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:limitations",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:reviewer_checklist",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "issue_shown_early:no_balance_sheet",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "draft_label",
+          "passed": true,
+          "detail": "the first 25 lines must say this is a draft"
+        },
+        {
+          "id": "provider_label",
+          "passed": true,
+          "detail": "must say it was written by deterministic"
+        },
+        {
+          "id": "reviewer_checklist",
+          "passed": true,
+          "detail": "6 unchecked item(s) under the heading"
+        },
+        {
+          "id": "causal_language_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "causal_words_outside_questions",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_vocabulary_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "seasonality_not_asserted",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "one_offs_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_label_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "direction_amounts_unsigned",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "impossible_values",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "client_isolation",
+          "passed": true,
+          "detail": "mentions other clients: []"
+        },
+        {
+          "id": "no_credentials",
+          "passed": true,
+          "detail": "credential-like text found"
+        },
+        {
+          "id": "figure:revenue.total",
+          "passed": true,
+          "detail": "found '$136,240.00'"
+        },
+        {
+          "id": "figure:revenue.total.mom_abs",
+          "passed": true,
+          "detail": "found '$144,480.00'"
+        },
+        {
+          "id": "figure:revenue.stream.retail_revenue.mom_abs",
+          "passed": true,
+          "detail": "found '$144,640.00'"
+        },
+        {
+          "id": "flag:retail_drop_flagged",
+          "passed": true,
+          "detail": "The Retail Revenue fall is reported."
+        },
+        {
+          "id": "flag:seasonality_not_assessed",
+          "passed": true,
+          "detail": "States that seasonality could not be assessed from 18 months."
+        },
+        {
+          "id": "forbidden:seasonal_as_fact",
+          "passed": true,
+          "detail": "No movement described as seasonal as a fact. "
+        }
+      ],
+      "values": {
+        "guard": "189/189 numbers traced",
+        "report_chars": 11393
+      }
+    },
+    "09_one_time_expense": {
+      "status": "pass",
+      "checks": [
+        {
+          "id": "report_command",
+          "passed": true,
+          "detail": "exit 2: "
+        },
+        {
+          "id": "guard",
+          "passed": true,
+          "detail": "155/155 numbers traced"
+        },
+        {
+          "id": "section:data_quality",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:revenue",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:margins",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:operating_expenses",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:month_over_month",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:ttm",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:significant_movements",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:one_offs",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:limitations",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:reviewer_checklist",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "issue_shown_early:ttm_window_incomplete",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "issue_shown_early:no_balance_sheet",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "draft_label",
+          "passed": true,
+          "detail": "the first 25 lines must say this is a draft"
+        },
+        {
+          "id": "provider_label",
+          "passed": true,
+          "detail": "must say it was written by deterministic"
+        },
+        {
+          "id": "reviewer_checklist",
+          "passed": true,
+          "detail": "9 unchecked item(s) under the heading"
+        },
+        {
+          "id": "causal_language_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "causal_words_outside_questions",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_vocabulary_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "seasonality_not_asserted",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "one_offs_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_label_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "direction_amounts_unsigned",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "ttm_incomplete_no_figures",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "ttm_incomplete_stated",
+          "passed": true,
+          "detail": "must say TTM is not available"
+        },
+        {
+          "id": "impossible_values",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "client_isolation",
+          "passed": true,
+          "detail": "mentions other clients: []"
+        },
+        {
+          "id": "no_credentials",
+          "passed": true,
+          "detail": "credential-like text found"
+        },
+        {
+          "id": "figure:opex.line.legal_settlement",
+          "passed": true,
+          "detail": "found '$285,000.00'"
+        },
+        {
+          "id": "figure:opex.total",
+          "passed": true,
+          "detail": "found '$368,770.00'"
+        },
+        {
+          "id": "figure:operating_income",
+          "passed": true,
+          "detail": "found '$216,770.00'"
+        },
+        {
+          "id": "flag:possible_one_off",
+          "passed": true,
+          "detail": "Legal Settlement is called a possible one-off."
+        },
+        {
+          "id": "forbidden:settlement_as_trend",
+          "passed": true,
+          "detail": "A single month must not be called a trend or a run rate. "
+        }
+      ],
+      "values": {
+        "guard": "155/155 numbers traced",
+        "report_chars": 12512
+      }
+    },
+    "10_multiple_revenue_streams": {
+      "status": "pass",
+      "checks": [
+        {
+          "id": "report_command",
+          "passed": true,
+          "detail": "exit 0: "
+        },
+        {
+          "id": "guard",
+          "passed": true,
+          "detail": "209/209 numbers traced"
+        },
+        {
+          "id": "section:data_quality",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:revenue",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:margins",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:operating_expenses",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:month_over_month",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:ttm",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:significant_movements",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:one_offs",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:limitations",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:reviewer_checklist",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "issue_shown_early:no_balance_sheet",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "issue_shown_early:ttm_includes_possible_one_offs",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "draft_label",
+          "passed": true,
+          "detail": "the first 25 lines must say this is a draft"
+        },
+        {
+          "id": "provider_label",
+          "passed": true,
+          "detail": "must say it was written by deterministic"
+        },
+        {
+          "id": "reviewer_checklist",
+          "passed": true,
+          "detail": "6 unchecked item(s) under the heading"
+        },
+        {
+          "id": "causal_language_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "causal_words_outside_questions",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_vocabulary_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "seasonality_not_asserted",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "one_offs_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_label_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "direction_amounts_unsigned",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "impossible_values",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "client_isolation",
+          "passed": true,
+          "detail": "mentions other clients: []"
+        },
+        {
+          "id": "no_credentials",
+          "passed": true,
+          "detail": "credential-like text found"
+        },
+        {
+          "id": "figure:revenue.total",
+          "passed": true,
+          "detail": "found '$221,236.00'"
+        },
+        {
+          "id": "figure:revenue.stream.platform_revenue",
+          "passed": true,
+          "detail": "found '$98,200.00'"
+        },
+        {
+          "id": "figure:revenue.stream.usage_fees",
+          "passed": true,
+          "detail": "found '$78,450.00'"
+        },
+        {
+          "id": "figure:revenue.stream.professional_services",
+          "passed": true,
+          "detail": "found '$20,960.00'"
+        },
+        {
+          "id": "figure:revenue.stream.partnership_income",
+          "passed": true,
+          "detail": "found '$11,476.00'"
+        },
+        {
+          "id": "figure:revenue.stream.white_label",
+          "passed": true,
+          "detail": "found '$5,600.00'"
+        },
+        {
+          "id": "figure:revenue.stream.training_revenue",
+          "passed": true,
+          "detail": "found '$6,550.00'"
+        },
+        {
+          "id": "flag:all_streams_named",
+          "passed": true,
+          "detail": "All six streams are named."
+        },
+        {
+          "id": "flag:partnership_flagged",
+          "passed": true,
+          "detail": "The Partnership Income jump is reported."
+        }
+      ],
+      "values": {
+        "guard": "209/209 numbers traced",
+        "report_chars": 13763
+      }
+    },
+    "11_balance_sheet": {
+      "status": "pass",
+      "checks": [
+        {
+          "id": "report_command",
+          "passed": true,
+          "detail": "exit 0: "
+        },
+        {
+          "id": "guard",
+          "passed": true,
+          "detail": "156/156 numbers traced"
+        },
+        {
+          "id": "section:data_quality",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:revenue",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:margins",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:operating_expenses",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:month_over_month",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:ttm",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:significant_movements",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:one_offs",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:limitations",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:reviewer_checklist",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:balance_sheet",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "draft_label",
+          "passed": true,
+          "detail": "the first 25 lines must say this is a draft"
+        },
+        {
+          "id": "provider_label",
+          "passed": true,
+          "detail": "must say it was written by deterministic"
+        },
+        {
+          "id": "reviewer_checklist",
+          "passed": true,
+          "detail": "5 unchecked item(s) under the heading"
+        },
+        {
+          "id": "causal_language_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "causal_words_outside_questions",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_vocabulary_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "seasonality_not_asserted",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "one_offs_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_label_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "direction_amounts_unsigned",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "impossible_values",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "client_isolation",
+          "passed": true,
+          "detail": "mentions other clients: []"
+        },
+        {
+          "id": "no_credentials",
+          "passed": true,
+          "detail": "credential-like text found"
+        },
+        {
+          "id": "figure:balance_sheet.assets",
+          "passed": true,
+          "detail": "found '$875,200.00'"
+        },
+        {
+          "id": "figure:balance_sheet.liabilities",
+          "passed": true,
+          "detail": "found '$464,000.00'"
+        },
+        {
+          "id": "figure:balance_sheet.equity",
+          "passed": true,
+          "detail": "found '$411,200.00'"
+        },
+        {
+          "id": "figure:balance_sheet.cash",
+          "passed": true,
+          "detail": "found '$478,400.00'"
+        },
+        {
+          "id": "flag:balance_check_reported",
+          "passed": true,
+          "detail": "The Assets = Liabilities + Equity check and its result are reported."
+        }
+      ],
+      "values": {
+        "guard": "156/156 numbers traced",
+        "report_chars": 10111
+      }
+    },
+    "12_unknown_client_bad_period": {
+      "status": "skip",
+      "checks": [],
+      "values": {},
+      "skip_reason": "stop behaviour is the skill's; covered by Level 1 for the CLI"
+    },
+    "13_deterministic_fallback": {
+      "status": "pass",
+      "checks": [
+        {
+          "id": "report_command",
+          "passed": true,
+          "detail": "exit 0: warning: Commentary provider 'ollama' is a documented extension point but is not implemented in Phase 1. Set LLM_PROVIDER=deterministic. Falling back to the deterministic provider."
+        },
+        {
+          "id": "guard",
+          "passed": true,
+          "detail": "318/318 numbers traced"
+        },
+        {
+          "id": "section:data_quality",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:revenue",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:margins",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:operating_expenses",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:month_over_month",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:ttm",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:significant_movements",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:one_offs",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:limitations",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:reviewer_checklist",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "issue_shown_early:negative_opex_line",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "issue_shown_early:ttm_includes_possible_one_offs",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "draft_label",
+          "passed": true,
+          "detail": "the first 25 lines must say this is a draft"
+        },
+        {
+          "id": "provider_label",
+          "passed": true,
+          "detail": "must say it was written by deterministic"
+        },
+        {
+          "id": "reviewer_checklist",
+          "passed": true,
+          "detail": "6 unchecked item(s) under the heading"
+        },
+        {
+          "id": "causal_language_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "causal_words_outside_questions",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_vocabulary_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "seasonality_not_asserted",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "one_offs_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_label_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "direction_amounts_unsigned",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "impossible_values",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "client_isolation",
+          "passed": true,
+          "detail": "mentions other clients: []"
+        },
+        {
+          "id": "no_credentials",
+          "passed": true,
+          "detail": "credential-like text found"
+        },
+        {
+          "id": "figure:revenue.total",
+          "passed": true,
+          "detail": "found '$195,898.16'"
+        },
+        {
+          "id": "figure:gross_margin_pct",
+          "passed": true,
+          "detail": "found '70.2%'"
+        },
+        {
+          "id": "figure:opex.total",
+          "passed": true,
+          "detail": "found '$468,181.80'"
+        },
+        {
+          "id": "figure:operating_income",
+          "passed": true,
+          "detail": "found '$330,756.08'"
+        },
+        {
+          "id": "flag:labelled_deterministic",
+          "passed": true,
+          "detail": "The report says the deterministic provider wrote it."
+        }
+      ],
+      "values": {
+        "guard": "318/318 numbers traced",
+        "report_chars": 18792
+      }
+    },
+    "14_year_complete": {
+      "status": "pass",
+      "checks": [
+        {
+          "id": "report_command",
+          "passed": true,
+          "detail": "exit 0: "
+        },
+        {
+          "id": "guard",
+          "passed": true,
+          "detail": "197/197 numbers traced"
+        },
+        {
+          "id": "section:data_quality",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:coverage",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:revenue",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:margins",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:operating_expenses",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:quarters",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:year_on_year",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:monthly_table",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:extremes",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:reconciliation",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:limitations",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:reviewer_checklist",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "draft_label",
+          "passed": true,
+          "detail": "the first 25 lines must say this is a draft"
+        },
+        {
+          "id": "provider_label",
+          "passed": true,
+          "detail": "must say it was written by deterministic"
+        },
+        {
+          "id": "reviewer_checklist",
+          "passed": true,
+          "detail": "3 unchecked item(s) under the heading"
+        },
+        {
+          "id": "causal_language_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "causal_words_outside_questions",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_vocabulary_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "seasonality_not_asserted",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "one_offs_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_label_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "direction_amounts_unsigned",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "impossible_values",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "client_isolation",
+          "passed": true,
+          "detail": "mentions other clients: []"
+        },
+        {
+          "id": "no_credentials",
+          "passed": true,
+          "detail": "credential-like text found"
+        },
+        {
+          "id": "figure:revenue.total",
+          "passed": true,
+          "detail": "found '$642,000.00'"
+        },
+        {
+          "id": "figure:gross_profit",
+          "passed": true,
+          "detail": "found '$527,400.00'"
+        },
+        {
+          "id": "figure:opex.total",
+          "passed": true,
+          "detail": "found '$426,000.00'"
+        },
+        {
+          "id": "figure:operating_income",
+          "passed": true,
+          "detail": "found '$101,400.00'"
+        },
+        {
+          "id": "figure:gross_margin_pct",
+          "passed": true,
+          "detail": "found '82.1%'"
+        },
+        {
+          "id": "flag:full_year",
+          "passed": true,
+          "detail": "States that 2025 is a complete year."
+        },
+        {
+          "id": "flag:quarters_shown",
+          "passed": true,
+          "detail": "Shows the four quarters."
+        },
+        {
+          "id": "flag:year_on_year_not_compared",
+          "passed": true,
+          "detail": "Says there is no year-on-year comparison."
+        },
+        {
+          "id": "forbidden:causal_wording",
+          "passed": true,
+          "detail": "States no cause for any movement. "
+        },
+        {
+          "id": "forbidden:invented_year_on_year",
+          "passed": true,
+          "detail": "No change on 2024 is stated; 2024 is not in the file. "
+        }
+      ],
+      "values": {
+        "guard": "197/197 numbers traced",
+        "report_chars": 9057
+      }
+    },
+    "15_year_partial": {
+      "status": "pass",
+      "checks": [
+        {
+          "id": "report_command",
+          "passed": true,
+          "detail": "exit 0: "
+        },
+        {
+          "id": "guard",
+          "passed": true,
+          "detail": "117/117 numbers traced"
+        },
+        {
+          "id": "section:data_quality",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:coverage",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:revenue",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:margins",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:operating_expenses",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:quarters",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:year_on_year",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:monthly_table",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:extremes",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:reconciliation",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:limitations",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:reviewer_checklist",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "draft_label",
+          "passed": true,
+          "detail": "the first 25 lines must say this is a draft"
+        },
+        {
+          "id": "provider_label",
+          "passed": true,
+          "detail": "must say it was written by deterministic"
+        },
+        {
+          "id": "reviewer_checklist",
+          "passed": true,
+          "detail": "4 unchecked item(s) under the heading"
+        },
+        {
+          "id": "causal_language_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "causal_words_outside_questions",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_vocabulary_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "seasonality_not_asserted",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "one_offs_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_label_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "direction_amounts_unsigned",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "impossible_values",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "client_isolation",
+          "passed": true,
+          "detail": "mentions other clients: []"
+        },
+        {
+          "id": "no_credentials",
+          "passed": true,
+          "detail": "credential-like text found"
+        },
+        {
+          "id": "figure:revenue.total",
+          "passed": true,
+          "detail": "found '$61,000.00'"
+        },
+        {
+          "id": "figure:operating_income",
+          "passed": true,
+          "detail": "found '$11,800.00'"
+        },
+        {
+          "id": "figure:revenue.total.yoy_abs",
+          "passed": true,
+          "detail": "found '$13,000.00'"
+        },
+        {
+          "id": "flag:year_to_date_label",
+          "passed": true,
+          "detail": "Labels the year as year to date, 1 of 12 months."
+        },
+        {
+          "id": "flag:not_annualised",
+          "passed": true,
+          "detail": "Says the totals are not scaled or annualised."
+        },
+        {
+          "id": "flag:quarters_incomplete",
+          "passed": true,
+          "detail": "Says the quarters are incomplete or n/a."
+        },
+        {
+          "id": "forbidden:annualised_figure",
+          "passed": true,
+          "detail": "No annualised, full-year-equivalent or run-rate figure. "
+        },
+        {
+          "id": "forbidden:causal_wording",
+          "passed": true,
+          "detail": "States no cause for any movement. "
+        }
+      ],
+      "values": {
+        "guard": "117/117 numbers traced",
+        "report_chars": 9195
+      }
+    },
+    "16_year_gap": {
+      "status": "pass",
+      "checks": [
+        {
+          "id": "report_command",
+          "passed": true,
+          "detail": "exit 2: "
+        },
+        {
+          "id": "guard",
+          "passed": true,
+          "detail": "192/192 numbers traced"
+        },
+        {
+          "id": "section:data_quality",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:coverage",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:revenue",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:margins",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:operating_expenses",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:quarters",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:year_on_year",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:monthly_table",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:extremes",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:reconciliation",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:limitations",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:reviewer_checklist",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "issue_shown_early:blank_not_zero",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "issue_shown_early:non_numeric_cell",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "issue_shown_early:blank_cell",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "issue_shown_early:year_months_missing",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "draft_label",
+          "passed": true,
+          "detail": "the first 25 lines must say this is a draft"
+        },
+        {
+          "id": "provider_label",
+          "passed": true,
+          "detail": "must say it was written by deterministic"
+        },
+        {
+          "id": "reviewer_checklist",
+          "passed": true,
+          "detail": "7 unchecked item(s) under the heading"
+        },
+        {
+          "id": "causal_language_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "causal_words_outside_questions",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_vocabulary_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "seasonality_not_asserted",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "one_offs_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_label_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "direction_amounts_unsigned",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "impossible_values",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "reconciliation_failure_shown",
+          "passed": true,
+          "detail": "a failed reconciliation must be stated"
+        },
+        {
+          "id": "reconciliation_failures_named",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "client_isolation",
+          "passed": true,
+          "detail": "mentions other clients: []"
+        },
+        {
+          "id": "no_credentials",
+          "passed": true,
+          "detail": "credential-like text found"
+        },
+        {
+          "id": "figure:revenue.total.q1",
+          "passed": true,
+          "detail": "found '$147,000.00'"
+        },
+        {
+          "id": "figure:revenue.total.q3",
+          "passed": true,
+          "detail": "found '$165,000.00'"
+        },
+        {
+          "id": "flag:gap_named",
+          "passed": true,
+          "detail": "Names June 2025 as missing inside the year."
+        },
+        {
+          "id": "flag:totals_not_available",
+          "passed": true,
+          "detail": "Says the year totals are not available."
+        },
+        {
+          "id": "flag:year_months_missing_code",
+          "passed": true,
+          "detail": "Shows the blocking error by its code."
+        },
+        {
+          "id": "forbidden:stated_year_total",
+          "passed": true,
+          "detail": "No 2025 revenue total is stated. "
+        },
+        {
+          "id": "forbidden:causal_wording",
+          "passed": true,
+          "detail": "States no cause for any movement. "
+        }
+      ],
+      "values": {
+        "guard": "192/192 numbers traced",
+        "report_chars": 12621
+      }
+    },
+    "17_whole_file": {
+      "status": "pass",
+      "checks": [
+        {
+          "id": "report_command",
+          "passed": true,
+          "detail": "exit 0: "
+        },
+        {
+          "id": "guard",
+          "passed": true,
+          "detail": "206/206 numbers traced"
+        },
+        {
+          "id": "section:data_quality",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:coverage",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:calendar_years",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:start_to_end",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:monthly_series",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:seasonality",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:reconciliation",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:limitations",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:reviewer_checklist",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "draft_label",
+          "passed": true,
+          "detail": "the first 25 lines must say this is a draft"
+        },
+        {
+          "id": "provider_label",
+          "passed": true,
+          "detail": "must say it was written by deterministic"
+        },
+        {
+          "id": "reviewer_checklist",
+          "passed": true,
+          "detail": "3 unchecked item(s) under the heading"
+        },
+        {
+          "id": "causal_language_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "causal_words_outside_questions",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_vocabulary_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "seasonality_not_asserted",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "one_offs_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_label_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "direction_amounts_unsigned",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "impossible_values",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "client_isolation",
+          "passed": true,
+          "detail": "mentions other clients: []"
+        },
+        {
+          "id": "no_credentials",
+          "passed": true,
+          "detail": "credential-like text found"
+        },
+        {
+          "id": "figure:year.2025.revenue.total",
+          "passed": true,
+          "detail": "found '$642,000.00'"
+        },
+        {
+          "id": "figure:year.2026.revenue.total",
+          "passed": true,
+          "detail": "found '$61,000.00'"
+        },
+        {
+          "id": "figure:revenue.total.start_to_end_abs",
+          "passed": true,
+          "detail": "found '$13,000.00'"
+        },
+        {
+          "id": "flag:thirteen_months",
+          "passed": true,
+          "detail": "States the file covers 13 months."
+        },
+        {
+          "id": "flag:partial_year_labelled",
+          "passed": true,
+          "detail": "Labels 2026 as year to date."
+        },
+        {
+          "id": "flag:seasonality_not_assessed",
+          "passed": true,
+          "detail": "Says seasonality is not assessed."
+        },
+        {
+          "id": "forbidden:seasonal_claim",
+          "passed": true,
+          "detail": "Asserts no seasonal pattern. "
+        },
+        {
+          "id": "forbidden:causal_wording",
+          "passed": true,
+          "detail": "States no cause for any movement. "
+        }
+      ],
+      "values": {
+        "guard": "206/206 numbers traced",
+        "report_chars": 8229
+      }
+    },
+    "18_file_selection": {
+      "status": "pass",
+      "checks": [
+        {
+          "id": "report_command",
+          "passed": true,
+          "detail": "exit 2: source: test_multi_first_half.xlsx (the only workbook in C:\\Users\\aadit\\OneDrive\\Desktop\\RE Assignment\\data\\clients\\test_multi\\source that contains period 2025-03)"
+        },
+        {
+          "id": "guard",
+          "passed": true,
+          "detail": "132/132 numbers traced"
+        },
+        {
+          "id": "section:data_quality",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:revenue",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:margins",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:operating_expenses",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:month_over_month",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:ttm",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:significant_movements",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:one_offs",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:limitations",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:reviewer_checklist",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "issue_shown_early:ttm_window_incomplete",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "issue_shown_early:no_balance_sheet",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "draft_label",
+          "passed": true,
+          "detail": "the first 25 lines must say this is a draft"
+        },
+        {
+          "id": "provider_label",
+          "passed": true,
+          "detail": "must say it was written by deterministic"
+        },
+        {
+          "id": "reviewer_checklist",
+          "passed": true,
+          "detail": "8 unchecked item(s) under the heading"
+        },
+        {
+          "id": "causal_language_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "causal_words_outside_questions",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_vocabulary_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "seasonality_not_asserted",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "one_offs_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_label_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "direction_amounts_unsigned",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "ttm_incomplete_no_figures",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "ttm_incomplete_stated",
+          "passed": true,
+          "detail": "must say TTM is not available"
+        },
+        {
+          "id": "impossible_values",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "client_isolation",
+          "passed": true,
+          "detail": "mentions other clients: []"
+        },
+        {
+          "id": "no_credentials",
+          "passed": true,
+          "detail": "credential-like text found"
+        },
+        {
+          "id": "figure:revenue.total",
+          "passed": true,
+          "detail": "found '$50,000.00'"
+        },
+        {
+          "id": "figure:revenue.total.mom_abs",
+          "passed": true,
+          "detail": "found '$1,000.00'"
+        },
+        {
+          "id": "flag:file_named",
+          "passed": true,
+          "detail": "The report names the workbook it read."
+        },
+        {
+          "id": "forbidden:other_file_figures",
+          "passed": true,
+          "detail": "No figure from the second workbook is mentioned. "
+        },
+        {
+          "id": "forbidden:causal_wording",
+          "passed": true,
+          "detail": "States no cause for any movement. "
+        }
+      ],
+      "values": {
+        "guard": "132/132 numbers traced",
+        "report_chars": 10334
+      }
+    },
+    "19_quickbooks_sandbox": {
+      "status": "pass",
+      "checks": [
+        {
+          "id": "report_command",
+          "passed": true,
+          "detail": "exit 0: "
+        },
+        {
+          "id": "guard",
+          "passed": true,
+          "detail": "204/204 numbers traced"
+        },
+        {
+          "id": "section:data_quality",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:revenue",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:margins",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:operating_expenses",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:month_over_month",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:ttm",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:significant_movements",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:one_offs",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:limitations",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "section:reviewer_checklist",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "id": "issue_shown_early:negative_revenue_line",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "issue_shown_early:no_balance_sheet",
+          "passed": true,
+          "detail": "shown before the Revenue section"
+        },
+        {
+          "id": "draft_label",
+          "passed": true,
+          "detail": "the first 25 lines must say this is a draft"
+        },
+        {
+          "id": "provider_label",
+          "passed": true,
+          "detail": "must say it was written by deterministic"
+        },
+        {
+          "id": "reviewer_checklist",
+          "passed": true,
+          "detail": "6 unchecked item(s) under the heading"
+        },
+        {
+          "id": "causal_language_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "causal_words_outside_questions",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_vocabulary_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "seasonality_not_asserted",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "one_offs_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "cause_label_hedged",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "direction_amounts_unsigned",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "impossible_values",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "id": "client_isolation",
+          "passed": true,
+          "detail": "mentions other clients: []"
+        },
+        {
+          "id": "no_credentials",
+          "passed": true,
+          "detail": "credential-like text found"
+        },
+        {
+          "id": "figure:revenue.total",
+          "passed": true,
+          "detail": "found '$6,641.38'"
+        },
+        {
+          "id": "figure:revenue.total.mom_abs",
+          "passed": true,
+          "detail": "found '$4,856.24'"
+        },
+        {
+          "id": "figure:opex.total",
+          "passed": true,
+          "detail": "found '$2,755.10'"
+        },
+        {
+          "id": "figure:operating_income",
+          "passed": true,
+          "detail": "found '$3,481.28'"
+        },
+        {
+          "id": "figure:revenue.total.ttm",
+          "passed": true,
+          "detail": "found '$10,200.77'"
+        },
+        {
+          "id": "flag:revenue_rose",
+          "passed": true,
+          "detail": "States that revenue rose from August."
+        },
+        {
+          "id": "forbidden:other_expenses_in_opex",
+          "passed": true,
+          "detail": "The 2,000.00 of Other Expenses is never presented as operating expense. "
+        },
+        {
+          "id": "forbidden:causal_wording",
+          "passed": true,
+          "detail": "States no cause for any movement. "
+        }
+      ],
+      "values": {
+        "guard": "204/204 numbers traced",
+        "report_chars": 13281
+      }
+    },
+    "20_quickbooks_round_trip": {
+      "status": "skip",
+      "checks": [],
+      "values": {},
+      "skip_reason": "case has no skill evaluation"
+    }
+  },
+  "claude_cost_usd_equivalent": 0
+}

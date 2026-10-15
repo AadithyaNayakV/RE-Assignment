@@ -17,6 +17,8 @@ deployed. Built and tested unless marked **[PLANNED]**.
 - `finance_engine/service/` and `finance_engine/web/`, `ui/`: the local web UI. Thin
   routes; each one listed with its CLI command; it never calculates.
 - `evals/`: 20 golden cases, Level 1 (engine) and Level 2 (report) runners, baselines.
+- `scripts/load_workbook_to_sandbox.py`: the only QuickBooks write (sandbox, by a person,
+  2026-10-15); the round trip matched.
 - `.mcp.json` starts the QuickBooks MCP server (no secret in it); `.claude/settings.json`
   denies its create, update and delete tools, so Claude sees only read tools.
 

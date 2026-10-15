@@ -1,6 +1,6 @@
 # Requirements checklist (audit)
 
-Source of truth: `docs/Build Exercise - AI Solutions Builder.pdf`. Audited 2026-10-11.
+Source of truth: `docs/Build Exercise - AI Solutions Builder.pdf`. Audited 2026-10-11; status updated 2026-10-15.
 Status: **PASS** (done, with evidence) · **PARTIAL** (done with a stated gap) ·
 **BLOCKED** (cannot be done from here) · **NOT STARTED**. Nothing is marked PASS without
 evidence in the right-hand column.
@@ -14,7 +14,7 @@ evidence in the right-hand column.
 | Where it would run for a whole team | PARTIAL | `docs/quickbooks_setup.md`, `docs/future_hosting.md` | The answer is written (hosted MCP over HTTPS behind SSO, per-client tokens in a secret manager). **Not built or deployed.** The brief says reasoning matters more than having deployed one. |
 | Credentials handled throughout | PARTIAL | `.gitignore`, `.env.example`, `docs/quickbooks_setup.md` | `.env` ignored in both repos; `.mcp.json` has an empty `env`; no secret in tracked files or in git history (scan below); the server rotates its own refresh token. **Gap:** the refresh token sits in plaintext in the server's git-ignored `.env`; a secret manager is planned, not built. |
 | Read-only access enforced | PASS | `.claude/settings.json` | All create/update/delete tools denied in both spellings; `tests/integration/test_quickbooks_mcp.py` checks it (3 config tests always run). 71 of 142 tools visible. |
-| (Phase 5C) Direct read-only reader for the CLI | PASS (sandbox) | `finance_engine/sources/quickbooks_api.py`, `sources/quickbooks.py`, `config/clients/qb_sandbox.yaml`, `tests/test_quickbooks.py`, case 19 | `pull-quickbooks` saves the monthly Profit and Loss as a snapshot the engine reads like a workbook. GET only plus the token refresh (checked by an AST test), sandbox host only, own token store, secrets redacted (checked with a fake server that echoes them). One real pull (2026-10-12) reconciled 65/65 for 2026-09. Loading the ABC workbook into the sandbox: **not done**. Secrets manager: **planned**. |
+| (Phase 5C) Direct read-only reader for the CLI | PASS (sandbox) | `finance_engine/sources/quickbooks_api.py`, `sources/quickbooks.py`, `config/clients/qb_sandbox.yaml`, `tests/test_quickbooks.py`, case 19 | `pull-quickbooks` saves the monthly Profit and Loss as a snapshot the engine reads like a workbook. GET only plus the token refresh (checked by an AST test), sandbox host only, own token store, secrets redacted (checked with a fake server that echoes them). One real pull (2026-10-12) reconciled 65/65 for 2026-09. Loading the ABC workbook into the sandbox: done on 2026-10-15 (the Stretch row below). Secrets manager: **planned**. |
 
 ## Part 2: A skill that produces the monthly trend analysis
 
@@ -29,7 +29,7 @@ evidence in the right-hand column.
 | Portable to a different company without a rewrite | PASS | `config/clients/*.yaml` | 10 synthetic clients, 3 layouts, no code change; rehearsal C added an 11th with one YAML. |
 | (Phase 5B) Draft a new client's config from its workbook | PASS | `finance_engine/init_client.py`, `tests/test_init_client.py` | `init-client` detects sheet, header row, columns, date order and format, sections, subtotal groups and reported lines; validates with the real loader, reader, analysis and reconciliation before writing `<id>.yaml`, else `<id>.draft.yaml` with the problems. For test_clean and Companies A and B the generated config gives the same metric values as the hand-written one. Unhandled layouts (a non-month column between months, no COGS section, a subtotal without a header) become drafts; a non-financial or unreadable file is refused. A balance-sheet tab in the same workbook (never a separate file or QuickBooks) is drafted too: tab, header row, columns, reported totals and trend lines by exact label; the draft is accepted only if the engine's balance check passes every month, and anything unsure is listed for a decision. |
 | (Phase 5B) Year, whole-file and multi-workbook analysis | PASS | `finance_engine/spans.py`, `finance_engine/sources/selection.py`, cases 14 to 18 | Year totals, quarters, same-months year on year, monthly table, extremes; a partial year labelled and never annualised; a gap blocks the totals. Whole file: monthly series, per-year totals, start-to-end change. `--file` and period-based workbook choice; never merged. Month output unchanged (byte-for-byte comparison against the previous commit). |
-| **Stretch:** load the workbook into the sandbox and run end to end | NOT STARTED | n/a | Deliberately not attempted. |
+| **Stretch:** load the workbook into the sandbox and run end to end | PASS (sandbox) | `scripts/load_workbook_to_sandbox.py`, `finance_engine/round_trip.py`, `config/clients/qb_sandbox_abc.yaml`, `tests/test_sandbox_loader.py`, case 20 | On 2026-10-15 a person ran `--apply`: 84 accounts and 18 journal entries (one per month) in the sandbox, logged in the git-ignored `data/clients/qb_sandbox_abc/load_log.json`. `pull-quickbooks --client qb_sandbox_abc` read them back, and `round-trip` matched all 18 months (558 figures, money to the cent). Claude never wrote: the MCP write tools stay denied and the script is the only write path. Case 20 checks the same comparison offline on a simulated snapshot. A Claude skill run on `qb_sandbox_abc` has not been graded. |
 
 ## Part 3: Eval suite
 
@@ -38,9 +38,9 @@ evidence in the right-hand column.
 | At least 5 golden cases (data state + expected output) | PASS (20) | `evals/cases/` | 20 cases, each with `case.yaml` (flags, forbidden claims, pass criteria) and, except case 12, `expected.json` (a derivation per value). Cases 14 to 18 (Phase 5B: year, year to date, gap, whole file, two workbooks) pass Level 1 and the deterministic Level 2; they have not been run through Claude. Case 19 (Phase 5C) reads a scrubbed real QuickBooks sandbox snapshot; its expected values are summed with plain `json`; it passes Level 1 and the deterministic Level 2 and has not been run through Claude. Case 20 (Phase 6) is the round trip: the ABC workbook in Intuit's report shape, read back through `qb_sandbox_abc_fixture` and compared month by month with the workbook (`round-trip`); its snapshot holds ABC figures, so it is git-ignored and written offline when missing; it has no Claude step. |
 | Expected values independent of the engine | PASS | `evals/tools/build_expected.py` | Built from the generator's inputs and the workbook's own cached totals; refuses to finish if `finance_engine` is imported; a test enforces it. |
 | Concrete grading approach | PASS | `evals/grading.md` | Three levels, thresholds, rubric. |
-| Regression detection | PASS | `evals/baseline/`, `evals/regression_demo.py` | A wrong subtotal in a test copy was caught by reconciliation; a temporary TTM off-by-one made 12 of the 13 cases the suite then had newly fail (it now has 20); reverted byte-identical. |
-| Evals actually caught things | PASS | `evals/CHANGELOG.md` | 17 numbered items: 10 product defects or gaps (#1 to #6, #14 to #17) and 7 faults in the eval suite itself (#7 to #13). |
-| Results | PARTIAL | `evals/evaluation_report.md` | Level 1 20/20 (2026-10-15). Level 2 Claude run (2026-10-11, cases 01 to 13, all that existed then) 12/13 as first graded, 13/13 after fixing a checker false positive; cases 14 to 17 not yet run through Claude (18 to 20 are graded on the template or have no commentary step). **Gaps:** one Claude run per case (variance unmeasured); Level 3 rubric not run; the full-run skill baseline predates the review fixes (re-saving needs about $5 of Pro usage). |
+| Regression detection | PASS | `evals/baseline/`, `evals/regression_demo.py` | A wrong subtotal in a test copy was caught by reconciliation; a temporary TTM off-by-one made 12 of the 13 cases the suite then had (2026-10-11) newly fail (it now has 20); reverted byte-identical. |
+| Evals actually caught things | PASS | `evals/CHANGELOG.md` | On 2026-10-11, 17 numbered items: 10 product defects or gaps (#1 to #6, #14 to #17) and 7 faults in the eval suite itself (#7 to #13). By 2026-10-15, 23: #18 to #22 from Phase 5B, and #23, a causal word in a Claude-written report. |
+| Results | PARTIAL | `evals/evaluation_report.md` | Level 1 20/20 (2026-10-15). Level 2 Claude run (2026-10-11, cases 01 to 13, all that existed then) 12/13 as first graded, 13/13 after fixing a checker false positive; cases 14 to 17 not yet run through Claude (18 to 20 are graded on the template or have no commentary step). On 2026-10-15, case 01 through Claude: 46/47 (a causal word outside the reviewer questions), then 47/47 after the fix; the other Claude cases have not been re-run against the current checks. **Gaps:** one Claude run per case (variance unmeasured); Level 3 rubric not run; the full-run skill baseline predates the review fixes (re-saving needs about $5 of Pro usage). |
 
 ## Part 4: One-page architecture note
 
@@ -72,18 +72,18 @@ it says PLANNED.
 
 | Requirement | Status | Evidence |
 |---|---|---|
-| Stay inside the sandbox and the supplied workbook | PASS | No live account connected; QuickBooks is an Intuit sandbox; every other client is labelled SYNTHETIC. |
+| Stay inside the sandbox and the supplied workbook | PASS | No live account connected; QuickBooks is an Intuit sandbox; every other client is labelled SYNTHETIC. The one write, the stretch-goal load (2026-10-15), went to the sandbox only and was run by a person. |
 | Be ready to explain every choice | PASS | `docs/decisions.md`. |
 | Live demo of the real system | PASS | `docs/demo_checklist.md`, `docs/live_demo_runbook.md`, `scripts/preflight_check.py` (13/13 on 2026-10-11, 83 s). I did not open the interactive `/mcp` screen; rehearse it once. |
 | One modification on the spot | PASS | Three rehearsals done and reverted (threshold, new metric, new company). |
 
-## Audit checks run 2026-10-11
+## Audit checks (dated per row)
 
 | Check | Result |
 |---|---|
-| Tests | `python -m pytest -q`: **650 passed, 3 skipped** (the skips are opt-in QuickBooks tiers). Mutation subset: 18 passed. On 2026-10-13, after Phase 5D: **1187 passed, 3 skipped**; mutation 18 passed; engine evals 19/19; deterministic Level 2 18 passed, 1 skipped; every month, year and whole-file output byte-identical to the previous commit; `scripts/ui_smoke.py` 47/47. |
+| Tests | `python -m pytest -q`: **650 passed, 3 skipped** (the skips are opt-in QuickBooks tiers). Mutation subset: 18 passed. On 2026-10-13, after Phase 5D: **1187 passed, 3 skipped**; mutation 18 passed; engine evals 19/19; deterministic Level 2 18 passed, 1 skipped; every month, year and whole-file output byte-identical to the previous commit; `scripts/ui_smoke.py` 47/47. On 2026-10-15: **1307 passed, 3 skipped**; engine evals 20/20. |
 | Engine evals | 13/13 (every case then); compare with baseline: no change. On 2026-10-14: 19/19. On 2026-10-15, with case 20: 20/20. |
-| Skill eval, ABC | 46/46 after the review fixes (13 turns, 92 s). |
+| Skill eval, ABC | 46/46 after the review fixes (13 turns, 92 s). On 2026-10-15, against 47 checks: 46/47 (`causal_words_outside_questions`), then 47/47 after the fix (`evals/runs/skill_2026-10-15T07-54-57Z`). |
 | Preflight | 13 passed, 0 failed, 0 skipped. |
 | Original ABC workbook | SHA-256 `75da8d679a89551f…` equals the reference in `scripts/reference_hashes.json` and the `source.sha256` in `metrics.json`; unchanged after the engine ran. |
 | `.env` and tokens in git | None tracked: `git ls-files` shows only `.env.example`. The root `.env` is ignored (`.gitignore:2`); the server's `.env` is ignored inside its own repo. |
@@ -91,4 +91,4 @@ it says PLANNED.
 | Keys in tracked files | None. `ANTHROPIC_API_KEY` and `OLLAMA_BASE_URL` are blank placeholders. |
 | `.gitignore` | Covers `.env*` (except the example), `*.pem`, `*.key`, token and credential JSON, `data/clients/`, `*.xlsx` (except synthetic), `output/`, `evals/runs/`, `demo_backup/abc_*`. |
 | `node_modules` | Not tracked. |
-| **Repo issue found** | `quickbooks-online-mcp-server` is recorded as a gitlink (commit `31a1dd5`) with no `.gitmodules`, so a fresh clone gets an empty folder. Fixed by adding `.gitmodules` (Intuit's URL, same commit, which equals upstream `HEAD` today); the README documents clone and build. Uncommitted until you commit it. |
+| **Repo issue found** | `quickbooks-online-mcp-server` is recorded as a gitlink (commit `31a1dd5`) with no `.gitmodules`, so a fresh clone gets an empty folder. Fixed by adding `.gitmodules` (Intuit's URL, same commit, which equals upstream `HEAD` today); the README documents clone and build. Committed in `8a21dcf`. |

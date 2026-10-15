@@ -106,7 +106,10 @@ can explain every one as my own.
   this source only, and the client config's classification note says so.
 - **Rejected:** analysing the live response directly (not reproducible); reusing the MCP
   server's token (rotation conflicts); production access (out of scope; refused in code).
-- **Not done:** loading the ABC workbook into the sandbox; a secrets manager (planned).
+- **Loading the ABC workbook into the sandbox:** done on 2026-10-15 by a person, with
+  `scripts/load_workbook_to_sandbox.py --apply` (84 accounts, 18 journal entries);
+  `round-trip` matched all 18 months. Claude never writes to QuickBooks.
+- **Not done:** a secrets manager (planned).
 
 ## 9. The local UI: FastAPI, plain JS modules, vendored Chart.js (Phase 5D)
 - **Chose:** a FastAPI app (`finance_engine/web/app.py`) of thin routes over a service
