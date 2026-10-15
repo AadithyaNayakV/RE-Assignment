@@ -156,6 +156,19 @@ def build_parser() -> argparse.ArgumentParser:
     p_pull.add_argument("--json", action="store_true",
                         help="print one JSON result on stdout; notes go to stderr")
 
+    p_rt = sub.add_parser("round-trip",
+                          help="the engine on a workbook against the engine on its "
+                               "QuickBooks sandbox copy, every month, to the cent")
+    p_rt.add_argument("--excel-client", required=True, help="workbook client, e.g. abc_inc")
+    p_rt.add_argument("--qb-client", required=True,
+                      help="QuickBooks client holding the loaded copy, e.g. qb_sandbox_abc")
+    p_rt.add_argument("--file", dest="workbook", default=None, metavar="NAME",
+                      help="which snapshot of --qb-client to read (default: the newest)")
+    p_rt.add_argument("--root", default=None,
+                      help="project root (defaults to the working directory)")
+    p_rt.add_argument("--json", action="store_true",
+                      help="print one JSON result on stdout; notes go to stderr")
+
     p_init = sub.add_parser("init-client",
                             help="draft config/clients/<ID>.yaml by inspecting a workbook")
     p_init.add_argument("--file", required=True, help="the workbook to inspect (.xlsx)")
@@ -258,7 +271,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 #: Commands that take no period and are dispatched before scope checks.
-_PLAIN = ("init-client", "pull-quickbooks", "list-clients", "list-files", "validate-config",
+_PLAIN = ("init-client", "pull-quickbooks", "round-trip", "list-clients", "list-files", "validate-config",
           "approve-config", "review", "list-evals", "provider-status", "quickbooks-status",
           "chart-data", "serve")
 
@@ -854,6 +867,14 @@ def _pull_quickbooks(args) -> int:
     return EXIT_OK
 
 
+def _round_trip(args) -> int:
+    """Workbook vs its QuickBooks copy: every month, every headline figure, to the cent."""
+    from finance_engine.round_trip import round_trip, summary_lines
+    result = round_trip(args.excel_client, args.qb_client, _root(args), args.workbook)
+    return _done(args, "round-trip", result, summary_lines(result),
+                 EXIT_OK if result["ok"] else EXIT_DATA)
+
+
 def _pull_for_report(args) -> None:
     """`report --source quickbooks`: pull, then analyse exactly that snapshot."""
     if args.workbook:
@@ -907,6 +928,7 @@ def _init_client(args) -> int:
 
 def _plain_command(args) -> int:
     handlers = {"init-client": _init_client, "pull-quickbooks": _pull_quickbooks,
+                "round-trip": _round_trip,
                 "list-clients": _list_clients, "list-files": _list_files,
                 "validate-config": _validate_config, "approve-config": _approve_config,
                 "review": _review, "list-evals": _list_evals,

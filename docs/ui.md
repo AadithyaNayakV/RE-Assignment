@@ -153,7 +153,7 @@ in the browser when storage is available); below 1000 px it folds into a Menu bu
 - **Review queue**: every report Ready for review, across companies. The top bar shows
   the count next to the page name and in the page title, refreshed every 30 seconds
   without a reload.
-- **Evals**: the 19 golden cases ("Test cases") with their newest saved baseline result
+- **Evals**: the 20 golden cases ("Test cases") with their newest saved baseline result
   (Level 2 "Template report" is the deterministic control), and "Run free evals" with a
   live log. No button for paid evals.
 - **Sources and settings**: QuickBooks status (sandbox badge, names of missing

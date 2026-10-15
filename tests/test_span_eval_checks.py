@@ -72,8 +72,8 @@ def _insert(report, sentence):
 
 
 class TestCasesAreRegistered:
-    def test_nineteen_cases(self):
-        assert [c["id"][:2] for c in load_cases()] == [f"{i:02d}" for i in range(1, 20)]
+    def test_twenty_cases(self):
+        assert [c["id"][:2] for c in load_cases()] == [f"{i:02d}" for i in range(1, 21)]
 
     def test_inputs_map_to_flags_and_paths(self):
         assert scope_args({"period": "2026-06"}) == ["--period", "2026-06"]
@@ -243,4 +243,6 @@ class TestFreshClone:
         needs = sorted(c["id"] for c in load_cases()
                        if c["input"].get("workbook")
                        and c["input"]["workbook"] not in generated | tracked)
-        assert needs == ["01_abc_inc_2026_06", "13_deterministic_fallback"]
+        # Case 20 reads the ABC workbook too (its round-trip snapshot is written from it).
+        assert needs == ["01_abc_inc_2026_06", "13_deterministic_fallback",
+                         "20_quickbooks_round_trip"]

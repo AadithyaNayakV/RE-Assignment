@@ -34,6 +34,12 @@ def evaluate(case: dict, out_dir: Path, root: Path | None) -> CaseResult:
     r = CaseResult(case["id"])
     eng = case.get("engine") or {}
     if eng.get("cli_checks"):
+        base = root or ROOT
+        missing = [p for p in eng.get("requires", []) if not (base / p).exists()]
+        if missing:
+            return r.skip(f"input not present: {', '.join(missing)}")
+        if eng.get("prepare") == "round_trip_fixture":
+            _prepare_round_trip_fixture(base)
         return _cli_checks(case, r, out_dir, root)
 
     inp, expected = case["input"], case["_expected"]
@@ -286,6 +292,18 @@ def _extra_run(r: CaseResult, run: dict, expected: dict, out_dir: Path,
                           prefix=f"{rid}:")
 
 
+def _prepare_round_trip_fixture(base: Path) -> None:
+    """Case 20's snapshot holds client figures, so it is git-ignored: write the offline
+    one if it is missing (an existing file, e.g. a real pull, is left alone)."""
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import load_workbook_to_sandbox as loader
+
+    path = loader.fixture_path(base)
+    if not path.exists():
+        loader.write_fixture(base)
+        print(f"generated missing round-trip fixture: {path}")
+
+
 def _cli_checks(case: dict, r: CaseResult, out_dir: Path, root: Path | None) -> CaseResult:
     for chk in case["engine"]["cli_checks"]:
         code, stdout, stderr = run_engine([str(a) for a in chk["args"]], out_dir, root)
@@ -297,6 +315,9 @@ def _cli_checks(case: dict, r: CaseResult, out_dir: Path, root: Path | None) -> 
         if chk.get("stderr"):
             r.check(f"{cid}:message", re.search(chk["stderr"], stderr) is not None,
                     f"stderr should match {chk['stderr']!r}; got {stderr.strip()[:200]!r}")
+        for n, pattern in enumerate(chk.get("stdout") or []):
+            r.check(f"{cid}:stdout_{n + 1}", re.search(pattern, stdout) is not None,
+                    f"stdout should match {pattern!r}; got {stdout.strip()[-300:]!r}")
         if chk.get("must_not_exist"):
             path = out_dir / chk["must_not_exist"]
             r.check(f"{cid}:no_output_for_unknown_client", not path.exists(), str(path))

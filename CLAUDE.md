@@ -50,9 +50,11 @@ Data source (Excel workbook, or a saved QuickBooks sandbox snapshot)
 | `finance_engine/sources/selection.py` | Which workbook a run reads when a client's folder holds several (`--file`); never merged |
 | `finance_engine/init_client.py` | `init-client`: drafts and validates a new client's YAML from its workbook |
 | `.claude/skills/monthly-financial-analysis/` | The skill: Claude Code writes the commentary from the brief, then runs the guard |
-| `evals/` | 19 golden cases, Level 1 (engine) and Level 2 (report) runners, baselines. See `evals/grading.md` |
+| `evals/` | 20 golden cases, Level 1 (engine) and Level 2 (report) runners, baselines. See `evals/grading.md` |
 | `finance_engine/onboarding.py` | `init-client --draft`, `validate-config`, `approve-config`: a new config goes live only after a named person approves it |
 | `finance_engine/review.py`, `config/review.yaml` | Review workflow (Ready for review on generation, Changes requested, Reviewed), files only; `review/review_log.json` beside each report |
+| `finance_engine/round_trip.py` | `round-trip`: the engine on a workbook vs the engine on its QuickBooks sandbox copy, every month, to the cent |
+| `scripts/load_workbook_to_sandbox.py` | The ONLY code that writes to QuickBooks: loads a workbook into the sandbox (dry run by default, offline; `--apply`, `--undo`), run by a person, never by Claude |
 | `finance_engine/trace_links.py` | Which figures in a report's prose map to exactly one metric (for click-to-trace); engine code, the guard is unchanged |
 | `finance_engine/service/` | Service layer shared by the new CLI commands and the web app: reads, jobs, uploads, the route-to-CLI parity table. No money maths |
 | `finance_engine/web/`, `ui/` | The local web app (`serve`, 127.0.0.1 only, no sign-in): FastAPI routes; plain HTML/CSS/JS modules; Chart.js vendored in `ui/static/vendor/`. See `docs/ui.md` |
@@ -68,6 +70,9 @@ Data source (Excel workbook, or a saved QuickBooks sandbox snapshot)
   plus the OAuth token refresh, nothing else, with its own token store
   (`.secrets/quickbooks_reader_token.json`), never the MCP server's. The engine analyses a
   saved snapshot file, never a live response. See `docs/quickbooks_setup.md`.
+- The one write path to QuickBooks is `scripts/load_workbook_to_sandbox.py` (sandbox only,
+  dry run by default, logged, undoable). A person runs `--apply` and `--undo`; Claude never
+  does, and the MCP server's write tools stay denied.
 - Everything is keyed by `client_id`.
 - External dependencies sit behind interfaces: `DataSource`, `CommentaryProvider`, `CredentialStore`.
 - Settings come from environment variables (`LLM_PROVIDER=deterministic` by default).
@@ -107,6 +112,8 @@ python -m finance_engine report  --client test_clean --scope year --year 2025   
 python -m finance_engine analyze --client test_multi --period 2025-06 --file test_multi_second_half.xlsx
 python -m finance_engine init-client --file book.xlsx --client-id acme_ltd --name "Acme Ltd"
 python -m finance_engine pull-quickbooks --client qb_sandbox --start 2025-10 --end 2026-10
+python scripts/load_workbook_to_sandbox.py           # dry run, offline; --apply / --undo by a person only
+python -m finance_engine round-trip --excel-client abc_inc --qb-client qb_sandbox_abc
 python -m finance_engine report  --client qb_sandbox_fixture --period 2026-09   # case 19's snapshot
 python -m finance_engine init-client --draft --file book.xlsx --client-id acme_ltd --name "Acme Ltd"
 python -m finance_engine validate-config --client acme_ltd --draft

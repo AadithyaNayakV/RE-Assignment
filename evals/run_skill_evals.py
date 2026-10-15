@@ -2,6 +2,7 @@
 
     python evals/run_skill_evals.py 04                     # one case through Claude Code
     python evals/run_skill_evals.py                        # every case (uses Pro usage)
+    python evals/run_skill_evals.py --recheck evals/runs/<run>   # re-grade, no Claude call
     python evals/run_skill_evals.py --provider deterministic   # free control run, no Claude
     python evals/run_skill_evals.py 01 --rubric            # add the Level 3 rubric score
     python evals/run_skill_evals.py --compare / --save-baseline
@@ -36,7 +37,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from evals.common import (ROOT, CaseResult, compare_results, latest_baseline,  # noqa: E402
+from evals.common import (ROOT, SKIP, CaseResult, compare_results, latest_baseline,  # noqa: E402
                           load_cases, new_run_dir, output_rel, print_comparison,
                           print_results, results_doc, run_engine, save_baseline,
                           save_results, scope_args, ensure_generated_workbooks)
@@ -305,6 +306,30 @@ def rubric_score(report: Path, case_dir: Path, args) -> dict:
 
 # ---- driver ----------------------------------------------------------------------
 
+def print_table(doc: dict, run_dir: Path) -> None:
+    """One row per case, then where everything was saved."""
+    rows = [("Case", "Result", "Checks", "Report written by", "Claude cost (USD)")]
+    for case_id, res in doc["cases"].items():
+        checks = res["checks"]
+        claude = res.get("claude") or {}
+        cost = claude.get("cost_usd")
+        rows.append((case_id, res["status"].upper(),
+                     f"{sum(c['passed'] for c in checks)}/{len(checks)}" if checks else "-",
+                     "-" if res["status"] == SKIP else ("Claude" if claude else "template"),
+                     "-" if cost is None else f"{cost:.2f}"))
+    widths = [max(len(r[i]) for r in rows) for i in range(len(rows[0]))]
+    print()
+    for n, row in enumerate(rows):
+        print("  " + "  ".join(cell.ljust(w) for cell, w in zip(row, widths)).rstrip())
+        if n == 0:
+            print("  " + "  ".join("-" * w for w in widths))
+    s = doc["summary"]
+    print(f"\nRESULT: {'PASS' if not s['failed'] else 'FAIL'} - {s['passed']} passed, "
+          f"{s['failed']} failed, {s['skipped']} skipped")
+    print(f"Saved: {run_dir / 'results.json'}")
+    print(f"       each case's report.md, metrics.json and transcript: "
+          f"{run_dir}{os.sep}<case>")
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("cases", nargs="*", help="case id prefixes; default all")
@@ -326,6 +351,9 @@ def main(argv: list[str] | None = None) -> int:
     label = "skill" if args.provider == "claude" else "skill_deterministic"
     run_id, run_dir = new_run_dir(label)
     print(f"Level 2 report evals ({args.provider}) -> {run_dir}")
+    if args.provider == "claude" and not args.recheck:
+        print("  Calls Claude Code headless, one case at a time. This uses your Claude Pro "
+              "usage;\n  the API-equivalent cost is printed at the end.")
     if not args.recheck:
         ensure_generated_workbooks()
     results = []
@@ -350,7 +378,8 @@ def main(argv: list[str] | None = None) -> int:
     elif args.provider == "claude":
         print(f"Claude usage, API-equivalent cost reported by the CLI: "
               f"${doc['claude_cost_usd_equivalent']}")
-    print(f"results: {save_results(doc, run_dir)}")
+    save_results(doc, run_dir)
+    print_table(doc, run_dir)
 
     regressed = False
     if args.compare:

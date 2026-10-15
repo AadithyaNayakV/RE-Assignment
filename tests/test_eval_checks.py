@@ -156,9 +156,9 @@ class TestEachCheckCatchesItsFault:
 
 
 class TestCasesAreWellFormed:
-    def test_nineteen_cases_each_with_criteria(self):
+    def test_twenty_cases_each_with_criteria(self):
         cases = load_cases()
-        assert len(cases) == 19
+        assert len(cases) == 20
         for case in cases:
             assert case["pass_criteria"] and case["why"], case["id"]
             assert case.get("engine") and case.get("skill"), case["id"]
@@ -166,7 +166,7 @@ class TestCasesAreWellFormed:
     def test_expected_values_were_built_without_the_engine(self):
         for case in load_cases():
             exp = case["_expected"]
-            if case["id"].startswith("12_"):
+            if case["id"].startswith(("12_", "20_")):   # CLI checks only
                 assert exp is None
                 continue
             if exp is None:            # ABC workbook absent on this machine

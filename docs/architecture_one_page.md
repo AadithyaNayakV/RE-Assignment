@@ -16,13 +16,17 @@ deployed. Built and tested unless marked **[PLANNED]**.
   checked, retried, and always fall back to the template.
 - `finance_engine/service/` and `finance_engine/web/`, `ui/`: the local web UI. Thin
   routes; each one listed with its CLI command; it never calculates.
-- `evals/`: 19 golden cases, Level 1 (engine) and Level 2 (report) runners, baselines.
+- `evals/`: 20 golden cases, Level 1 (engine) and Level 2 (report) runners, baselines.
+- `.mcp.json` starts the QuickBooks MCP server (no secret in it); `.claude/settings.json`
+  denies its create, update and delete tools, so Claude sees only read tools.
 
 ## Skills and memory
 
 - `.claude/skills/monthly-financial-analysis/`: Claude Code writes commentary from the
   brief, then runs the guard. It never calculates.
 - `CLAUDE.md` is the project memory (the rules, folder map, commands).
+- Claude Code's per-user auto-memory is not relied on: everything the skill needs is in
+  the repo (`SKILL.md`, its `reference/` files, `CLAUDE.md`).
 - Review state is files: `review/review_log.json` beside each report (append-only,
   hash-chained, with a SHA-256 of report.md and metrics.json per decision) and
   `data/clients/<id>/config_approval.json`. On this machine only; names are
@@ -49,6 +53,9 @@ deployed. Built and tested unless marked **[PLANNED]**.
 - **[PLANNED]:** access control per client, per-client audit logs, a secret-manager
   entry and QuickBooks token per client. **Today nothing stops a local user reading any
   client's folder.**
+- **What breaks first:** QuickBooks. The reader has one set of `QBO_*` variables and one
+  token file (`.secrets/quickbooks_reader_token.json`), so every QuickBooks client shares
+  one sandbox company and one token. After that: no login, and review logs on local disk.
 
 ## What breaks first at ten clients
 

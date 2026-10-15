@@ -35,12 +35,12 @@ evidence in the right-hand column.
 
 | Requirement | Status | Where | Evidence |
 |---|---|---|---|
-| At least 5 golden cases (data state + expected output) | PASS (19) | `evals/cases/` | 19 cases, each with `case.yaml` (flags, forbidden claims, pass criteria) and, except case 12, `expected.json` (a derivation per value). Cases 14 to 18 (Phase 5B: year, year to date, gap, whole file, two workbooks) pass Level 1 and the deterministic Level 2; they have not been run through Claude. Case 19 (Phase 5C) reads a scrubbed real QuickBooks sandbox snapshot; its expected values are summed with plain `json`; it passes Level 1 and the deterministic Level 2 and has not been run through Claude. |
+| At least 5 golden cases (data state + expected output) | PASS (20) | `evals/cases/` | 20 cases, each with `case.yaml` (flags, forbidden claims, pass criteria) and, except case 12, `expected.json` (a derivation per value). Cases 14 to 18 (Phase 5B: year, year to date, gap, whole file, two workbooks) pass Level 1 and the deterministic Level 2; they have not been run through Claude. Case 19 (Phase 5C) reads a scrubbed real QuickBooks sandbox snapshot; its expected values are summed with plain `json`; it passes Level 1 and the deterministic Level 2 and has not been run through Claude. Case 20 (Phase 6) is the round trip: the ABC workbook in Intuit's report shape, read back through `qb_sandbox_abc_fixture` and compared month by month with the workbook (`round-trip`); its snapshot holds ABC figures, so it is git-ignored and written offline when missing; it has no Claude step. |
 | Expected values independent of the engine | PASS | `evals/tools/build_expected.py` | Built from the generator's inputs and the workbook's own cached totals; refuses to finish if `finance_engine` is imported; a test enforces it. |
 | Concrete grading approach | PASS | `evals/grading.md` | Three levels, thresholds, rubric. |
-| Regression detection | PASS | `evals/baseline/`, `evals/regression_demo.py` | A wrong subtotal in a test copy was caught by reconciliation; a temporary TTM off-by-one made 12 of 13 cases newly fail; reverted byte-identical. |
+| Regression detection | PASS | `evals/baseline/`, `evals/regression_demo.py` | A wrong subtotal in a test copy was caught by reconciliation; a temporary TTM off-by-one made 12 of the 13 cases the suite then had newly fail (it now has 20); reverted byte-identical. |
 | Evals actually caught things | PASS | `evals/CHANGELOG.md` | 17 numbered items: 10 product defects or gaps (#1 to #6, #14 to #17) and 7 faults in the eval suite itself (#7 to #13). |
-| Results | PARTIAL | `evals/evaluation_report.md` | Level 1 13/13; Level 2 Claude run 12/13 as first graded, 13/13 after fixing a checker false positive. **Gaps:** one Claude run per case (variance unmeasured); Level 3 rubric not run; the full-run skill baseline predates the review fixes (re-saving needs about $5 of Pro usage). |
+| Results | PARTIAL | `evals/evaluation_report.md` | Level 1 20/20 (2026-10-15). Level 2 Claude run (2026-10-11, cases 01 to 13, all that existed then) 12/13 as first graded, 13/13 after fixing a checker false positive; cases 14 to 17 not yet run through Claude (18 to 20 are graded on the template or have no commentary step). **Gaps:** one Claude run per case (variance unmeasured); Level 3 rubric not run; the full-run skill baseline predates the review fixes (re-saving needs about $5 of Pro usage). |
 
 ## Part 4: One-page architecture note
 
@@ -82,7 +82,7 @@ it says PLANNED.
 | Check | Result |
 |---|---|
 | Tests | `python -m pytest -q`: **650 passed, 3 skipped** (the skips are opt-in QuickBooks tiers). Mutation subset: 18 passed. On 2026-10-13, after Phase 5D: **1187 passed, 3 skipped**; mutation 18 passed; engine evals 19/19; deterministic Level 2 18 passed, 1 skipped; every month, year and whole-file output byte-identical to the previous commit; `scripts/ui_smoke.py` 47/47. |
-| Engine evals | 13/13; compare with baseline: no change. |
+| Engine evals | 13/13 (every case then); compare with baseline: no change. On 2026-10-14: 19/19. On 2026-10-15, with case 20: 20/20. |
 | Skill eval, ABC | 46/46 after the review fixes (13 turns, 92 s). |
 | Preflight | 13 passed, 0 failed, 0 skipped. |
 | Original ABC workbook | SHA-256 `75da8d679a89551f…` equals the reference in `scripts/reference_hashes.json` and the `source.sha256` in `metrics.json`; unchanged after the engine ran. |

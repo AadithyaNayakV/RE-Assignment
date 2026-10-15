@@ -1,3 +1,5 @@
+> Historical record from 2026-10-11; the suite now has 20 cases. See evals/README.md.
+
 # Evaluation report
 
 Actual results, 2026-10-11, on commit `a18e32d` plus the uncommitted Phase 3 changes,

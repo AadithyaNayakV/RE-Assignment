@@ -1,0 +1,133 @@
+# Golden case 20: the round trip, offline. Identical to qb_sandbox_abc.yaml except the
+# client id, the name and the file (a test keeps the mappings identical). The snapshot,
+# data/clients/qb_sandbox_abc_fixture/source/qb_pl_roundtrip_fixture.json, holds ABC
+# figures, so it is git-ignored and written on demand by
+#   python scripts/load_workbook_to_sandbox.py --write-fixture [--from <real pull>]
+# (the eval runner writes the offline one when it is missing and the workbook exists).
+client_id: qb_sandbox_abc_fixture
+company_name: ABC Inc via QuickBooks Sandbox (SANDBOX fixture)
+currency: USD
+currency_symbol: "$"
+units_scale: 1
+synthetic: true
+scenario: The ABC Inc workbook loaded into Intuit's QuickBooks Online sandbox (test data)
+
+source:
+  type: quickbooks
+  filename: qb_pl_roundtrip_fixture.json
+  # Read only the accounts the loader created. The sandbox also holds Intuit's sample
+  # company; every account not named "RE - ..." is left out, and Intuit's totals that
+  # count those accounts are marked "not provided" (never recomputed). The round trip
+  # against the workbook (`round-trip`) is the check that matters for this client.
+  account_prefix: "RE - "
+  may_be_omitted:
+    revenue: Income
+    cogs: COGS
+    opex: Expenses
+    gross_profit: GrossProfit
+    operating_income: NetOperatingIncome
+    net_income: NetIncome
+
+sheets:
+  income_statement:
+    name: ProfitAndLoss
+    header_row: 1
+    label_columns: [A]
+    first_data_column: B
+    date_order: oldest_first
+
+# Intuit's own report sections; the loader puts revenue lines in Income accounts, COGS
+# lines in Cost of Goods Sold accounts and operating expenses in Expense accounts.
+income_statement:
+  sections:
+    - key: revenue
+      header_label: Income
+      total_label: Total Income
+    - key: cogs
+      header_label: Cost of Goods Sold
+      total_label: Total Cost of Goods Sold
+    - key: opex
+      header_label: Expenses
+      total_label: Total Expenses
+      subtotal_groups: []
+  reported_lines:
+    gross_profit: Gross Profit
+    operating_income: Net Operating Income
+    net_income: Net Income
+
+# Copied from abc_inc.yaml so each "RE - <line>" account lands in the same category as
+# its workbook line (the rules match on substrings; the prefix matches none of them).
+# A test keeps the two lists identical.
+opex_categories:
+  - name: "Payroll & People Costs"
+    match_contains: ["payroll", "bonus", "severance", "recruiting", "training",
+                     "health insurance", "workers comp", "401k", "benefits"]
+  - name: "Commissions"
+    match_contains: ["commission"]
+  - name: "Contractors"
+    match_contains: ["contractor"]
+  - name: "Marketing & Advertising"
+    match_contains: ["marketing/advertising", "events & conferences"]
+  - name: "Software, Hosting & AI"
+    match_contains: ["software", "saas", "hosting", "ai token"]
+  - name: "Professional & Legal Fees"
+    match_contains: ["accounting", "legal", "consulting", "advisory", "professional fees"]
+  - name: "Occupancy & Insurance"
+    match_contains: ["rent", "insurance"]
+  - name: "Travel, Meals & Office"
+    match_contains: ["travel", "meals", "office", "postage", "printing",
+                     "telephone", "general expenses"]
+  - name: "Finance, Tax & Non-Cash"
+    match_contains: ["interest", "depreciation", "bad debts", "tax", "bank service",
+                     "merchant fees", "stock-based", "charities"]
+fallback_opex_category: "Other Operating Expenses"
+
+reconciliation:
+  tolerance_abs: 0.01
+  checks:
+    - key: revenue_items_vs_total
+      description: Sum of RE income accounts equals Intuit's Total Income
+    - key: cogs_items_vs_total
+      description: Sum of RE cost-of-goods-sold accounts equals Intuit's Total Cost of Goods Sold
+    - key: opex_items_vs_total
+      description: Sum of RE expense accounts equals Intuit's Total Expenses
+    - key: gross_profit
+      description: Total Income minus Total Cost of Goods Sold equals Intuit's Gross Profit
+    - key: operating_income
+      description: Gross Profit minus Total Expenses equals Intuit's Net Operating Income
+
+classification_notes:
+  - "QuickBooks Online SANDBOX: the ABC Inc workbook, loaded by
+     scripts/load_workbook_to_sandbox.py as one journal entry per month into accounts
+     named 'RE - <workbook line>'. Only those accounts are read; Intuit's sample-company
+     accounts in the same sandbox are left out, and Intuit's totals that include them are
+     not used. As in the workbook, Interest Income, Interest Expense, Bad Debts and Income
+     Tax Benefit sit inside operating expenses, so operating income equals net income for
+     these accounts. A blank QuickBooks cell means no activity and is read as zero."
+
+expected_negative_lines:
+  - RE - Interest Income
+  - RE - Income Tax Benefit
+
+thresholds:
+  # A movement is "significant" if EITHER its absolute change clears significant_mom_abs,
+  # OR its percentage change clears significant_mom_pct *and* its absolute change clears
+  # significant_mom_min_abs. The second floor matters: without it a line moving 400 -> 600
+  # is "+50%" and crowds out the movements that actually affect the month.
+  significant_mom_pct: 25.0
+  significant_mom_abs: 10000.0
+  significant_mom_min_abs: 1000.0
+  # A month is a "possible one-off" if it exceeds the trailing average by this multiple
+  # and the absolute gap clears the floor. Labelled "possible" — never a stated cause.
+  oneoff_multiple: 3.0
+  oneoff_min_abs: 5000.0
+  oneoff_trailing_months: 6
+  # Separate, higher floor for scanning the whole trailing-twelve-month window. A TTM
+  # total silently carries whatever happened eleven months ago, so anything this large
+  # inside the window earns a warning on every TTM metric.
+  oneoff_window_min_abs: 25000.0
+  # Movements ranked in the report
+  top_movements: 5
+
+ttm:
+  months: 12

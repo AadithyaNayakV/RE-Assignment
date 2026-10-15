@@ -1,3 +1,5 @@
+> Historical record from 2026-10-11; the suite now has 20 cases. See evals/README.md.
+
 # demo_backup: what each file is, and what it is a backup of
 
 Honest labels. Say which one you are showing.

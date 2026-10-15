@@ -26,6 +26,11 @@ Two deliberate limitations, both reported rather than hidden:
   signs gets no verdict, and any other sign use remains a reviewer's job.
 * A number that happens to coincide with an unrelated allowed value passes. The guard
   proves a figure is *supported*, not that it was used in the right sentence.
+
+It also rejects causal wording ("because", "due to", ...) outside "Questions for the
+reviewer", using `finance_engine.wording.causal_units`: the same word list and the same
+check as the eval `causal_words_outside_questions`, so `check-commentary` cannot pass a
+report the evals fail on wording.
 """
 
 from __future__ import annotations
@@ -35,6 +40,8 @@ import re
 from dataclasses import dataclass, field
 from decimal import ROUND_HALF_DOWN, ROUND_HALF_UP, Decimal
 from pathlib import Path
+
+from finance_engine.wording import causal_units
 
 #: Smallest meaningful currency difference — one cent.
 MIN_TOLERANCE = 0.011
@@ -144,6 +151,13 @@ class GuardResult:
     notes: list[str] = field(default_factory=list)
     direction_errors: list[dict] = field(default_factory=list)
     directions_checked: int = 0
+    causal_wording: list[str] = field(default_factory=list)
+
+    @property
+    def numbers_passed(self) -> bool:
+        """Figures and direction words only: for engine text that is not commentary,
+        such as the brief, which explains "n/a (reason)" to the writer."""
+        return not self.unsupported and not self.direction_errors
 
     def to_dict(self) -> dict:
         return {
@@ -155,6 +169,7 @@ class GuardResult:
             "unsupported": [f.to_dict() for f in self.unsupported],
             "directions_checked": self.directions_checked,
             "direction_errors": self.direction_errors,
+            "causal_wording": self.causal_wording,
             "notes": self.notes,
         }
 
@@ -175,6 +190,12 @@ class GuardResult:
                 lines.append(f"  line {e['line']}: {e['word']!r} before {e['text']!r}: "
                              f"{e['problem']}")
                 lines.append(f"      context: ...{e['context']}...")
+        if self.causal_wording:
+            lines.append(f"REJECTED — {len(self.causal_wording)} sentence(s) use causal "
+                         f"wording outside 'Questions for the reviewer' (say where a "
+                         f"change sits, not why):")
+            for unit in self.causal_wording:
+                lines.append(f"  {' '.join(unit.split())[:160]!r}")
         for f in self.unsupported:
             closest = (f"closest supported value {f.closest_allowed:,.2f} "
                        f"(off by {f.closest_difference:,.2f})"
@@ -228,9 +249,11 @@ class NumberGuard:
 
         unsupported = [f for f in findings if not f.supported]
         direction_errors, directions_checked = self._check_directions(text, masked)
+        causal = causal_units(text, self.doc)
         return GuardResult(
-            passed=not unsupported and not direction_errors,
+            passed=not unsupported and not direction_errors and not causal,
             direction_errors=direction_errors,
+            causal_wording=causal,
             directions_checked=directions_checked,
             checked=len(findings),
             unsupported=unsupported,

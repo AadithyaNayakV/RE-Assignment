@@ -1,0 +1,52 @@
+id: 20_quickbooks_round_trip
+title: ABC workbook loaded into the QuickBooks sandbox and read back (round trip)
+synthetic: false
+builder: round_trip
+input:
+  client_id: qb_sandbox_abc_fixture
+  period: "2026-06"
+  workbook: data/clients/abc_inc/source/ABC Inc - Financial Statements.xlsx
+  config: config/clients/qb_sandbox_abc_fixture.yaml
+why: >
+  The stretch goal: scripts/load_workbook_to_sandbox.py posts every ABC line, every month,
+  as a journal entry into accounts named "RE - <line>", and pull-quickbooks reads them
+  back. If loading, pulling or reading changed anything, the engine's figures differ.
+  The snapshot sits beside Intuit's sample company, so it also holds accounts that are
+  not ABC's: the reader must leave them out and must not use Intuit's totals that count
+  them. The snapshot holds ABC figures, so it is git-ignored. When it is missing, the
+  runner writes the offline one (`--write-fixture`: Intuit's report shape, built from the
+  loader's own plan, plus two sample-company accounts). After a real --apply and pull,
+  `--write-fixture --from <snapshot>` puts the real response in its place (checked first:
+  no QBO_* value may appear in it). Skipped, like case 01, when the workbook is missing.
+
+engine:
+  requires:
+    - data/clients/abc_inc/source/ABC Inc - Financial Statements.xlsx
+  prepare: round_trip_fixture
+  cli_checks:
+    - id: round_trip
+      args: [round-trip, --excel-client, abc_inc, --qb-client, qb_sandbox_abc_fixture]
+      exit_code: 0
+      stdout:
+        - 'RESULT: all 18 months match'
+        - '2026-06 +31 +15 +match'
+        - 'were left out \(config source\.account_prefix\)'
+    - id: report_on_snapshot
+      args: [report, --client, qb_sandbox_abc_fixture, --period, "2026-06",
+             --provider, deterministic]
+      exit_code: 0
+      stdout:
+        - 'number check: +PASS'
+        - 'reconciliation: +\d+/\d+ passed; \d+ not provided'
+
+skill:
+  run: false
+
+pass_criteria: >
+  Level 1: for each of the 18 months, revenue, COGS, gross profit, gross margin, operating
+  expenses, every operating-expense category, operating income, net income and each of
+  their TTM totals (where the window is complete) are the same from the workbook and from
+  the snapshot: money to the cent, margins within 0.000001 points. The workbook side is
+  checked independently by case 01. The deterministic report on the snapshot passes the
+  number check, and Intuit totals that count non-RE accounts are listed as not provided,
+  never as passed.

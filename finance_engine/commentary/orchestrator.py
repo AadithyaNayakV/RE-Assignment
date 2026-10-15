@@ -31,7 +31,7 @@ from finance_engine.commentary.providers import (DETERMINISTIC, PROVIDER_CLASSES
                                                  ProvidersConfig, ProviderSkip)
 from finance_engine.credentials import CredentialStore, redact
 from finance_engine.guard import GuardResult, NumberGuard
-from finance_engine.wording import (SIGNED_AFTER_DIRECTION, causal_units, period_named,
+from finance_engine.wording import (SIGNED_AFTER_DIRECTION, period_named,
                                     units, unstated_caveats)
 
 PROMPT_PATH = Path(__file__).with_name("writer_prompt.md")
@@ -100,7 +100,7 @@ def validate(text: str, doc: dict, require_periods: bool = True) -> list[str]:
         problems.append(f"Line {e['line']}: {e['word']!r} before {e['text']!r} contradicts "
                         f"the sign of that change ({e['problem']}). Use the direction word "
                         f"that matches the sign.")
-    for unit in causal_units(text, doc):
+    for unit in guard.causal_wording:
         problems.append(f"Causal wording outside 'Questions for the reviewer': "
                         f"{' '.join(unit.split())[:160]!r}. Say where a change sits, not "
                         f"why; put any possible cause as a question in that section.")

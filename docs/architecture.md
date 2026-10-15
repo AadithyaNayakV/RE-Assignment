@@ -14,7 +14,7 @@ documented, not built. Nothing here is deployed anywhere; everything runs on one
 | `CLAUDE.md` | Project memory: the one hard rule (Python is the only source of numbers), folder map, boundaries, commands. Loaded into every Claude Code session. | NOW |
 | `config/clients/<id>.yaml` | One company = one file: sheet layout, section anchors, categories, thresholds, expected-negative lines. `init-client` drafts it from a workbook and validates it with the engine before writing it; anything it is unsure of is listed for a person to decide. A balance sheet is read from another tab of the same workbook (never a separate file or QuickBooks); `init-client` drafts it too, and the draft is accepted only if the engine's balance check passes every month. | NOW |
 | Scopes and files | `--scope month` (default), `year` and `all` (`finance_engine/spans.py`, built from one month's figures at a time); `--file` picks one workbook when a client's folder holds several (`sources/selection.py`). Files are never combined. Every command has `--json` for a UI. | NOW |
-| `evals/` | 19 golden cases; Level 1 (engine) and Level 2 (report) runners; baselines; regression demo. | NOW |
+| `evals/` | 20 golden cases; Level 1 (engine) and Level 2 (report) runners; baselines; regression demo. | NOW |
 | Local web UI (`finance_engine/web/`, `finance_engine/service/`, `ui/`) | `serve` on 127.0.0.1 only, no sign-in. Reports with badges and click-to-trace, warnings, charts, review workflow, add-company wizard, free evals, read-only QuickBooks pull. Every route has a CLI equivalent; the UI never calculates. `docs/ui.md`, one-page view: `docs/architecture_one_page.md`. | NOW |
 | Review workflow and config approval | `review submit/approve/send-back`, `init-client --draft` then `approve-config`. Files on this machine only, names self-declared; the approver must differ from the submitter by default (a nudge, not security). Sign-in and durable storage: PLANNED. | NOW |
 | `.mcp.json`, `.claude/settings.json` | The QuickBooks MCP connection and its read-only permission rules. | NOW |
@@ -84,7 +84,8 @@ manager entry per client. **Today nothing enforces who may read which client's f
 2. **Token management.** Ten refresh tokens that rotate and expire; one lapsed token
    silently takes a client offline.
 3. **Pro usage limits.** One skill run costs about $0.30 to $0.50 API-equivalent and a full
-   13-case eval about $4 to $5. We hit the session limit once during this build.
+   Claude eval about $4 to $5 when the suite had 13 cases; it now has 20, and a full run of
+   all 20 has not been priced. We hit the session limit once during this build.
 4. **Reviewer load.** The report is a draft. Ten drafts a month are ten human reviews.
 5. **Guard blind spots.** It proves a number exists, not that it sits in the right sentence.
    More clients means more chances for that to matter.

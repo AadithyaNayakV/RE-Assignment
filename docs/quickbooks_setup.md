@@ -25,7 +25,16 @@ one of them would eventually fail with `invalid_grant`. The reader therefore has
 Intuit development app, its own refresh token and its own token file. It never reads or
 writes `quickbooks-online-mcp-server/.env`.
 
-**Not done.** Loading the ABC workbook into the sandbox (the brief's stretch goal) was not
+**Stretch goal: built, not yet applied.** `scripts/load_workbook_to_sandbox.py` loads the
+ABC workbook as one journal entry per month into "RE - " accounts (dry run by default,
+offline). **Why writes go through a reviewed script and not through Claude:** a script
+is code a person can read, test (`tests/test_sandbox_loader.py`, fake server) and run on
+purpose. It is idempotent, sandbox-only, logged, and can be undone entry by entry. A
+model with write tools could post a wrong figure into the books with nobody reviewing
+it. So the MCP write tools stay denied, and the only write path is this script, which a
+person runs with `--apply`. The original note follows.
+
+**Previously not done.** Loading the ABC workbook into the sandbox was not
 attempted. The sandbox holds Intuit's sample company, so everything read from it is test
 data, not evidence about a client.
 
@@ -194,6 +203,35 @@ locally only in this phase. Do not deploy.").
 - Production's OAuth handshake needs a public HTTPS callback — the README documents an
   ngrok tunnel for one-off re-auth, or a small deployed callback handler; after that initial
   handshake, only the refresh token matters for day-to-day use.
+
+## Credentials, end to end
+
+**MCP route (Claude Code).**
+- The Intuit client ID and secret live only in the MCP server's own
+  `quickbooks-online-mcp-server/.env`, as `QUICKBOOKS_CLIENT_ID` and
+  `QUICKBOOKS_CLIENT_SECRET`, with `QUICKBOOKS_ENVIRONMENT=sandbox`.
+- `npm run auth` writes the OAuth result (`QUICKBOOKS_REFRESH_TOKEN`,
+  `QUICKBOOKS_REALM_ID`) into that same `.env`. The server saves each rotated token back
+  there, or to `QUICKBOOKS_TOKEN_STORE_PATH` if that is set.
+- `.mcp.json` holds no secret (empty `env`).
+- `.claude/settings.json` denies every `create`, `update` and `delete` tool, in both
+  spellings (`_` and `-`).
+- To revoke: disconnect the app in the Intuit developer portal (or in the company's
+  Connected Apps). Deleting the token from `.env` does not revoke it at Intuit.
+- Git-ignored: the server's `.env` and `tokens.json` (its own `.gitignore`); here, `.env`,
+  `.env.*` except `.env.example`, `*token*.json`, `.secrets/` and `data/clients/`.
+
+**Direct reader (`pull-quickbooks`).** It has its own app and its own token. See
+[Credentials and token handling](#credentials-and-token-handling).
+
+**Team version: [PLANNED], not built.**
+- Secrets live in a secrets manager behind the existing `CredentialStore` interface.
+- Each client gets its own QuickBooks connection and refresh token.
+- Production tokens never sit on a laptop.
+
+**Rule.** Claude never gets write access to QuickBooks. A write goes only through a
+reviewed script that a person runs, and only against the sandbox
+(`scripts/load_workbook_to_sandbox.py`, below).
 
 ### What changes for remote access / ten clients
 

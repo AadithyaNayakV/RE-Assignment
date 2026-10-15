@@ -157,7 +157,7 @@ class TestReportAndBrief:
         assert brief.index("## Comparison caveats") < brief.index("## Status")
         assert "`opex.total` (Total operating expenses) vs 2025-10 (prior month)" in brief
         assert "- Reporting month 2025-11: reconciles." in brief
-        assert NumberGuard(doc).check(brief).passed
+        assert NumberGuard(doc).check(brief).numbers_passed
         assert "## Comparison caveats" not in build_brief(make("2025-12"))
 
 

@@ -1,0 +1,19 @@
+# What the tests and evals caught
+
+These are real defects that a test or an eval found while the project was being built.
+Each one is backed by `evals/CHANGELOG.md` (item numbers given), a saved run under
+`evals/runs/`, or Git history. Defects that a person found in review are not listed.
+Injected faults (`evals/regression_demo.py`) are not listed either, because they were
+planted on purpose. Full details are in `evals/CHANGELOG.md`.
+
+| # | What broke | Caught by | Fix: commit and file |
+|---|---|---|---|
+| 1 | `analyze --period 2026-13` crashed with a Python traceback. An existing test had locked the crash in. | Case 12, Level 1 (`malformed_period`). CHANGELOG #1 | `fd60402`: `finance_engine/cli.py` (`UsageError`); `tests/test_cli.py::test_malformed_period` now expects the clean message |
+| 2 | `report.py` worked out the prior-month column as `current - change`, which put 5 figures in the report that are not in metrics.json (guard on ABC: REJECTED, 6 of 331) | Case 13, Level 1 `report_guard`. CHANGELOG #2 | `fd60402`: the engine emits `<base>.prior`, and `report.py` reads it. Guard PASS 331/331 |
+| 3 | The guard read "SHA-256" as the number 256. Claude's ABC report was rejected (2 of 341), and Claude spent about 8 turns debugging the guard | Case 13, Level 1, then case 01, Level 2 (Claude). CHANGELOG #3 | `fd60402`: `finance_engine/guard.py` masks the label |
+| 4 | The guard read timestamps, hash tails and its own "30/30" counts as figures. Each synthetic report failed with 6 to 9 unsupported numbers | Level 2 deterministic control, cases 02 to 11. CHANGELOG #4 | `fd60402`: `finance_engine/guard.py` |
+| 5 | The guard compared signs, although its docstring says it compares magnitudes. `(2)` and `-$195,898.16` failed | Level 2 deterministic control. CHANGELOG #5 | `fd60402`: `finance_engine/guard.py`, plus tests that a wrong figure fails whatever its sign |
+| 6 | `report.py` hard-coded "100.0%" in the share column. That figure is not a metric | Level 2 deterministic control, cases 02, 03, 06, 08 to 11. CHANGELOG #6 | `fd60402`: `finance_engine/report.py` shows `—` |
+| 7 | The skill wrote "Gross margin rose +3.1 pts", and it left figures in the reviewer questions without a "change" or "level" label | Level 2 checks `direction_amounts_unsigned` and `reviewer_questions_label_figures` in `evals/runs/skill_2026-10-11T12-36-29Z` (42/46) | `c85f0fa`: `.claude/skills/monthly-financial-analysis/SKILL.md`. Re-run 46/46 (`evals/runs/skill_2026-10-11T14-50-30Z`) |
+| 8 | Fault in the eval itself: `forbidden:eleven_month_ttm` fired on the report *stating the rule* ("No TTM … figure is given") | Full Claude run, case 06: the only failure of 12/13 (`evals/runs/skill_2026-10-11T11-03-32Z`). CHANGELOG #13 | `fd60402`: the claim in `evals/cases/06_missing_months/case.yaml` has an `unless` for negated sentences, which `evals/report_checks.py` applies. `tests/test_eval_checks.py` shows the positive claim is still caught |
+| 9 | The skill wrote "Both are true because revenue fell proportionally faster than the loss narrowed." in the ABC June 2026 summary. Claude had run `check-commentary` and it passed (313/313 numbers), because the guard checked numbers and directions only; the causal check lived in the eval suite and the API-provider orchestrator | Level 2 check `causal_words_outside_questions`, case 01 (`evals/runs/skill_2026-10-15T06-13-34Z/01_abc_inc_2026_06`: `report.md`, `transcript.jsonl`) | Uncommitted: `finance_engine/guard.py` now runs `wording.causal_units` (the one list the eval uses), so `check-commentary` rejects that report; SKILL.md step 5 has a wrong/right example; `tests/test_guard.py::TestCausalWording` uses the exact sentence |

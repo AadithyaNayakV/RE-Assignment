@@ -541,6 +541,6 @@ class TestEvalsListing:
     def test_lists_every_golden_case(self):
         data = core.list_evals(ROOT)
         ids = [c["id"] for c in data["cases"]]
-        assert len(ids) == 19 and ids[0].startswith("01_") and ids[-1].startswith("19_")
+        assert len(ids) == 20 and ids[0].startswith("01_") and ids[-1].startswith("20_")
         assert data["paid_command"].startswith("python evals/run_skill_evals.py")
         assert "run it yourself" in data["paid_note"]

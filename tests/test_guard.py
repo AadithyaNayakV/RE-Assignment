@@ -382,3 +382,39 @@ class TestRoundingHalfSteps:
         assert not wrong.passed and wrong.direction_errors
         off = NumberGuard(self._doc(-0.7500000001, name="x.mom_pct")).check("It fell 0.7%.")
         assert not off.passed and off.unsupported
+
+
+class TestCausalWording:
+    """check-commentary rejects causal wording outside "Questions for the reviewer",
+    with the word list the eval `causal_words_outside_questions` uses
+    (`finance_engine.wording.CAUSAL_WORDS`). A skill run passed the guard with this exact
+    sentence and failed the eval (evals/runs/skill_2026-10-15T06-13-34Z, case 01)."""
+
+    SENTENCE = ("- **The operating loss narrowed by $8,343.52 to -$330,756.08, yet operating "
+                "margin fell 6.1 pts to -168.8%.** Both are true because revenue fell "
+                "proportionally faster than the loss narrowed.")
+
+    def test_the_slipped_sentence_is_rejected(self, guard):
+        result = guard.check(self.SENTENCE)
+        assert not result.unsupported and not result.direction_errors   # numbers are fine
+        assert not result.passed
+        assert result.causal_wording and "because" in result.causal_wording[0]
+        assert "causal wording" in result.summary()
+        assert result.to_dict()["causal_wording"] == result.causal_wording
+
+    def test_the_same_sentence_without_a_cause_passes(self, guard):
+        fixed = ("- **The operating loss narrowed by $8,343.52 to -$330,756.08, while "
+                 "operating margin fell 6.1 pts to -168.8%.**")
+        assert guard.check(fixed).passed
+
+    def test_a_cause_as_a_reviewer_question_is_allowed(self, guard):
+        text = ("## Questions for the reviewer\n\n"
+                "- Did margin fall because of pricing? Possible; needs confirmation.\n")
+        assert guard.check(text).passed
+
+    def test_guard_and_eval_share_one_list(self):
+        import finance_engine.guard as guard_module
+        from finance_engine import wording
+        from evals import report_checks
+        assert guard_module.causal_units is wording.causal_units
+        assert report_checks.CAUSAL_WORDS is wording.CAUSAL_WORDS

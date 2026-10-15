@@ -64,13 +64,13 @@ Say plainly which is a backup. Files are in `demo_backup/` (see its README).
 | Claude is slow, or the Pro limit is reached | `demo_backup/abc_inc_2026-06_claude_skill_report.md` | A **saved** report the skill wrote earlier in the 46/46 eval run. Not live. |
 | Same, and you want a live run anyway | `python -m finance_engine report --client abc_inc --period 2026-06` | A **live** run of the no-AI template. It is the fallback, not the skill. |
 | Sandbox or token is down | `demo_backup/quickbooks_sandbox_get_company_info_SAVED.md` | **Saved** output, not a live call. |
-| Evals are slow or fail | `demo_backup/eval_results_*.json` | **Saved** results. The Level 2 file is the re-graded 13/13; the first grading was 12/13. |
+| Evals are slow or fail | `demo_backup/eval_results_*.json` | **Saved** results. The Level 2 file is the re-graded 13/13 (cases 01 to 13; the suite now has 20); the first grading was 12/13. |
 
 ## Tips
 
-- **Do not spend Pro usage the day before or the morning of the call.** The full 13-case
-  skill run costs about $4 to $5 API-equivalent and I hit the session limit once while
-  building. Run at most `run_skill_evals.py 04` during the demo.
+- **Do not spend Pro usage the day before or the morning of the call.** The full skill run cost
+  about $4 to $5 API-equivalent for 13 cases (the suite now has 20), and I hit the session
+  limit once while building. Run at most `run_skill_evals.py 04` during the demo.
 - Close other apps and browser tabs. Keep the terminal font large.
 - **Never show `.env` or `quickbooks-online-mcp-server/.env` on screen.** Do not `cat` them,
   do not open them in the editor, and keep the editor sidebar collapsed on that folder.
@@ -142,5 +142,5 @@ Each was done once for real on 2026-10-11, then reverted with Git. Revert with
 - **Run:** `python -m finance_engine list-periods --client company_k_demo`, then
   `python -m finance_engine report --client company_k_demo --period 2026-06`, then
   `python evals/run_engine_evals.py`.
-- **Expect:** 18 months, reconciliation 108/108, guard PASS, and every engine case (19) still passes.
+- **Expect:** 18 months, reconciliation 108/108, guard PASS, and every engine case (20) still passes.
 - **Recorded:** done; the file and its output folder were deleted.

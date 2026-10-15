@@ -54,6 +54,9 @@ Reference files (read when you reach the step that needs them):
    possible and needing confirmation. Everywhere else in the report, do not use
    "because", "due to", "caused", "the reason" or "driven by". Say *where* a change sits,
    not *why*: write "the increase is in Subscriptions", never "driven by Subscriptions".
+   Wrong: "operating margin fell because revenue dropped". Right: "operating margin fell
+   6.1 pts while revenue fell 12%" (state both figures, no cause). `check-commentary`
+   rejects these words too.
    **Never say what a figure *is*.** "a reversal", "a recovery", "a refund", "a one-off",
    "a misposting", "a timing difference" are causes. Write "may be a reversal; needs
    confirmation", never "is a reversal" or ": a reversal". A sign change is described by
@@ -151,6 +154,23 @@ a separate file or QuickBooks. Then:
   into shape yourself, and never pass `--force` unless the user asks.
 - Exit 1: the file is unreadable, not a monthly income statement, or a config already
   exists. Report the message and stop.
+
+## ABC through the QuickBooks sandbox (qb_sandbox_abc)
+
+Use this when asked for the ABC report "from QuickBooks" or "through the live connection".
+A person must already have loaded the workbook (`scripts/load_workbook_to_sandbox.py
+--apply`). You never write to QuickBooks and never run that script.
+
+1. `python -m finance_engine pull-quickbooks --client qb_sandbox_abc --start 2025-01 --end 2026-06`
+   (one read-only pull; it prints the new snapshot's file name).
+2. `python -m finance_engine analyze --client qb_sandbox_abc --period <YYYY-MM> --file <that snapshot>`
+3. Then the normal steps above (brief, commentary, `check-commentary`), passing the same
+   `--client qb_sandbox_abc --period <YYYY-MM> --file <snapshot>` each time.
+4. Optional: `python -m finance_engine round-trip --excel-client abc_inc --qb-client qb_sandbox_abc`
+   shows whether every month matches the workbook. Report its RESULT line as printed.
+
+Reconciliation checks against Intuit's totals are "not provided" for this client
+(the sandbox also holds Intuit's sample company). Say so; it is not a failure.
 
 ## If something is unavailable
 

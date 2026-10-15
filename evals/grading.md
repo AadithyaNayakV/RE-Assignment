@@ -5,7 +5,7 @@ optional opinion and never decides anything on its own.
 
 | Level | What is graded | Runner | Cost | Decides pass/fail |
 |---|---|---|---|---|
-| 1 | The engine's `metrics.json` against independently derived values | `evals/run_engine_evals.py` | free, ~40 s for 19 cases | **yes** |
+| 1 | The engine's `metrics.json` against independently derived values | `evals/run_engine_evals.py` | free, ~40 s for 20 cases | **yes** |
 | 2 | The `report.md` the skill writes (or the deterministic fallback) | `evals/run_skill_evals.py` | Pro usage per case; free with `--provider deterministic` | **yes** |
 | 3 | Clarity and usefulness, scored 1–5 by a read-only Claude judge | `run_skill_evals.py --rubric` | Pro usage | **no**, advisory only |
 

@@ -67,11 +67,11 @@ def synthetic_doc(request) -> dict:
 class TestBrief:
     def test_every_number_in_the_brief_is_in_metrics_json(self, synthetic_doc):
         result = NumberGuard(synthetic_doc).check(build_brief(synthetic_doc))
-        assert result.passed, result.summary()
+        assert result.numbers_passed, result.summary()
 
     def test_abc_brief_is_traceable_and_small(self, abc_metrics):
         brief = build_brief(abc_metrics)
-        assert NumberGuard(abc_metrics).check(brief).passed
+        assert NumberGuard(abc_metrics).check(brief).numbers_passed
         # The point of the brief: the skill reads ~11 KB, not ~860 KB of metrics.json.
         assert len(brief) < len(json.dumps(abc_metrics)) / 20
 

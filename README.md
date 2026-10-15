@@ -13,15 +13,19 @@ The brief (`docs/Build Exercise - AI Solutions Builder.pdf`) asks for four thing
 |---|---|---|---|
 | 1 | **The working connection**: QuickBooks sandbox to Claude | `.mcp.json` (config), `.claude/settings.json` (read-only permission rules), `quickbooks-online-mcp-server/` (Intuit's official server), `docs/quickbooks_setup.md` (both paths, choice, rejected options, credentials, team hosting), `tests/integration/test_quickbooks_mcp.py`, `scripts/preflight_check.py`. Also a direct read-only reader for the CLI: `pull-quickbooks`, `finance_engine/sources/quickbooks_api.py`, `tests/test_quickbooks.py`, `scripts/qb_smoke.py` | Working against the sandbox, local only |
 | 2 | **The skill file(s)** | `.claude/skills/monthly-financial-analysis/` (`SKILL.md` and `reference/`), backed by `finance_engine/` and `config/clients/*.yaml` | Working |
-| 3 | **The eval cases and grading approach** | `evals/cases/` (19 cases), `evals/grading.md`, `evals/run_engine_evals.py`, `evals/run_skill_evals.py`, `evals/baseline/`, `evals/CHANGELOG.md`, `evals/evaluation_report.md` | Working |
+| 3 | **The eval cases and grading approach** | `evals/cases/` (20 cases), `evals/grading.md`, `evals/run_engine_evals.py`, `evals/run_skill_evals.py`, `evals/baseline/`, `evals/CHANGELOG.md`, `evals/evaluation_report.md` | Working |
 | 4 | **The one-page architecture note** | `docs/architecture_one_page.md` (about 450 words); detail in `docs/architecture.md`, hosting plan in `docs/future_hosting.md` | Written |
 
 Also: `docs/requirements_checklist.md` (every requirement with evidence and status),
 `docs/decisions.md` (why each choice), `docs/demo_checklist.md` and
 `docs/live_demo_runbook.md` (the live readout).
 
-**Not done:** the brief's *stretch goal* (loading the workbook into the sandbox and running
-the skill through the live connection). Nothing is deployed anywhere.
+**Stretch goal: built, not yet applied.** `scripts/load_workbook_to_sandbox.py` loads the
+workbook into the sandbox (a person runs `--apply`; Claude never writes), `pull-quickbooks
+--client qb_sandbox_abc` reads it back, `round-trip` compares every month with the workbook,
+and the skill has a section for that run. Offline, the round trip matches all 18 months
+(golden case 20, on a simulated snapshot); no real load has been made yet. Nothing is
+deployed anywhere.
 
 ## Setup from scratch
 
@@ -55,6 +59,9 @@ and `source ~/venvs/re-assignment/bin/activate`.
 
 5. **Run the tests:** `python -m pytest -q` (UI tests skip if fastapi is not installed),
    then `python evals/run_engine_evals.py --compare` (free).
+
+   Clean install checked on 2026-10-15 with Python 3.12.10 on Windows: a new venv outside
+   the repo, steps 1, 2 and 5 exactly as written; 1292 passed, 3 skipped; engine evals 20/20.
 
 6. **Run the CLI:** `python -m finance_engine report --client test_clean --period 2026-01`.
 
@@ -363,10 +370,13 @@ copy of a real pull (`tests/fixtures/qb_pl_monthly.json`, client `qb_sandbox_fix
 - **One Claude run per eval case.** Output varies between runs; variance is not measured.
 - **Local only.** No authentication, authorization, TLS or tenant isolation. Clients are
   separated by path and convention. Not production-ready (`docs/future_hosting.md`).
-- **The skill needs a Pro session.** A full 13-case run cost about $4 to $5 API-equivalent;
-  the five Phase 5B cases (14 to 18) have not been run through Claude.
+- **The skill needs a Pro session.** The suite has 20 cases. A full Claude run of the first
+  13 cost about $4 to $5 API-equivalent; cases 14 to 17 have not been run through Claude
+  (18 to 20 are graded on the template report or have no commentary step). See
+  `evals/README.md`: no Claude-written report has passed the current checks yet.
 - **Sandbox only.** The QuickBooks data is Intuit's sample data, not evidence about a client.
 - **QuickBooks: sandbox Profit and Loss only.** The direct reader pulls one report, from
   the sandbox only; production, the balance sheet and other reports are not read. A
   blank QuickBooks cell is read as 0 (Intuit's convention), unlike a blank workbook cell.
-- **Stretch goal not attempted.**
+- **Stretch goal: not yet applied to the real sandbox.** The loader, the read-back and the
+  round trip are built and tested offline; `--apply` has not been run.

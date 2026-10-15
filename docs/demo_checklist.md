@@ -96,8 +96,10 @@ Run everything from the repo root.
 - **Do:**
   `python evals/run_engine_evals.py --compare` (about 30 s), then
   `python evals/run_skill_evals.py 04` (about 90 s, Pro usage).
-- **Expect:** 13 passed; `Compared with baseline … no change.` Then 04 passes.
-- **Verified:** yes. Level 1 13/13. Full Claude Level 2 run: first graded 12/13, then 13/13
+- **Expect:** 20 passed. `--compare` lists cases 14 to 20 as new until the baseline is
+  re-saved; nothing regressed. Then 04 passes.
+- **Verified:** yes. Level 1 20/20 (2026-10-15). Full Claude Level 2 run (2026-10-11, the 13
+  cases that existed then): first graded 12/13, then 13/13
   after fixing a checker false positive (documented). ABC single-case: 46/46.
 - **Say:** "A fault in my own checker is a defect too, so each fix has a test that proves the
   check still catches what it exists for."
@@ -125,4 +127,4 @@ Three changes you might be asked for, each done once for real and reverted with 
 |---|---|---|---|
 | Change the significance threshold | `config/clients/abc_inc.yaml` | `analyze` + `brief`, then `run_engine_evals.py 01` | ABC significant movements 11 → 6; evals still pass (values unchanged); reverted |
 | Add a metric (`opex_pct_of_revenue`) | `finance_engine/metrics.py`, `brief.py`, `evals/tools/build_expected.py`, `metric_definitions.md` | `build_expected.py 02`, `run_engine_evals.py 02` | 65/65 pass (42.57% = 79,004 / 185,600); a wrong denominator made it FAIL; reverted |
-| Add a new company | `config/clients/<id>.yaml` only | `list-periods`, `report`, full engine evals | reconciliation 108/108, guard PASS, 13/13 evals; removed |
+| Add a new company | `config/clients/<id>.yaml` only | `list-periods`, `report`, full engine evals | reconciliation 108/108, guard PASS, 13/13 evals (all 13 cases on 2026-10-11; 19 now); removed |

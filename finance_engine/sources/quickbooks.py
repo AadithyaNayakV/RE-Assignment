@@ -40,6 +40,14 @@ tests/fixtures/qb_pl_monthly.json):
   QuickBooks", never as a pass or a failure, and a warning says the section was counted
   as 0. A left-out summary row (Gross Profit, Net Income...) gets no values at all:
   Intuit's own totals are never filled in.
+* **Only accounts with a given prefix** (`source.account_prefix`, e.g. "RE - " for the
+  ABC workbook loaded into the sandbox next to Intuit's sample company). Every other
+  account row, and every nested account group whose name lacks the prefix, is left out,
+  with one warning that counts them. Intuit's totals still include those accounts, so
+  each total or summary row that a left-out account fed (a section's own total; Gross
+  Profit and every summary row below a section with a left-out account) gets no values
+  and is marked not provided, exactly like a total QuickBooks left out. It is never
+  recomputed. Without the setting, nothing is left out.
 """
 
 from __future__ import annotations
@@ -62,6 +70,8 @@ SHEET_NAME = "ProfitAndLoss"
 #: Intuit's top-level row groups of a Profit and Loss report, in the order it sends them.
 GROUP_ORDER = ("Income", "COGS", "GrossProfit", "Expenses", "NetOperatingIncome",
                "OtherIncome", "OtherExpenses", "NetOtherIncome", "NetIncome")
+#: The groups that hold accounts; the others are Intuit's summary rows.
+ACCOUNT_GROUPS = ("Income", "COGS", "Expenses", "OtherIncome", "OtherExpenses")
 
 
 class QuickBooksSnapshotSource(DataSource):
@@ -189,6 +199,9 @@ def read_profit_and_loss(report: dict, name: str, config: ClientConfig,
                 f"{span}, {header.get('ReportBasis', '')} basis, {currency or ''}".strip()],
         period_columns={p.key: get_column_letter(i + 1) for i, p in months})
     counter = [1]                                  # row 1: the column headings
+    prefix = (config.raw.get("source") or {}).get("account_prefix") or ""
+    left_out: dict[str, int] = {}                  # Intuit group -> accounts left out
+    top_totals: list[tuple[str, LineItem]] = []    # (Intuit group, its total row)
 
     def line(label: str, cells_raw: list, role: str) -> None:
         counter[0] += 1
@@ -205,9 +218,18 @@ def read_profit_and_loss(report: dict, name: str, config: ClientConfig,
         sheet.line_items.append(LineItem(sheet=SHEET_NAME, row=row, label=label,
                                          role=role, cells=cells))
 
-    def walk(items: list, path: list[str], top: bool, heading: str = "") -> None:
+    def walk(items: list, path: list[str], top: bool, heading: str = "",
+             group: str = "") -> None:
         for item in items:
             kind = item.get("type")
+            group_here = item.get("group") if top else group
+            if prefix and not top and not _label(
+                    ((item.get("Header") or {}).get("ColData") or item.get("ColData")
+                     or [])).startswith(prefix):
+                # Not one of this client's accounts (an account, or a whole nested
+                # account group): left out, and Intuit's totals above it are not used.
+                left_out[group] = left_out.get(group, 0) + 1
+                continue
             if kind == "Data":
                 cells_raw = item.get("ColData") or []
                 label = _label(cells_raw)
@@ -233,7 +255,8 @@ def read_profit_and_loss(report: dict, name: str, config: ClientConfig,
                 if not top and any(str(c.get("value") or "").strip() for c in head[1:]):
                     line(f"{heading_label} (own amount)", head, "item")
             inner = path + [title] if (title and not top) else path
-            walk((item.get("Rows") or {}).get("Row") or [], inner, top=False, heading=title)
+            walk((item.get("Rows") or {}).get("Row") or [], inner, top=False, heading=title,
+                 group=group_here)
             if summary:
                 total = _label(summary)
                 # A nested group's total is a subtotal, never summed again. A top-level
@@ -241,6 +264,7 @@ def read_profit_and_loss(report: dict, name: str, config: ClientConfig,
                 # config's anchors turn into a section total or a reported line.
                 if top:
                     line(total, summary, "item")
+                    top_totals.append((group_here or "", sheet.line_items[-1]))
                 else:
                     line(f"Total {': '.join(inner)}", summary, "subtotal")
 
@@ -294,7 +318,34 @@ def read_profit_and_loss(report: dict, name: str, config: ClientConfig,
         walk([item], [], top=True)
     while pending:
         put_back(pending.pop(0)[0])
+    if left_out:
+        _drop_totals_fed_by(left_out, top_totals, prefix)
+        notes.append({"code": "quickbooks_accounts_left_out",
+                      "message": f"{sum(left_out.values())} QuickBooks account row(s) or "
+                                 f"account group(s) not named '{prefix}...' were left out "
+                                 f"(config source.account_prefix). QuickBooks' own totals "
+                                 f"that include them are not used.",
+                      "affects": ()})
     return sheet
+
+
+def _drop_totals_fed_by(left_out: dict[str, int], top_totals: list, prefix: str) -> None:
+    """Blank each Intuit total that counted a left-out account, and say why.
+
+    A section's own total is affected by its own group; a summary row (Gross Profit, Net
+    Operating Income, Net Income...) by every account group above it in the report.
+    """
+    for group, row in top_totals:
+        if group in ACCOUNT_GROUPS:
+            fed = group in left_out
+        else:
+            above = GROUP_ORDER[:GROUP_ORDER.index(group)] if group in GROUP_ORDER                 else GROUP_ORDER
+            fed = any(g in left_out for g in above)
+        if fed:
+            row.cells = {}
+            row.omitted_by_source = (f"not provided for this client: QuickBooks' "
+                                     f"{row.label} also counts accounts not named "
+                                     f"'{prefix}...', which source.account_prefix leaves out")
 
 
 def _label(cells: list) -> str:
