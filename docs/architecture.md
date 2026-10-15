@@ -1,6 +1,7 @@
 # Architecture
 
-One page. **[NOW]** means built and tested in this repo. **[PLANNED]** means designed and
+Reference version. The one-page note is `docs/architecture_one_page.md`.
+**[NOW]** means built and tested in this repo. **[PLANNED]** means designed and
 documented, not built. Nothing here is deployed anywhere; everything runs on one laptop.
 
 ## 1. Project structure: files, skills, memory
@@ -25,15 +26,15 @@ documented, not built. Nothing here is deployed anywhere; everything runs on one
 ```
 Excel workbook ─┐                       ┌─ Claude Code + skill  (now, Pro plan, no API key)
 QuickBooks      ├─► finance_engine ─► metrics.json ─► commentary ─┼─ deterministic template (now, always available)
- P&L snapshot ──┘  validate·calculate·reconcile   │            └─ Gemini / Claude API    (now, optional; checked, retried,
-                                                    │                                       deterministic fallback; Claude API opt-in, paid)
+ P&L snapshot ──┘  validate·calculate·reconcile   │            └─ Gemini                 (now, optional; checked, retried,
+                                                    │                                       deterministic fallback)
                                                     └────────────────► guard ─► report.md ─► human reviewer
 ```
 
 The model can only describe numbers it was handed. A figure it invents fails the guard.
-The cloud providers receive only the compact brief; a draft that fails the checks is
-retried, then the next provider is tried, and the deterministic report is always the
-last step. Ollama is not built.
+Gemini receives only the compact brief. If its draft fails the checks, it is retried,
+then the deterministic report is used. A Claude API provider exists in the code but is
+off and not used. No local model is used.
 
 ## 3. QuickBooks connection [NOW, local only]
 
@@ -60,9 +61,9 @@ entries); `pull-quickbooks` read it back and `round-trip` matched all 18 months.
 
 **Now:** everything local; the web UI is a FastAPI app bound to 127.0.0.1 with no
 sign-in. **Later [PLANNED]:** the same app behind HTTPS and the firm's SSO with per-user
-roles, review records in durable shared storage, and a `/health` endpoint; commentary by a local Ollama model or a paid API, chosen by
-`LLM_PROVIDER` with no rewrite; the MCP server hosted over HTTPS behind the firm's SSO for
-the team; secrets in a secret manager, not a file. Sketch: `docs/future_hosting.md`.
+roles, review records in durable shared storage, and a `/health` endpoint; the MCP server
+hosted over HTTPS behind the firm's SSO for the team; secrets in a secret manager, not a
+file. Sketch: `docs/future_hosting.md`.
 
 **AWS option [PLANNED, not built, not verified].** Secrets (the QuickBooks tokens and any
 API key) in AWS Secrets Manager behind the existing `CredentialStore` interface, instead of
@@ -73,26 +74,21 @@ for this; nothing has been tried against AWS.
 ## 5. Ten clients
 
 Everything is keyed by `client_id`: `config/clients/<id>.yaml`, `data/clients/<id>/`,
-`output/clients/<id>/<period>/`, one QuickBooks token store per client
-(`QUICKBOOKS_TOKEN_STORE_PATH` for the MCP server, supported today; the direct reader has
-one token file today, so a second QuickBooks client would need a per-client path, not
-built). **[NOW]:** separation by
-path and convention; the skill is told to handle one client per run and never cite another;
-an eval check fails a report that names another client; evals run per client.
-**[PLANNED]:** per-client access control, per-client logs and audit trail, a secret
-manager entry per client. **Today nothing enforces who may read which client's folder.**
+`output/clients/<id>/<period>/`.
+
+**[NOW]:** separation by path and convention. The skill is told to handle one client per
+run and never cite another; an eval check fails a report that names another client; evals
+run per client. Today all QuickBooks clients share one sandbox company and one token.
+**[PLANNED]:** a token and secret-manager entry per client, per-client access control,
+per-client logs and audit trail. **Today nothing enforces who may read which client's
+folder.**
 
 ## 6. What breaks first at ten clients
 
-1. **Per-client mapping configs.** Each new workbook layout needs a YAML written and
-   reconciled by a person. This is the real scaling cost, not compute.
-2. **Token management.** Ten refresh tokens that rotate and expire; one lapsed token
-   silently takes a client offline.
-3. **Pro usage limits.** One skill run costs about $0.30 to $0.52 API-equivalent (case 01 on
-   2026-10-15: $0.50 and $0.52) and a full Claude eval about $4 to $5 when the suite had 13
-   cases (2026-10-11); it now has 20, and a full run of
-   all 20 has not been priced. We hit the session limit once during this build.
+1. **QuickBooks.** One token and one sandbox company shared by every QuickBooks client.
+   Ten clients means ten rotating tokens, and one lapsed token takes a client offline.
+2. **Per-client mapping configs.** Each new workbook layout needs a YAML written and
+   reconciled by a person (now drafted and approved, still a person's work).
+3. **No login, and review logs on local disk.** Fine for one analyst, not for ten clients.
 4. **Reviewer load.** The report is a draft. Ten drafts a month are ten human reviews.
 5. **Guard blind spots.** It proves a number exists, not that it sits in the right sentence.
-   More clients means more chances for that to matter.
-6. **No tenant isolation** (section 5). Fine for one analyst, not for ten clients.
